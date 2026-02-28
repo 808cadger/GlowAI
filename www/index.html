@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Archer Travel</title>
+  <title>GlowAI</title>
   <style>
     :root {
       --primary: #7C3AED;
@@ -395,7 +395,7 @@
 <!-- ═══════════════════════════════════════ SPLASH ═══════════════════════════════════════ -->
 <div id="splash" class="screen">
   <div class="splash-logo">✨</div>
-  <div class="splash-title">Archer Travel</div>
+  <div class="splash-title">GlowAI</div>
   <div class="splash-sub">Your AI-powered skin coach</div>
   <div class="splash-loader"><div class="splash-loader-bar"></div></div>
 </div>
@@ -452,7 +452,7 @@
       </div>
       <div class="quick-card" onclick="showScreen('agent')">
         <div class="qc-icon">🤖</div>
-        <div class="qc-title">Archer Agent</div>
+        <div class="qc-title">GlowAI Agent</div>
         <div class="qc-sub">Ask anything</div>
       </div>
       <div class="quick-card" onclick="showScreen('routine')">
@@ -582,7 +582,7 @@
     <!-- Actions -->
     <div style="display:flex;gap:10px;margin-top:20px">
       <button class="btn-primary" style="flex:1" onclick="buildRoutineFromAnalysis()">Build Routine</button>
-      <button class="btn-secondary" style="flex:1" onclick="showScreen('agent')">Ask Archer</button>
+      <button class="btn-secondary" style="flex:1" onclick="showScreen('agent')">Ask GlowAI</button>
     </div>
   </div>
 </div>
@@ -592,7 +592,7 @@
   <div class="agent-header">
     <div class="agent-avatar">✨</div>
     <div class="agent-info">
-      <div class="agent-name">Archer Agent</div>
+      <div class="agent-name">GlowAI Agent</div>
       <div class="agent-status"><div class="agent-dot"></div> Online · Ready to help</div>
     </div>
     <div class="btn-icon" onclick="clearChat()">🗑️</div>
@@ -606,7 +606,7 @@
     <div class="starter-pill" onclick="sendStarter(this)">Best moisturizer?</div>
   </div>
   <div class="chat-input-area">
-    <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask Archer anything..." onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+    <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask GlowAI anything..." onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
     <button class="chat-send" id="chat-send" onclick="sendMessage()">➤</button>
   </div>
 </div>
@@ -707,7 +707,7 @@
         <div class="settings-row" onclick="">
           <div class="settings-row-icon" style="background:rgba(99,102,241,0.2)">ℹ️</div>
           <div class="settings-row-text">
-            <div class="settings-row-title">About Archer Travel</div>
+            <div class="settings-row-title">About GlowAI</div>
             <div class="settings-row-sub">v1.0.0 · Powered by Claude</div>
           </div>
           <div class="settings-chevron">›</div>
@@ -729,7 +729,7 @@
   </div>
   <div class="nav-item" id="nav-agent" onclick="navTo('agent')">
     <div class="nav-icon">✨</div>
-    <div class="nav-label">Archer</div>
+    <div class="nav-label">GlowAI</div>
   </div>
   <div class="nav-item" id="nav-routine" onclick="navTo('routine')">
     <div class="nav-icon">🌿</div>
@@ -750,12 +750,12 @@
 //  STATE
 // ══════════════════════════════════════════════════════════════════════
 const state = {
-  profile: JSON.parse(localStorage.getItem('archer_profile') || 'null'),
-  routine: JSON.parse(localStorage.getItem('archer_routine') || 'null'),
-  lastAnalysis: JSON.parse(localStorage.getItem('archer_analysis') || 'null'),
-  chatHistory: JSON.parse(localStorage.getItem('archer_chat') || '[]'),
-  streak: parseInt(localStorage.getItem('archer_streak') || '7'),
-  apiKey: localStorage.getItem('archer_apikey') || '',
+  profile: JSON.parse(localStorage.getItem('glowai_profile') || 'null'),
+  routine: JSON.parse(localStorage.getItem('glowai_routine') || 'null'),
+  lastAnalysis: JSON.parse(localStorage.getItem('glowai_analysis') || 'null'),
+  chatHistory: JSON.parse(localStorage.getItem('glowai_chat') || '[]'),
+  streak: parseInt(localStorage.getItem('glowai_streak') || '7'),
+  apiKey: localStorage.getItem('glowai_apikey') || '',
   currentScreen: 'splash',
   activeTab: 'am',
   obStep: 1,
@@ -890,9 +890,9 @@ function completeOnboarding() {
     name: 'You',
     score: 72 + Math.floor(Math.random() * 15)
   };
-  localStorage.setItem('archer_profile', JSON.stringify(state.profile));
+  localStorage.setItem('glowai_profile', JSON.stringify(state.profile));
   state.routine = buildDefaultRoutine(state.profile);
-  localStorage.setItem('archer_routine', JSON.stringify(state.routine));
+  localStorage.setItem('glowai_routine', JSON.stringify(state.routine));
   updateHome();
   renderRoutine();
   showScreen('home');
@@ -935,7 +935,7 @@ function updateSettings() {
 }
 function saveApiKey(val) {
   state.apiKey = val;
-  localStorage.setItem('archer_apikey', val);
+  localStorage.setItem('glowai_apikey', val);
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -975,8 +975,8 @@ function showAnalysisResults() {
   const analysis = { score, concerns, date: new Date().toISOString(), skinType: profile.skinType };
   state.lastAnalysis = analysis;
   state.profile.score = score;
-  localStorage.setItem('archer_analysis', JSON.stringify(analysis));
-  localStorage.setItem('archer_profile', JSON.stringify(state.profile));
+  localStorage.setItem('glowai_analysis', JSON.stringify(analysis));
+  localStorage.setItem('glowai_profile', JSON.stringify(state.profile));
   renderAnalysis(analysis);
   showScreen('analysis');
 }
@@ -1027,7 +1027,7 @@ function getRecommendations(a) {
 }
 function buildRoutineFromAnalysis() {
   state.routine = buildDefaultRoutine(state.profile);
-  localStorage.setItem('archer_routine', JSON.stringify(state.routine));
+  localStorage.setItem('glowai_routine', JSON.stringify(state.routine));
   renderRoutine();
   showScreen('routine');
   navTo('routine');
@@ -1073,7 +1073,7 @@ function switchTab(tab) {
 function renderRoutine() {
   if (!state.routine) {
     state.routine = buildDefaultRoutine(state.profile);
-    localStorage.setItem('archer_routine', JSON.stringify(state.routine));
+    localStorage.setItem('glowai_routine', JSON.stringify(state.routine));
   }
   const steps = state.routine[state.activeTab] || [];
   const container = document.getElementById('routine-steps');
@@ -1092,18 +1092,18 @@ function renderRoutine() {
 }
 function toggleStep(tab, idx) {
   state.routine[tab][idx].done = !state.routine[tab][idx].done;
-  localStorage.setItem('archer_routine', JSON.stringify(state.routine));
+  localStorage.setItem('glowai_routine', JSON.stringify(state.routine));
   renderRoutine();
   const allDone = state.routine[tab].every(s => s.done);
   if (allDone) { showToast('🎉 ' + (tab === 'am' ? 'Morning' : 'Evening') + ' routine complete!'); }
 }
 function markAllDone() {
   state.routine[state.activeTab].forEach(s => s.done = true);
-  localStorage.setItem('archer_routine', JSON.stringify(state.routine));
+  localStorage.setItem('glowai_routine', JSON.stringify(state.routine));
   renderRoutine();
   showToast('🎉 All done! Great job! 🔥');
   state.streak++;
-  localStorage.setItem('archer_streak', state.streak);
+  localStorage.setItem('glowai_streak', state.streak);
   document.getElementById('routine-streak').textContent = state.streak;
 }
 
@@ -1112,7 +1112,7 @@ function markAllDone() {
 // ══════════════════════════════════════════════════════════════════════
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-sonnet-4-6';
-const SYSTEM_PROMPT = `You are Archer, an expert AI travel assistant. You are warm, encouraging, and knowledgeable.
+const SYSTEM_PROMPT = `You are Glow, an expert AI skincare assistant. You are warm, encouraging, and knowledgeable.
 
 You have access to tools to help users with their skincare journey. Use tools proactively and multiple tools in sequence to give the best experience.
 
@@ -1239,7 +1239,7 @@ function executeTool(name, input) {
       const { skin_type, concerns, time_commitment = 'moderate', focus } = input;
       const routine = buildDefaultRoutine({ skinType: skin_type, skinTypeId: skin_type.toLowerCase(), concerns });
       state.routine = routine;
-      localStorage.setItem('archer_routine', JSON.stringify(routine));
+      localStorage.setItem('glowai_routine', JSON.stringify(routine));
       renderRoutine();
       return {
         routine_built: true,
@@ -1257,10 +1257,10 @@ function executeTool(name, input) {
     case 'track_skin_progress': {
       const { skin_score, notes, concerns_improved = [], concerns_worsened = [] } = input;
       const entry = { date: new Date().toISOString(), score: skin_score, notes, concerns_improved, concerns_worsened };
-      const history = JSON.parse(localStorage.getItem('archer_progress') || '[]');
+      const history = JSON.parse(localStorage.getItem('glowai_progress') || '[]');
       history.push(entry);
-      localStorage.setItem('archer_progress', JSON.stringify(history));
-      if (state.profile) { state.profile.score = skin_score; localStorage.setItem('archer_profile', JSON.stringify(state.profile)); }
+      localStorage.setItem('glowai_progress', JSON.stringify(history));
+      if (state.profile) { state.profile.score = skin_score; localStorage.setItem('glowai_profile', JSON.stringify(state.profile)); }
       return {
         logged: true, score: skin_score, date: entry.date,
         trend: history.length > 1 ? (skin_score > history[history.length-2].score ? 'improving' : 'declining') : 'baseline',
@@ -1339,8 +1339,8 @@ function initChat() {
   }
   const profile = state.profile;
   const greeting = profile
-    ? `Hi! I'm your Archer Agent ✨ I can see you have **${profile.skinType} skin** with concerns about **${(profile.concerns || []).join(', ')}**.\n\nI can analyze your skin, build personalized routines, explain ingredients, and track your progress — all through our conversation.\n\nWhat would you like to work on today?`
-    : `Hi! I'm Archer, your personal AI travel assistant ✨\n\nI can help you with:\n• 🔬 Skin analysis & assessments\n• 🌿 Personalized routine building\n• ⚗️ Ingredient explanations\n• 📊 Progress tracking\n\nWhat brings you here today?`;
+    ? `Hi! I'm your GlowAI Agent ✨ I can see you have **${profile.skinType} skin** with concerns about **${(profile.concerns || []).join(', ')}**.\n\nI can analyze your skin, build personalized routines, explain ingredients, and track your progress — all through our conversation.\n\nWhat would you like to work on today?`
+    : `Hi! I'm Glow, your personal AI skincare assistant ✨\n\nI can help you with:\n• 🔬 Skin analysis & assessments\n• 🌿 Personalized routine building\n• ⚗️ Ingredient explanations\n• 📊 Progress tracking\n\nWhat brings you here today?`;
   addAIMessage(greeting);
 }
 function renderChatHistory() {
@@ -1489,7 +1489,7 @@ function autoResize(el) {
 }
 function clearChat() {
   state.chatHistory = [];
-  localStorage.removeItem('archer_chat');
+  localStorage.removeItem('glowai_chat');
   document.getElementById('chat-body').innerHTML = '';
   document.getElementById('starter-pills').style.display = 'flex';
   initChat();
@@ -1628,7 +1628,7 @@ function buildApiMessages(newUserText) {
 function saveToHistory(role, text) {
   state.chatHistory.push({ role, text });
   if (state.chatHistory.length > 40) state.chatHistory = state.chatHistory.slice(-40);
-  localStorage.setItem('archer_chat', JSON.stringify(state.chatHistory));
+  localStorage.setItem('glowai_chat', JSON.stringify(state.chatHistory));
 }
 
 // Demo responses when no API key

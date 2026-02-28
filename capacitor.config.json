@@ -1,6 +1,6 @@
 {
-  "appId": "com.archertravel.app",
-  "appName": "Archer Travel",
+  "appId": "com.glowai.app",
+  "appName": "GlowAI",
   "webDir": "www",
   "server": {
     "androidScheme": "https",

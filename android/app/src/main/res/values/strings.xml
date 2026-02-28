@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Archer Travel</string>
-    <string name="title_activity_main">Archer Travel</string>
-    <string name="package_name">com.archertravel.app</string>
-    <string name="custom_url_scheme">com.archertravel.app</string>
+    <string name="app_name">GlowAI</string>
+    <string name="title_activity_main">GlowAI</string>
+    <string name="package_name">com.glowai.app</string>
+    <string name="custom_url_scheme">com.glowai.app</string>
 </resources>

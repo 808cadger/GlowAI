@@ -1,39 +1,36 @@
-# Archer Travel
+# GlowAI
 
-A mobile app built with [Capacitor](https://capacitorjs.com/) that wraps the Archer Travel web application. The web frontend is hosted on Vercel and served inside a native Android shell.
+An AI-powered skincare mobile app built with Capacitor and Claude AI (Anthropic). Features a full multi-screen SPA with an agentic AI assistant that analyzes your skin, builds personalized routines, and tracks your progress.
+
+---
+
+## Features
+
+- **Agentic Claude AI** with 5 tools: skin analysis, product recommendations, routine builder, ingredient explainer, progress tracker
+- Tool-use agentic loop — AI proactively chains multi-step actions
+- Personalized onboarding quiz (skin type, concerns, goals)
+- Skin scan with animated analysis flow and AI-generated results
+- Personalized AM/PM skincare routine with step tracking and streaks
+- Demo mode when no API key is set
+- Mobile-first UI with safe area support, smooth transitions, dark theme
 
 ---
 
 ## Prerequisites
 
-Before getting started, make sure you have the following installed:
-
 - [Node.js](https://nodejs.org/) (v16 or higher)
-- [npm](https://www.npmjs.com/) (comes with Node.js)
-- [Android Studio](https://developer.android.com/studio) (for Android builds)
-- Android SDK with API level 22+ (minSdk) and API level 33+ (targetSdk)
+- [Android Studio](https://developer.android.com/studio)
+- Android SDK (API level 22+ minSdk, 33+ targetSdk)
 - Java Development Kit (JDK) 17
 
 ---
 
 ## Installation
 
-### 1. Clone the repository
-
 ```bash
 git clone <your-repo-url>
 cd quickapp
-```
-
-### 2. Install dependencies
-
-```bash
 npm install
-```
-
-### 3. Sync Capacitor
-
-```bash
 npx cap sync android
 ```
 
@@ -41,45 +38,35 @@ npx cap sync android
 
 ## Running on Android
 
-### Option A: Open in Android Studio
+### Option A: Android Studio
 
 ```bash
 npx cap open android
 ```
 
-Then press **Run** (▶) in Android Studio to build and deploy to a device or emulator.
+Press **Run** (▶) in Android Studio to build and deploy.
 
-### Option B: Build an APK from the command line
+### Option B: Command line
 
 ```bash
 cd android
 ./gradlew assembleDebug
 ```
 
-The debug APK will be output to:
-
-```
-android/app/build/outputs/apk/debug/app-debug.apk
-```
+Output: `android/app/build/outputs/apk/debug/app-debug.apk`
 
 ---
 
 ## Building a Release APK
-
-The release signing config uses the keystore at the project root (`archer-release.keystore`).
 
 ```bash
 cd android
 ./gradlew assembleRelease
 ```
 
-The signed release APK will be output to:
+Output: `android/app/build/outputs/apk/release/app-release.apk`
 
-```
-android/app/build/outputs/apk/release/app-release.apk
-```
-
-> **Note:** Keep the keystore file and its credentials secure. Do not commit credentials to version control.
+> **Note:** Keep the keystore and its credentials secure. Do not commit credentials to version control.
 
 ---
 
@@ -90,41 +77,30 @@ quickapp/
 ├── android/                  # Native Android project (Capacitor)
 │   └── app/
 │       └── build.gradle      # Android build configuration
-├── www/                      # Web assets (fallback / offline shell)
+├── www/                      # Web app (mobile SPA)
 │   └── index.html
 ├── capacitor.config.json     # Capacitor configuration
-├── package.json
-└── archer-release.keystore   # Release signing keystore
+└── package.json
 ```
 
 ---
 
 ## Configuration
 
-The app is configured to load the web app from Vercel via `capacitor.config.json`:
+The app serves the skincare SPA from `www/index.html`. To use the Claude AI features, set your Anthropic API key in the app's Settings screen.
 
 ```json
 {
-  "appId": "com.archertravel.app",
-  "appName": "Archer Travel",
-  "webDir": "www",
-  "server": {
-    "androidScheme": "https",
-    "url": "https://quickapp-three.vercel.app"
-  }
+  "appId": "com.glowai.app",
+  "appName": "GlowAI",
+  "webDir": "www"
 }
-```
-
-To point the app at a different URL (e.g. a local dev server), update the `server.url` field and re-sync:
-
-```bash
-npx cap sync android
 ```
 
 ---
 
-## Troubleshooting
+## Tech Stack
 
-- **Gradle build fails:** Make sure your Android SDK path is set correctly in `android/local.properties`.
-- **App shows blank screen:** Check that the `server.url` in `capacitor.config.json` is reachable from the device.
-- **Keystore not found:** Ensure `archer-release.keystore` exists at the project root before running a release build.
+- **Claude AI (Anthropic)** — agentic tool-use loop
+- **Capacitor** — native Android wrapper
+- **Vanilla JS / HTML / CSS** — mobile SPA

@@ -6,6 +6,7 @@
 [![Capacitor](https://img.shields.io/badge/Capacitor-119EFF?logo=capacitor&logoColor=white)](https://capacitorjs.com/)
 [![Claude AI](https://img.shields.io/badge/Claude_AI-Anthropic-D97706?logo=anthropic&logoColor=white)](https://anthropic.com/)
 [![GitHub stars](https://img.shields.io/github/stars/808cadger/GlowAI?style=social)](https://github.com/808cadger/GlowAI/stargazers)
+[![YouTube](https://img.shields.io/badge/Demo-YouTube-FF0000?logo=youtube&logoColor=white)](https://youtube.com/shorts/HJhoHTewcf8?feature=share)
 
 **Live App:** [quickapp-three.vercel.app](https://quickapp-three.vercel.app)
 

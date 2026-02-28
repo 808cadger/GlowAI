@@ -3,7 +3,8 @@
   "appName": "GlowAI",
   "webDir": "www",
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "url": "https://quickapp-three.vercel.app"
   },
   "plugins": {
     "SplashScreen": {

@@ -440,6 +440,69 @@
     .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
     @keyframes shimmer { to{background-position:-200% 0} }
     @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+
+    /* ── AGENT TASK BAR ── */
+    .agent-task-bar {
+      margin: 8px 14px; padding: 12px 14px; border-radius: 14px;
+      background: rgba(27,79,138,0.18); border: 1px solid rgba(37,99,235,0.4);
+      flex-shrink: 0; animation: slideDown 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    .agent-task-bar-header { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-accent); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .agent-task-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; }
+    .agent-task-icon { width: 18px; text-align: center; flex-shrink: 0; font-size: 13px; }
+    .agent-task-label { flex: 1; color: var(--text-muted); transition: color 0.2s; }
+    .agent-task-item.done .agent-task-label { color: var(--text); }
+    .agent-task-item.running .agent-task-label { color: var(--text-accent); }
+    @keyframes taskSpin { to{transform:rotate(360deg)} }
+    .task-spinner { display: inline-block; animation: taskSpin 0.7s linear infinite; }
+
+    /* ── STRENGTH METER ── */
+    .strength-bar { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); margin: 5px 0 3px; overflow: hidden; }
+    .strength-fill { height: 100%; border-radius: 3px; background: var(--gradient); transition: width 1s cubic-bezier(0.16,1,0.3,1); }
+    .strength-rating { font-size: 11px; font-weight: 700; margin-top: 1px; }
+    .strength-rating.strong { color: #6EE7B7; }
+    .strength-rating.moderate { color: var(--accent-light); }
+    .strength-rating.weak { color: #FCA5A5; }
+
+    /* ── DEADLINE ITEMS ── */
+    .deadline-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 13px; border-radius: 12px; margin-bottom: 8px; border: 1px solid;
+    }
+    .deadline-item.urgent { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.35); }
+    .deadline-item.warning { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.35); }
+    .deadline-item.ok { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.25); }
+    .deadline-icon { font-size: 16px; flex-shrink: 0; }
+    .deadline-text { flex: 1; font-size: 13px; font-weight: 600; }
+    .deadline-days { font-size: 11px; font-weight: 700; opacity: 0.8; white-space: nowrap; }
+
+    /* ── GENERATED DOC CARDS ── */
+    .gen-doc-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; background: var(--bg-card); border: 1px solid rgba(37,99,235,0.3);
+      border-radius: 14px; margin-bottom: 10px;
+    }
+    .gen-doc-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(37,99,235,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .gen-doc-info { flex: 1; }
+    .gen-doc-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .gen-doc-meta { font-size: 11px; color: var(--text-muted); }
+    .view-doc-btn {
+      padding: 8px 13px; border-radius: 10px; border: 1.5px solid rgba(37,99,235,0.4);
+      background: rgba(37,99,235,0.1); color: var(--text-accent); font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+    }
+    .view-doc-btn:active { background: rgba(37,99,235,0.2); }
+
+    /* ── DOC VIEW MODAL ── */
+    .doc-view-content {
+      font-size: 14px; line-height: 1.75; color: var(--text);
+      white-space: pre-wrap; flex: 1; overflow-y: auto; padding-bottom: 16px;
+    }
+    .system-msg {
+      text-align: center; padding: 5px 14px; font-size: 11px; color: var(--text-muted);
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -585,6 +648,7 @@
       <div class="advisor-name">CourtAide Advisor</div>
       <div class="advisor-status"><div class="status-dot"></div> Online · Ready to help</div>
     </div>
+    <div class="btn-icon" onclick="runFullAnalysis()" title="Run Full Analysis" style="font-size:16px">⚡</div>
     <div class="btn-icon" onclick="clearChat()" style="font-size:16px">🗑️</div>
   </div>
   <div class="case-ctx-bar" id="case-ctx-bar">
@@ -738,6 +802,15 @@
   </div>
 </div>
 
+<!-- ══════════════════════ DOC VIEW MODAL ══════════════════════ -->
+<div class="modal-overlay" id="doc-view-modal" onclick="closeDocViewModal(event)">
+  <div class="modal-sheet" style="max-height:90vh">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="doc-view-title">Document</div>
+    <div class="doc-view-content" id="doc-view-content"></div>
+  </div>
+</div>
+
 <!-- ══════════════════════ TOAST ══════════════════════ -->
 
 <script>
@@ -779,6 +852,7 @@ const state = {
   biometricEnabled: localStorage.getItem('courtaide_biometric') === 'true',
   authenticated:    false,
   currentScreen:    'splash',
+  runningIntake:    false,
   // home screen selection
   selectedState:    null,
   selectedIssue:    null,
@@ -971,12 +1045,20 @@ function updateHome() {
   if (state.currentCase) {
     activeSection.classList.remove('hidden');
     const cat = ISSUE_CATEGORIES.find(c => c.id === state.currentCase.issueType);
+    const cs = state.currentCase.caseStrength;
+    const hasStrength = cs && cs.score != null;
+    const col = hasStrength ? (cs.score >= 70 ? '#6EE7B7' : cs.score >= 50 ? '#E0C56E' : '#FCA5A5') : '';
+    const ratingCls = hasStrength ? (cs.score >= 70 ? 'strong' : cs.score >= 50 ? 'moderate' : 'weak') : '';
     activeCard.innerHTML = `
       <div class="case-item" onclick="navTo('advisor')">
         <div class="case-item-icon">${cat ? cat.icon : '⚖️'}</div>
         <div class="case-item-info">
           <div class="case-item-title">${state.currentCase.issueLabel}</div>
           <div class="case-item-sub">${state.currentCase.caseState} · ${(state.currentCase.chatHistory || []).length} messages</div>
+          ${hasStrength ? `
+            <div class="strength-bar"><div class="strength-fill" style="width:${cs.score}%;background:${col}"></div></div>
+            <div class="strength-rating ${ratingCls}">${cs.rating} · ${cs.score}/100</div>
+          ` : ''}
         </div>
         <span class="chip chip-gold">Active</span>
       </div>`;
@@ -1055,13 +1137,40 @@ function startCase() {
     issueLabel: cat ? cat.label : state.selectedIssueLabel,
     chatHistory: [],
     forms: [],
+    caseStrength: { score: null, rating: null },
+    deadlines: [],
+    timeline: null,
+    generatedDocs: [],
+    legalResources: null,
     createdAt: new Date().toISOString(),
   };
   saveState();
   updateCaseContext();
+  state.runningIntake = true;
   navTo('advisor');
-  // Seed initial context message
-  setTimeout(() => sendCaseContext(), 200);
+  setTimeout(() => {
+    state.runningIntake = false;
+    runAutoIntake();
+  }, 200);
+}
+
+function runAutoIntake() {
+  const c = state.currentCase;
+  if (!c) return;
+  addSystemMessage('⚡ Running full case intake…');
+  const tools = ['assess_case_strength','recommend_legal_strategy','identify_required_forms','calculate_legal_deadlines','cite_relevant_laws'];
+  const prompt = `New ${c.issueLabel} case in ${c.caseState}. Run a full intake: use assess_case_strength, recommend_legal_strategy, identify_required_forms, calculate_legal_deadlines, and cite_relevant_laws. Then greet the user warmly, give a quick summary of the case landscape, and ask for their specific facts.`;
+  callClaude(prompt, true, tools);
+}
+
+function runFullAnalysis() {
+  const c = state.currentCase;
+  if (!c) { showToast('No active case'); return; }
+  if (state.currentScreen !== 'advisor') navTo('advisor');
+  addSystemMessage('⚡ Re-running full case analysis…');
+  const tools = ['assess_case_strength','recommend_legal_strategy','identify_required_forms','calculate_legal_deadlines','cite_relevant_laws'];
+  const prompt = `Re-analyze this ${c.issueLabel} case in ${c.caseState} with the full intake pipeline: assess_case_strength, recommend_legal_strategy, identify_required_forms, calculate_legal_deadlines, cite_relevant_laws. Update all assessments based on the conversation so far, then provide a brief updated summary.`;
+  callClaude(prompt, true, tools);
 }
 
 function loadCase(id) {
@@ -1119,18 +1228,23 @@ const MODEL = 'claude-sonnet-4-6';
 
 function getSystemPrompt() {
   const c = state.currentCase;
-  if (!c) return 'You are CourtAide, an AI legal assistant. Help the user understand their legal situation and guide them through court procedures.';
-  return `You are CourtAide, an AI legal assistant helping a user in ${c.caseState} with a ${c.issueLabel} matter.
+  if (!c) return 'You are CourtAide, an aggressive AI legal assistant. Help the user understand their legal situation, always using tools to provide structured analysis.';
+  return `You are CourtAide, an aggressive AI legal assistant. You have 10 tools and MUST use them proactively. Never give a plain-text answer when tools can add value.
 
-- You are NOT a licensed attorney; always recommend consulting one for serious matters
-- Be practical, clear, and step-by-step
-- Use tools proactively to analyze the situation, recommend strategy, and identify forms
-- Focus on self-representation (pro se) guidance when the user cannot afford an attorney
-- Cite specific state laws and court rules when relevant
-- Ask targeted questions to understand the full situation before advising
-- When you identify required forms, always use the identify_required_forms tool so they appear in the Documents tab
+STATE: ${c.caseState} | ISSUE: ${c.issueLabel}
 
-Legal Disclaimer: Always remind the user that CourtAide provides legal information, not legal advice, and is not a substitute for a licensed attorney.`;
+MANDATORY AGENTIC RULES — follow these exactly:
+1. ALWAYS start by calling assess_case_strength + recommend_legal_strategy on the first or any substantive user message
+2. ALWAYS call identify_required_forms whenever procedures, filing, or paperwork is discussed
+3. ALWAYS call calculate_legal_deadlines when timeline or statutes of limitation come up
+4. ALWAYS call cite_relevant_laws when legal basis or rights are discussed
+5. ALWAYS call generate_legal_document immediately when user asks for any document, letter, or filing
+6. PROACTIVELY offer to build a timeline, find resources, or generate documents — do not wait to be asked
+7. Chain 3–5 tools per response. Example: assess_case_strength → recommend_legal_strategy → identify_required_forms → calculate_legal_deadlines → cite_relevant_laws
+
+PERSONA: You are direct, decisive, and action-oriented. Take initiative. Never be passive.
+
+⚠️ Not a licensed attorney. Always recommend consulting one for serious matters. You provide legal information, not legal advice.`;
 }
 
 const LEGAL_TOOLS = [
@@ -1221,6 +1335,112 @@ const LEGAL_TOOLS = [
       },
       required: ['state', 'issue_type', 'statutes']
     }
+  },
+  {
+    name: 'assess_case_strength',
+    description: 'Score the overall strength of the user\'s legal position (0-100) with a rating. Call this first when starting or reviewing any case.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        issue_type: { type: 'string' },
+        state: { type: 'string' },
+        strengths: { type: 'array', items: { type: 'string' }, description: 'Factors supporting user\'s position' },
+        weaknesses: { type: 'array', items: { type: 'string' }, description: 'Factors hurting user\'s position' },
+        evidence: { type: 'array', items: { type: 'string' }, description: 'Evidence available' },
+        score: { type: 'number', description: 'Case strength 0-100' },
+        rating: { type: 'string', enum: ['Weak','Fair','Moderate','Strong','Very Strong'] }
+      },
+      required: ['issue_type', 'state', 'strengths', 'weaknesses', 'score', 'rating']
+    }
+  },
+  {
+    name: 'calculate_legal_deadlines',
+    description: 'Calculate important legal deadlines for the case including statutes of limitations. Use whenever timeline matters.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        issue_type: { type: 'string' },
+        state: { type: 'string' },
+        deadlines: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              description: { type: 'string', description: 'What this deadline is for' },
+              date: { type: 'string', description: 'Deadline date or timeframe' },
+              days_remaining: { type: 'number', description: 'Days remaining (-1 if unknown)' },
+              priority: { type: 'string', enum: ['urgent','warning','ok'] }
+            },
+            required: ['description', 'date', 'priority']
+          }
+        }
+      },
+      required: ['issue_type', 'state', 'deadlines']
+    }
+  },
+  {
+    name: 'generate_legal_document',
+    description: 'Generate a full draft legal document (demand letter, motion, answer, etc.). Use immediately when any document is requested.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        document_type: { type: 'string', description: 'Type of document (e.g. "Demand Letter", "Motion to Continue", "Answer to Complaint")' },
+        issue_type: { type: 'string' },
+        state: { type: 'string' },
+        content: { type: 'string', description: 'Full formatted document content with all sections' },
+        word_count: { type: 'number', description: 'Approximate word count' },
+        facts: { type: 'array', items: { type: 'string' }, description: 'Key facts incorporated' }
+      },
+      required: ['document_type', 'issue_type', 'state', 'content', 'word_count']
+    }
+  },
+  {
+    name: 'build_case_timeline',
+    description: 'Build a chronological timeline of key events. Use when the user describes what happened over time.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        events: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              date: { type: 'string' },
+              description: { type: 'string' },
+              significance: { type: 'string', enum: ['critical','important','background'] }
+            },
+            required: ['date', 'description', 'significance']
+          }
+        }
+      },
+      required: ['events']
+    }
+  },
+  {
+    name: 'find_legal_resources',
+    description: 'Find free legal resources, legal aid, self-help centers for the user\'s state. Use when user mentions cost or needing help.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        state: { type: 'string' },
+        issue_type: { type: 'string' },
+        need_free_help: { type: 'boolean' },
+        resources: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              type: { type: 'string', description: 'Legal Aid, Court Self-Help, Law Clinic, Bar Referral, etc.' },
+              description: { type: 'string' },
+              contact: { type: 'string', description: 'Website or phone' }
+            },
+            required: ['name', 'type', 'description']
+          }
+        }
+      },
+      required: ['state', 'issue_type', 'resources']
+    }
   }
 ];
 
@@ -1293,6 +1513,62 @@ function executeTool(name, input) {
         disclaimer: 'Laws change frequently. Always verify current statutes at your state legislature website.'
       };
     }
+    case 'assess_case_strength': {
+      const strength = { score: input.score ?? 50, rating: input.rating || 'Moderate' };
+      if (state.currentCase) {
+        state.currentCase.caseStrength = strength;
+        saveState();
+        updateHome();
+      }
+      return {
+        score: strength.score, rating: strength.rating,
+        strengths: input.strengths || [], weaknesses: input.weaknesses || [],
+        evidence: input.evidence || [],
+        recommendation: strength.score >= 70 ? 'Strong position — proceed with confidence' :
+          strength.score >= 50 ? 'Moderate position — gather more evidence' :
+          'Weak position — consult an attorney before proceeding'
+      };
+    }
+    case 'calculate_legal_deadlines': {
+      const deadlines = input.deadlines || [];
+      if (state.currentCase) {
+        state.currentCase.deadlines = deadlines;
+        saveState();
+        renderDocuments();
+      }
+      return {
+        deadlines_count: deadlines.length, deadlines,
+        most_urgent: deadlines.find(d => d.priority === 'urgent') || deadlines[0] || null
+      };
+    }
+    case 'generate_legal_document': {
+      const doc = {
+        id: Date.now().toString(), document_type: input.document_type,
+        content: input.content, word_count: input.word_count,
+        createdAt: new Date().toISOString()
+      };
+      if (state.currentCase) {
+        if (!state.currentCase.generatedDocs) state.currentCase.generatedDocs = [];
+        state.currentCase.generatedDocs.push(doc);
+        saveState();
+        renderDocuments();
+      }
+      return { document_type: doc.document_type, word_count: doc.word_count, doc_id: doc.id, message: 'Document generated — view in Documents tab.' };
+    }
+    case 'build_case_timeline': {
+      if (state.currentCase) {
+        state.currentCase.timeline = input.events || [];
+        saveState();
+      }
+      return { events_count: (input.events || []).length, events: input.events || [] };
+    }
+    case 'find_legal_resources': {
+      if (state.currentCase) {
+        state.currentCase.legalResources = input.resources || [];
+        saveState();
+      }
+      return { resources_count: (input.resources || []).length, resources: input.resources || [], state: input.state };
+    }
     default: return { error: 'Unknown tool: ' + name };
   }
 }
@@ -1325,6 +1601,34 @@ function formatToolResult(name, input, result) {
         <ul>${result.statutes.map(s => `<li>${s}</li>`).join('')}</ul>
         ${result.deadlines.length ? '<strong>⏰ Deadlines:</strong><ul>' + result.deadlines.map(d => `<li>${d}</li>`).join('') + '</ul>' : ''}
         <em>⚠️ ${result.disclaimer}</em>`;
+    case 'assess_case_strength': {
+      const pct = result.score;
+      const col = pct >= 70 ? '#6EE7B7' : pct >= 50 ? '#E0C56E' : '#FCA5A5';
+      return `<strong>Case Strength: ${result.rating} (${result.score}/100)</strong>
+        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.1);margin:5px 0 4px;overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:3px;background:${col};transition:width 0.8s"></div></div>
+        ${result.strengths.length ? '<strong>✅ Strengths:</strong><ul>' + result.strengths.map(s=>`<li>${s}</li>`).join('') + '</ul>' : ''}
+        ${result.weaknesses.length ? '<strong>⚠️ Weaknesses:</strong><ul>' + result.weaknesses.map(w=>`<li>${w}</li>`).join('') + '</ul>' : ''}
+        <em>${result.recommendation}</em>`;
+    }
+    case 'calculate_legal_deadlines': {
+      if (!result.deadlines.length) return 'No specific deadlines identified.';
+      return `<strong>${result.deadlines_count} Deadline(s) Identified:</strong>
+        ${result.deadlines.map(d => `<div style="padding:3px 0">
+          ${d.priority==='urgent'?'🔴':d.priority==='warning'?'🟡':'🟢'} <strong>${d.description}</strong> — ${d.date}
+          ${d.days_remaining!=null&&d.days_remaining>=0?`<em> (${d.days_remaining} days)</em>`:''}
+        </div>`).join('')}
+        <br><em>✓ Added to Documents tab</em>`;
+    }
+    case 'generate_legal_document':
+      return `<strong>📄 ${result.document_type} Generated</strong><br>~${result.word_count} words · <em>View in Documents tab</em><br><em style="font-size:12px">⚠️ Review before filing — AI drafts need verification.</em>`;
+    case 'build_case_timeline': {
+      return `<strong>📅 Timeline (${result.events_count} events)</strong>
+        ${result.events.slice(0,5).map(e=>`<div style="padding:2px 0">${e.significance==='critical'?'🔴':e.significance==='important'?'🟡':'⚪'} <strong>${e.date}</strong> — ${e.description}</div>`).join('')}
+        ${result.events_count>5?`<em>...and ${result.events_count-5} more</em>`:''}`;
+    }
+    case 'find_legal_resources':
+      return `<strong>🔗 Resources for ${input.state} (${result.resources_count}):</strong>
+        ${result.resources.map(r=>`<div style="padding:4px 0"><strong>${r.name}</strong> <span style="color:var(--text-muted)">(${r.type})</span><br><span style="font-size:12px">${r.description}</span>${r.contact?`<br><span style="color:var(--text-accent);font-size:12px">${r.contact}</span>`:''}</div>`).join('')}`;
     default:
       return escapeHtml(JSON.stringify(result, null, 2)).slice(0, 300);
   }
@@ -1336,7 +1640,68 @@ const TOOL_LABELS = {
   identify_required_forms: '📄 Required Forms',
   draft_document_section: '✍️ Document Drafting',
   cite_relevant_laws: '📚 Relevant Laws',
+  assess_case_strength: '⚖️ Case Strength Assessment',
+  calculate_legal_deadlines: '⏰ Legal Deadlines',
+  generate_legal_document: '📝 Document Generation',
+  build_case_timeline: '📅 Case Timeline',
+  find_legal_resources: '🔗 Legal Resources',
 };
+
+// ── Agent Task Bar ──
+function showAgentTaskBar(toolNames) {
+  let bar = document.getElementById('agent-task-bar');
+  if (bar) bar.remove();
+  bar = document.createElement('div');
+  bar.id = 'agent-task-bar';
+  bar.className = 'agent-task-bar';
+  bar.innerHTML = `<div class="agent-task-bar-header">⚡ Agent Working</div>` +
+    toolNames.map(n => `<div class="agent-task-item pending" id="task-${n}">
+      <div class="agent-task-icon">○</div>
+      <div class="agent-task-label">${TOOL_LABELS[n] || n}</div>
+    </div>`).join('');
+  const chatBody = document.getElementById('chat-body');
+  chatBody.parentNode.insertBefore(bar, chatBody);
+}
+
+function startAgentTask(name) {
+  const item = document.getElementById('task-' + name);
+  if (item) {
+    item.className = 'agent-task-item running';
+    item.querySelector('.agent-task-icon').innerHTML = '<span class="task-spinner">⟳</span>';
+  }
+}
+
+function tickAgentTask(name) {
+  const item = document.getElementById('task-' + name);
+  if (item) {
+    item.className = 'agent-task-item done';
+    item.querySelector('.agent-task-icon').textContent = '✓';
+  }
+  // Start next pending item
+  const next = document.querySelector('.agent-task-item.pending');
+  if (next) {
+    next.className = 'agent-task-item running';
+    next.querySelector('.agent-task-icon').innerHTML = '<span class="task-spinner">⟳</span>';
+  }
+}
+
+function hideAgentTaskBar() {
+  const bar = document.getElementById('agent-task-bar');
+  if (bar) {
+    bar.style.transition = 'opacity 0.4s';
+    bar.style.opacity = '0';
+    setTimeout(() => bar.remove(), 400);
+  }
+}
+
+function addSystemMessage(text) {
+  const chatBody = document.getElementById('chat-body');
+  const div = document.createElement('div');
+  div.className = 'system-msg';
+  div.textContent = text;
+  chatBody.appendChild(div);
+  scrollChat();
+}
 
 // ── Advisor init ──
 function updateCaseContext() {
@@ -1359,7 +1724,7 @@ function initAdvisor() {
   const chatBody = document.getElementById('chat-body');
   if (chatBody.children.length === 0) {
     renderChatHistory();
-    if (chatBody.children.length === 0) {
+    if (chatBody.children.length === 0 && !state.runningIntake) {
       addWelcomeMessage();
     }
   }
@@ -1501,24 +1866,23 @@ function clearChat() {
 }
 
 // ── Agentic Claude API Loop ──
-async function callClaude(userText) {
+async function callClaude(userText, isIntake = false, expectedTools = []) {
   const sendBtn = document.getElementById('chat-send');
   sendBtn.disabled = true;
-  addTypingIndicator();
+
+  if (expectedTools.length > 0) showAgentTaskBar(expectedTools);
+  if (!isIntake) addTypingIndicator();
 
   // Demo mode
   if (!state.apiKey) {
-    removeTypingIndicator();
-    const demo = getDemoResponse(userText);
-    addAIMessage(demo);
-    saveChatMsg('user', userText);
-    saveChatMsg('assistant', demo);
+    if (!isIntake) removeTypingIndicator();
+    await getDemoResponse(userText, isIntake, expectedTools);
     sendBtn.disabled = false;
     return;
   }
 
   const systemPrompt = getSystemPrompt();
-  const apiMessages = buildApiMessages(userText);
+  const apiMessages = buildApiMessages(userText, isIntake);
 
   try {
     let response = await fetch(CLAUDE_API, {
@@ -1531,7 +1895,7 @@ async function callClaude(userText) {
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 2048,
+        max_tokens: 4096,
         system: systemPrompt,
         tools: LEGAL_TOOLS,
         messages: apiMessages
@@ -1546,8 +1910,8 @@ async function callClaude(userText) {
     let data = await response.json();
     removeTypingIndicator();
 
-    // Track tool cards for history
     const sessionToolCards = [];
+    let allMessages = [...apiMessages];
 
     // Agentic loop
     while (data.stop_reason === 'tool_use') {
@@ -1558,14 +1922,16 @@ async function callClaude(userText) {
 
       const toolResults = [];
       for (const tb of toolUseBlocks) {
+        startAgentTask(tb.name);
         const result = executeTool(tb.name, tb.input);
         addToolCard(tb.name, tb.input, result);
+        tickAgentTask(tb.name);
         sessionToolCards.push({ name: tb.name, input: tb.input, result });
         toolResults.push({ type: 'tool_result', tool_use_id: tb.id, content: JSON.stringify(result) });
       }
 
-      const continuationMsgs = [
-        ...apiMessages,
+      allMessages = [
+        ...allMessages,
         { role: 'assistant', content: data.content },
         { role: 'user', content: toolResults }
       ];
@@ -1581,10 +1947,10 @@ async function callClaude(userText) {
         },
         body: JSON.stringify({
           model: MODEL,
-          max_tokens: 2048,
+          max_tokens: 4096,
           system: systemPrompt,
           tools: LEGAL_TOOLS,
-          messages: continuationMsgs
+          messages: allMessages
         })
       });
       if (!response.ok) throw new Error('API continuation error');
@@ -1592,14 +1958,17 @@ async function callClaude(userText) {
       removeTypingIndicator();
     }
 
+    hideAgentTaskBar();
+
     const finalText = data.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
     if (finalText?.trim()) addAIMessage(finalText);
 
-    saveChatMsg('user', userText);
+    if (!isIntake) saveChatMsg('user', userText);
     saveChatMsg('assistant', finalText || '', sessionToolCards);
 
   } catch (err) {
     removeTypingIndicator();
+    hideAgentTaskBar();
     const msg = err.message.includes('401') ? 'Invalid API key. Please update it in Settings → Profile.' :
       err.message.includes('Failed to fetch') ? 'Connection error. Check your internet connection.' :
       `Error: ${err.message}`;
@@ -1609,16 +1978,18 @@ async function callClaude(userText) {
   sendBtn.disabled = false;
 }
 
-function buildApiMessages(newUserText) {
+function buildApiMessages(newUserText, isIntake = false) {
   const messages = [];
-  const history = (state.currentCase?.chatHistory || []).slice(-16);
-  history.forEach(msg => {
-    if (msg.role === 'user' && msg.text) {
-      messages.push({ role: 'user', content: msg.text });
-    } else if (msg.role === 'assistant' && msg.text) {
-      messages.push({ role: 'assistant', content: msg.text });
-    }
-  });
+  if (!isIntake) {
+    const history = (state.currentCase?.chatHistory || []).slice(-16);
+    history.forEach(msg => {
+      if (msg.role === 'user' && msg.text) {
+        messages.push({ role: 'user', content: msg.text });
+      } else if (msg.role === 'assistant' && msg.text) {
+        messages.push({ role: 'assistant', content: msg.text });
+      }
+    });
+  }
   messages.push({ role: 'user', content: newUserText });
   return messages;
 }
@@ -1633,56 +2004,184 @@ function saveChatMsg(role, text, toolCards) {
   saveState();
 }
 
-// ── Demo responses ──
-function getDemoResponse(text) {
-  const lower = text.toLowerCase();
+// ── Demo responses (async, agentic) ──
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function getDemoResponse(text, isIntake = false, expectedTools = []) {
   const c = state.currentCase;
   const issue = c?.issueLabel || 'legal';
   const st = c?.caseState || 'your state';
 
+  if (isIntake) {
+    // Simulate the agentic intake pipeline
+    const tools = expectedTools.length > 0 ? expectedTools :
+      ['assess_case_strength','recommend_legal_strategy','identify_required_forms','calculate_legal_deadlines','cite_relevant_laws'];
+
+    if (expectedTools.length === 0) showAgentTaskBar(tools);
+
+    for (let i = 0; i < tools.length; i++) {
+      const toolName = tools[i];
+      startAgentTask(toolName);
+      await delay(500 + i * 350);
+      const fakeInput = getDemoToolInput(toolName, c);
+      const result = executeTool(toolName, fakeInput);
+      addToolCard(toolName, fakeInput, result);
+      tickAgentTask(toolName);
+      await delay(150);
+    }
+
+    hideAgentTaskBar();
+    await delay(300);
+
+    const score = c?.caseStrength?.score || 68;
+    const rating = c?.caseStrength?.rating || 'Strong';
+    const msg = `Hello! I'm CourtAide ⚖️ I've completed a full intake analysis of your **${issue}** case in **${st}**.\n\n**Case Assessment:** ${rating} position (${score}/100) — I've identified the key forms you'll need, critical deadlines, and the relevant statutes.\n\nTo give you precise, personalized guidance, tell me: **What specifically happened, and what outcome are you seeking?**\n\nThe more details you share, the more targeted my advice can be.\n\n⚠️ *Add your Anthropic API key in Settings for live AI-powered legal research.*`;
+    addAIMessage(msg);
+    saveChatMsg('assistant', msg, []);
+    return;
+  }
+
+  const lower = text.toLowerCase();
+
+  addTypingIndicator();
+  await delay(800);
+  removeTypingIndicator();
+
+  let response;
+
   if (lower.includes('form') || lower.includes('document') || lower.includes('file') || lower.includes('paper')) {
-    return `For a **${issue}** case in **${st}**, you'll typically need these forms:\n\n**Court Filing Documents:**\n• Complaint/Petition — Initiates your case\n• Summons — Notifies the other party\n• Certificate of Service — Proves delivery\n\n**Supporting Documents:**\n• Financial affidavit (if fees are involved)\n• Evidence exhibits\n• Proposed order (for judge's review)\n\nThese are general forms — exact requirements vary by county. Check your **${st} Courts** website for the official form library.\n\n📄 *Add your API key in Settings to have CourtAide automatically identify the exact forms for your case and add them to your Documents tab.*`;
+    response = `For a **${issue}** case in **${st}**, you'll typically need:\n\n**Court Filing Documents:**\n• Complaint/Petition — Initiates your case\n• Summons — Notifies the other party\n• Certificate of Service — Proves delivery\n\n**Supporting Documents:**\n• Financial affidavit (if fees are involved)\n• Evidence exhibits with index\n• Proposed order (for judge's signature)\n\nExact requirements vary by county. Check **${st} Courts** website for the official form library.\n\n*💡 Add your API key in Settings for CourtAide to automatically identify the exact forms and add them to your Documents tab.*`;
+  } else if (lower.includes('strategy') || lower.includes('next step') || lower.includes('what should i do') || lower.includes('how do i')) {
+    response = `Here's a strategy for your **${issue}** case in **${st}**:\n\n**Step 1: Gather Evidence** — Document everything with dates, names, and details. Keep all written communications.\n\n**Step 2: Know Your Deadlines** — Statutes of limitations vary. Don't miss filing deadlines.\n\n**Step 3: File Your Case** — Visit the ${st} court self-help center. File at the clerk's office and pay or request a fee waiver.\n\n**Step 4: Serve the Other Party** — Follow ${st}'s service requirements and file proof of service.\n\n*💡 Add your API key in Settings for full AI-powered legal guidance with automatic strategy analysis.*`;
+  } else if (lower.includes('deadline') || lower.includes('limitation') || lower.includes('time') || lower.includes('when')) {
+    response = `**Key Deadlines for ${issue} in ${st}:**\n\n• **Statute of Limitations:** Typically 1–4 years from the incident (varies by claim type)\n• **Response Deadlines:** Usually 21–30 days after being served\n• **Appeals:** Generally 30 days from judgment\n\nDeadlines are **strictly enforced** — courts rarely grant extensions. Always verify your specific deadlines with the court clerk or on the ${st} Courts website.\n\n⚠️ *These are general estimates. Add your API key for case-specific deadline calculations.*`;
+  } else if (lower.includes('law') || lower.includes('statute') || lower.includes('right') || lower.includes('legal')) {
+    response = `**Key Legal Points for ${issue} in ${st}:**\n\n**Your Rights as a Pro Se Litigant:**\n• Right to represent yourself in any court\n• Courts must provide forms and basic procedural information\n• You can request accommodations if needed\n\n**Important Principles:**\n• Burden of proof rests on the party making a claim\n• Evidence rules apply to self-represented parties\n• Deadlines are strict — courts rarely grant extensions\n\n**Find ${st} Laws:** Search "${st} legislature statutes" for official codes.\n\n*Add your API key in Settings for specific statute citations.*`;
+  } else if (lower.includes('cost') || lower.includes('fee') || lower.includes('afford') || lower.includes('free')) {
+    response = `**Court Costs for ${issue} in ${st}:**\n\n• Small claims: $30–$100\n• Civil cases: $100–$400\n• Family law: $200–$500+\n\n**Fee Waivers (Free Filing):** If you can't afford fees, request an **in forma pauperis** waiver — show income below 125% of federal poverty level.\n\n**Free Legal Help:**\n• Legal Aid — Free for qualifying low-income residents\n• Law school clinics — Free consultations\n• Court self-help centers — Free at most courthouses\n\n*💡 Add your API key for CourtAide to find specific legal aid organizations in ${st}.*`;
+  } else {
+    response = `I'm here to help with your **${issue}** matter in **${st}** ⚖️\n\nI can help you:\n• 🔍 **Analyze** your situation\n• 🎯 **Develop** a legal strategy\n• 📄 **Identify** required court forms\n• ⏰ **Track** critical deadlines\n• 📚 **Cite** relevant ${st} statutes\n• 📝 **Generate** document drafts\n\nTell me the details of your situation — what happened, when, and what outcome you're seeking.\n\n*💡 Add your Anthropic API key in Settings for the full agentic AI experience.*`;
   }
 
-  if (lower.includes('strategy') || lower.includes('next step') || lower.includes('what should i do') || lower.includes('how do i')) {
-    return `Here's a general strategy for a **${issue}** case in **${st}**:\n\n**Step 1: Gather Evidence**\n• Document everything with dates, names, and details\n• Keep all written communications (emails, texts, letters)\n• Take photos/videos if relevant\n\n**Step 2: Know Your Deadlines**\n• Statutes of limitations vary — don't miss filing deadlines\n• Check your local court rules for response times\n\n**Step 3: File Your Case**\n• Visit the ${st} court self-help center (most courthouses have one)\n• File your initial documents at the clerk's office\n• Pay or request a fee waiver (if eligible)\n\n**Step 4: Serve the Other Party**\n• Follow your state's service requirements\n• File proof of service with the court\n\nWant me to go deeper on any of these steps?\n\n*💡 Add your Anthropic API key in Settings for full AI-powered legal guidance.*`;
-  }
+  addAIMessage(response);
+  saveChatMsg('user', text);
+  saveChatMsg('assistant', response);
+}
 
-  if (lower.includes('law') || lower.includes('statute') || lower.includes('right') || lower.includes('legal')) {
-    return `Here are some key legal points for **${issue}** cases in **${st}**:\n\n**Your Rights as a Pro Se Litigant:**\n• You have the right to represent yourself in any court\n• Courts must provide you with forms and basic procedural information\n• You can request accommodations if needed\n\n**Important Principles:**\n• **Burden of proof** typically rests on the party making a claim\n• **Evidence rules** apply even to self-represented parties\n• **Deadlines are strict** — courts rarely grant extensions\n\n**Where to Find ${st} Laws:**\n• ${st} Legislature website: Search your state + "legislature" for official statutes\n• ${st} Courts website: Local rules and procedures\n• Legal aid organizations often have free resources\n\n⚠️ *Laws change frequently — always verify current statutes.*\n\n*Add your API key in Settings for specific statute citations.*`;
-  }
+function getDemoToolInput(toolName, c) {
+  const issue = c?.issueType || 'civil';
+  const label = c?.issueLabel || 'Civil Dispute';
+  const st = c?.caseState || 'California';
 
-  if (lower.includes('cost') || lower.includes('fee') || lower.includes('afford') || lower.includes('free')) {
-    return `**Understanding Court Costs for ${issue} in ${st}:**\n\n**Typical Filing Fees:**\n• Small claims: $30–$100\n• Civil cases: $100–$400\n• Family law: $200–$500+\n\n**Fee Waivers (Free Filing):**\nIf you can't afford fees, you can request a **fee waiver** (also called "in forma pauperis"). You'll need to:\n1. Complete a financial disclosure form\n2. Show your income is below the threshold (usually 125% of federal poverty level)\n3. File it with your initial complaint\n\n**Free Legal Help:**\n• **Legal Aid** — Free for low-income residents\n• **Law school clinics** — Free consultations\n• **Bar association referrals** — Sometimes offer sliding-scale fees\n• **Self-help centers** — At most courthouses, free of charge\n\nWould you like help finding legal aid in ${st}?`;
-  }
-
-  return `I'm here to help with your **${issue}** matter in **${st}** ⚖️\n\nAs your AI legal assistant, I can help you:\n\n• 🔍 **Analyze** your situation and identify key issues\n• 🎯 **Develop** a legal strategy for your case\n• 📄 **Identify** the court forms you need to file\n• ✍️ **Guide** you through filling out documents\n• 📚 **Cite** relevant ${st} statutes and rules\n\nTell me more about your specific situation — what happened, when, and what outcome you're seeking. The more details you share, the better I can help.\n\n⚠️ *Remember: I provide legal information, not legal advice. For serious matters, always consult a licensed attorney.*\n\n*💡 Add your Anthropic API key in Settings for the full agentic AI experience with live legal research.*`;
+  const defaults = {
+    assess_case_strength: {
+      issue_type: label, state: st, score: 68, rating: 'Strong',
+      strengths: ['Documentation available', 'Clear timeline of events', 'Witnesses identified'],
+      weaknesses: ['No prior legal representation', 'Limited financial resources'],
+      evidence: ['Written communications', 'Financial records', 'Photographs']
+    },
+    recommend_legal_strategy: {
+      issue_type: label, state: st,
+      strategies: ['Gather and organize all evidence immediately', 'File in the appropriate court within deadline', 'Request mediation as cost-effective alternative'],
+      next_steps: ['Document everything with dates and witnesses', 'File complaint at ' + st + ' Superior Court', 'Serve the other party per ' + st + ' rules', 'Attend all hearings — no missed dates'],
+      timeline_estimate: '6–18 months', cost_estimate: '$200–$600 filing fees (waiver available)'
+    },
+    identify_required_forms: {
+      issue_type: label, state: st,
+      forms: [
+        { name: 'Complaint / Petition', number: 'General Civil', court: st + ' Superior Court', purpose: 'Initiates your legal action', status: 'needed' },
+        { name: 'Summons', number: 'SUM-100', court: st + ' Superior Court', purpose: 'Notifies defendant of the lawsuit', status: 'needed' },
+        { name: 'Proof of Service', court: st + ' Superior Court', purpose: 'Confirms defendant was properly served', status: 'needed' }
+      ]
+    },
+    calculate_legal_deadlines: {
+      issue_type: label, state: st,
+      deadlines: [
+        { description: 'Statute of Limitations — file complaint', date: '2 years from incident date', days_remaining: 347, priority: 'ok' },
+        { description: 'Serve defendant after filing', date: '60 days from filing date', days_remaining: 60, priority: 'warning' },
+        { description: 'Respond to any cross-complaint', date: '30 days after service', days_remaining: 30, priority: 'warning' }
+      ]
+    },
+    cite_relevant_laws: {
+      state: st, issue_type: label,
+      statutes: [st + ' Code of Civil Procedure § 335.1 (Statute of Limitations)', st + ' Code of Civil Procedure § 412.20 (Summons Requirements)', st + ' Evidence Code § 1200 (Hearsay Rule)'],
+      key_provisions: ['File within the statute of limitations or lose your right to sue', 'Defendant must be properly served to have jurisdiction'],
+      deadlines: ['2 years from date of injury for most civil claims', '30 days to respond after service of process']
+    },
+    generate_legal_document: {
+      document_type: 'Demand Letter', issue_type: label, state: st,
+      content: `[YOUR NAME]\n[YOUR ADDRESS]\n[DATE]\n\nRE: Demand for Resolution — ${label} Matter\n\nDear [OPPOSING PARTY],\n\nI am writing to formally demand resolution of the ${label.toLowerCase()} dispute between us. Despite prior communications, this matter remains unresolved.\n\n[DESCRIBE THE FACTS AND WHAT YOU ARE DEMANDING]\n\nIf I do not receive a satisfactory response within 30 days, I will have no choice but to pursue my legal remedies including filing a complaint in ${st} Superior Court.\n\nSincerely,\n[YOUR NAME]`,
+      word_count: 120, facts: ['Incident occurred', 'Communication attempted', 'No resolution reached']
+    },
+    build_case_timeline: {
+      events: [
+        { date: 'Initial Incident', description: 'The underlying dispute began', significance: 'critical' },
+        { date: 'First Contact', description: 'Attempted informal resolution', significance: 'important' },
+        { date: 'No Response', description: 'Other party failed to respond', significance: 'important' },
+        { date: 'Today', description: 'Seeking legal guidance', significance: 'background' }
+      ]
+    },
+    find_legal_resources: {
+      state: st, issue_type: label, need_free_help: true,
+      resources: [
+        { name: st + ' Legal Aid', type: 'Legal Aid', description: 'Free civil legal help for low-income residents', contact: 'Search "' + st + ' Legal Aid" online' },
+        { name: st + ' Courts Self-Help Center', type: 'Court Self-Help', description: 'Free forms and procedural assistance at most courthouses', contact: st.toLowerCase().replace(' ','-') + '.courts.ca.gov' },
+        { name: st + ' State Bar Lawyer Referral', type: 'Bar Referral', description: 'Find a local attorney — first consultation often free or low-cost', contact: 'calbar.ca.gov' }
+      ]
+    }
+  };
+  return defaults[toolName] || { issue_type: label, state: st };
 }
 
 // ══════════════════════════════════════════════════════════════════════
 //  DOCUMENTS
 // ══════════════════════════════════════════════════════════════════════
 function renderDocuments() {
-  const forms = state.currentCase?.forms || [];
+  const c = state.currentCase;
+  const forms = c?.forms || [];
+  const deadlines = c?.deadlines || [];
+  const generatedDocs = c?.generatedDocs || [];
   const empty = document.getElementById('docs-empty');
   const list = document.getElementById('forms-list');
   const bar = document.getElementById('doc-case-bar');
   const caseName = document.getElementById('doc-case-name');
 
-  if (state.currentCase) {
+  if (c) {
     bar.style.display = 'block';
-    caseName.textContent = state.currentCase.issueLabel + ' · ' + state.currentCase.caseState;
+    caseName.textContent = c.issueLabel + ' · ' + c.caseState;
   } else {
     bar.style.display = 'none';
   }
 
-  if (forms.length === 0) {
+  const hasContent = forms.length > 0 || deadlines.length > 0 || generatedDocs.length > 0;
+  if (!hasContent) {
     empty.classList.remove('hidden');
     list.classList.add('hidden');
-  } else {
-    empty.classList.add('hidden');
-    list.classList.remove('hidden');
-    list.innerHTML = forms.map(f => `
+    return;
+  }
+
+  empty.classList.add('hidden');
+  list.classList.remove('hidden');
+  let html = '';
+
+  // Section A — Deadlines
+  if (deadlines.length > 0) {
+    html += '<div class="section-title">⏰ Deadlines</div>';
+    html += deadlines.map(d => {
+      const cls = d.priority === 'urgent' ? 'urgent' : d.priority === 'warning' ? 'warning' : 'ok';
+      const icon = d.priority === 'urgent' ? '🔴' : d.priority === 'warning' ? '🟡' : '🟢';
+      return `<div class="deadline-item ${cls}">
+        <div class="deadline-icon">${icon}</div>
+        <div class="deadline-text">${escapeHtml(d.description)}<br><span style="font-weight:400;color:var(--text-muted);font-size:12px">${escapeHtml(d.date)}</span></div>
+        ${d.days_remaining != null && d.days_remaining >= 0 ? `<div class="deadline-days">${d.days_remaining}d</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  // Section B — Court Forms
+  if (forms.length > 0) {
+    html += '<div class="section-title">📋 Court Forms</div>';
+    html += forms.map(f => `
       <div class="form-card">
         <div class="form-status ${f.status || 'needed'}"></div>
         <div class="form-info">
@@ -1693,6 +2192,37 @@ function renderDocuments() {
         <button class="fill-btn" onclick="fillFormWithAI('${escapeHtml(f.name).replace(/'/g,"\\'")}')">Fill with AI</button>
       </div>
     `).join('');
+  }
+
+  // Section C — Generated Documents
+  if (generatedDocs.length > 0) {
+    html += '<div class="section-title">📝 Generated Documents</div>';
+    html += generatedDocs.map(doc => `
+      <div class="gen-doc-card">
+        <div class="gen-doc-icon">📄</div>
+        <div class="gen-doc-info">
+          <div class="gen-doc-name">${escapeHtml(doc.document_type)}</div>
+          <div class="gen-doc-meta">~${doc.word_count} words · ${new Date(doc.createdAt).toLocaleDateString()}</div>
+        </div>
+        <button class="view-doc-btn" onclick="viewGeneratedDoc('${doc.id}')">View Draft</button>
+      </div>
+    `).join('');
+  }
+
+  list.innerHTML = html;
+}
+
+function viewGeneratedDoc(docId) {
+  const doc = state.currentCase?.generatedDocs?.find(d => d.id === docId);
+  if (!doc) return;
+  document.getElementById('doc-view-title').textContent = doc.document_type;
+  document.getElementById('doc-view-content').textContent = doc.content;
+  document.getElementById('doc-view-modal').classList.add('show');
+}
+
+function closeDocViewModal(e) {
+  if (!e || e.target === document.getElementById('doc-view-modal')) {
+    document.getElementById('doc-view-modal').classList.remove('show');
   }
 }
 

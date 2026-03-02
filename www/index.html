@@ -5,25 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>GlowAI</title>
+  <title>CourtAide</title>
   <style>
     :root {
-      --primary: #7C3AED;
-      --primary-light: #8B5CF6;
-      --primary-dark: #5B21B6;
-      --secondary: #EC4899;
-      --secondary-light: #F472B6;
-      --bg: #080B1A;
-      --bg-card: rgba(26, 18, 50, 0.9);
-      --bg-card2: rgba(35, 26, 61, 0.8);
-      --bg-input: rgba(255,255,255,0.07);
-      --text: #F9FAFB;
-      --text-muted: #9CA3AF;
-      --text-accent: #C4B5FD;
-      --border: rgba(139, 92, 246, 0.2);
-      --glow: 0 0 30px rgba(124, 58, 237, 0.4);
-      --gradient: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
-      --gradient-card: linear-gradient(135deg, rgba(124,58,237,0.3) 0%, rgba(236,72,153,0.15) 100%);
+      --primary: #1B4F8A;
+      --primary-light: #2563EB;
+      --primary-dark: #0F2D4E;
+      --accent: #C9A84C;
+      --accent-light: #E0C56E;
+      --bg: #050A14;
+      --bg-card: rgba(15, 30, 55, 0.92);
+      --bg-card2: rgba(10, 20, 40, 0.8);
+      --bg-input: rgba(255,255,255,0.06);
+      --text: #EEF2FF;
+      --text-muted: #7A8FAD;
+      --text-accent: #93B8DC;
+      --border: rgba(27, 79, 138, 0.3);
+      --glow: 0 0 32px rgba(27, 79, 138, 0.5);
+      --gradient: linear-gradient(135deg, #1B4F8A 0%, #C9A84C 100%);
+      --gradient-card: linear-gradient(135deg, rgba(27,79,138,0.28) 0%, rgba(201,168,76,0.10) 100%);
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --nav-h: 68px;
@@ -39,65 +39,124 @@
       opacity: 0; pointer-events: none; transform: translateY(20px);
     }
     .screen.active { opacity: 1; pointer-events: all; transform: translateY(0); }
-    .screen.slide-left { transform: translateX(-24px); }
-    .screen.slide-right { transform: translateX(24px); }
 
     /* ── SPLASH ── */
     #splash {
-      justify-content: center; align-items: center; gap: 24px;
-      background: radial-gradient(ellipse at 50% 40%, rgba(124,58,237,0.4) 0%, transparent 70%), var(--bg);
+      justify-content: center; align-items: center; gap: 18px;
+      background: radial-gradient(ellipse at 50% 40%, rgba(27,79,138,0.5) 0%, transparent 70%), var(--bg);
     }
-    .splash-logo { width: 90px; height: 90px; border-radius: 28px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: var(--glow); opacity: 0; animation: splashLogoIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, pulse 2s ease-in-out 0.9s infinite; }
-    .splash-title { font-size: 38px; font-weight: 800; letter-spacing: -1px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0; animation: splashFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards; }
+    .splash-logo {
+      width: 96px; height: 96px; border-radius: 28px; background: var(--gradient);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--glow); opacity: 0;
+      animation: splashLogoIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, logoPulse 2.5s ease-in-out 1s infinite;
+    }
+    .splash-logo svg { width: 54px; height: 54px; }
+    .splash-title { font-size: 36px; font-weight: 800; letter-spacing: -1px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0; animation: splashFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards; }
     .splash-sub { font-size: 15px; color: var(--text-muted); opacity: 0; animation: splashFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards; }
-    .splash-loader { width: 48px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 24px; opacity: 0; animation: splashFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.65s forwards; }
+    .splash-loader { width: 56px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 32px; opacity: 0; animation: splashFadeUp 0.5s 0.65s forwards; }
     .splash-loader-bar { height: 100%; width: 0%; background: var(--gradient); border-radius: 2px; animation: loadbar 2.2s ease 0.65s forwards; }
     @keyframes splashLogoIn { 0%{transform:scale(0.3) rotate(-15deg);opacity:0} 70%{transform:scale(1.1) rotate(3deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
     @keyframes splashFadeUp { from{transform:translateY(18px);opacity:0} to{transform:translateY(0);opacity:1} }
     @keyframes loadbar { 0%{width:0%} 60%{width:80%} 100%{width:100%} }
-    @keyframes pulse { 0%,100%{box-shadow:0 0 30px rgba(124,58,237,0.4)} 50%{box-shadow:0 0 60px rgba(236,72,153,0.5)} }
+    @keyframes logoPulse { 0%,100%{box-shadow:0 0 32px rgba(27,79,138,0.5)} 50%{box-shadow:0 0 60px rgba(201,168,76,0.4),0 0 30px rgba(27,79,138,0.3)} }
 
-    /* ── ONBOARDING ── */
-    #onboarding {
-      padding-top: calc(var(--safe-top) + 20px);
-      background: radial-gradient(ellipse at 30% 0%, rgba(124,58,237,0.3) 0%, transparent 60%), var(--bg);
+    /* ── AUTH ── */
+    #auth {
+      justify-content: center; align-items: center;
+      background: radial-gradient(ellipse at 50% 35%, rgba(27,79,138,0.4) 0%, transparent 65%), var(--bg);
+      padding: calc(var(--safe-top) + 24px) 32px calc(var(--safe-bottom) + 24px);
+      gap: 0;
     }
-    .ob-progress { display: flex; gap: 6px; padding: 0 28px; margin-bottom: 32px; }
-    .ob-dot { flex: 1; height: 3px; border-radius: 2px; background: var(--border); transition: background 0.3s; }
-    .ob-dot.active { background: var(--gradient); }
-    .ob-content { flex: 1; padding: 0 28px; overflow-y: auto; }
-    .ob-title { font-size: 28px; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
-    .ob-sub { font-size: 15px; color: var(--text-muted); margin-bottom: 28px; }
-    .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .option-card {
-      padding: 18px 14px; border-radius: 16px; border: 1.5px solid var(--border);
-      background: var(--bg-card); text-align: center; cursor: pointer;
-      transition: all 0.2s; user-select: none;
+    .auth-logo { width: 56px; height: 56px; border-radius: 18px; background: var(--gradient); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: var(--glow); }
+    .auth-logo svg { width: 30px; height: 30px; }
+    .auth-title { font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 8px; }
+    .auth-sub { font-size: 14px; color: var(--text-muted); text-align: center; margin-bottom: 44px; line-height: 1.5; max-width: 280px; }
+    .face-scan-wrap {
+      width: 190px; height: 190px; position: relative;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 44px;
     }
-    .option-card:active { transform: scale(0.97); }
-    .option-card.selected { border-color: var(--primary-light); background: rgba(124,58,237,0.2); animation: cardPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    @keyframes cardPop { 0%{transform:scale(1)} 40%{transform:scale(0.94)} 70%{transform:scale(1.05)} 100%{transform:scale(1)} }
-    .option-card .icon { font-size: 28px; margin-bottom: 8px; }
-    .option-card .label { font-size: 13px; font-weight: 600; }
-    .option-card .desc { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-    .concern-chip {
-      display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px;
-      border-radius: 50px; border: 1.5px solid var(--border); background: var(--bg-card);
-      font-size: 13px; font-weight: 500; cursor: pointer; margin: 0 8px 10px 0;
-      transition: all 0.2s; user-select: none;
+    .face-outer-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 2.5px solid rgba(27,79,138,0.4);
     }
-    .concern-chip.selected { border-color: var(--secondary); background: rgba(236,72,153,0.15); color: var(--secondary-light); }
-    .concern-chip:active { transform: scale(0.95); }
-    .ob-footer { padding: 20px 28px; padding-bottom: calc(20px + var(--safe-bottom)); }
+    .face-spin-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 2.5px solid transparent;
+      border-top-color: var(--accent);
+      border-right-color: rgba(201,168,76,0.4);
+      animation: spin 1.8s linear infinite;
+    }
+    .face-spin-ring2 {
+      position: absolute; inset: 14px; border-radius: 50%;
+      border: 2px solid transparent;
+      border-bottom-color: var(--primary-light);
+      border-left-color: rgba(37,99,235,0.35);
+      animation: spinReverse 2.4s linear infinite;
+    }
+    .face-inner {
+      width: 138px; height: 138px; border-radius: 50%;
+      background: rgba(27,79,138,0.12); border: 1.5px solid rgba(27,79,138,0.35);
+      display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
+    }
+    .face-inner svg { width: 76px; height: 76px; }
+    .scan-beam {
+      position: absolute; left: 10px; right: 10px; height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+      border-radius: 1px; animation: beamScan 2.2s ease-in-out infinite;
+    }
+    .scan-beam.hidden-beam { opacity: 0; }
+    @keyframes beamScan { 0%{top:15%;opacity:0} 10%{opacity:0.9} 50%{top:78%} 90%{opacity:0.9} 100%{top:15%;opacity:0} }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    @keyframes spinReverse { to{transform:rotate(-360deg)} }
+    .auth-btn {
+      width: 100%; max-width: 320px; padding: 17px; border-radius: 16px; border: none;
+      background: var(--gradient); color: white; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 24px rgba(27,79,138,0.45);
+      letter-spacing: 0.3px;
+    }
+    .auth-btn:active { transform: scale(0.98); box-shadow: 0 2px 12px rgba(27,79,138,0.3); }
+    .auth-status { font-size: 13px; color: var(--text-muted); margin-top: 16px; text-align: center; }
+
+    /* ── SETUP ── */
+    #setup {
+      background: radial-gradient(ellipse at 30% 0%, rgba(27,79,138,0.3) 0%, transparent 60%), var(--bg);
+      padding-top: calc(var(--safe-top) + 16px);
+    }
+    .setup-header { padding: 0 24px 20px; }
+    .setup-eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--accent); margin-bottom: 8px; }
+    .setup-title { font-size: 26px; font-weight: 800; line-height: 1.2; }
+    .setup-sub { font-size: 14px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+    .setup-body { flex: 1; overflow-y: auto; padding: 0 24px; -webkit-overflow-scrolling: touch; }
+    .setup-footer { padding: 20px 24px; padding-bottom: calc(20px + var(--safe-bottom)); flex-shrink: 0; }
+    .field-label { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px; }
+    .field-input {
+      width: 100%; background: var(--bg-input); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 14px 16px; color: var(--text); font-size: 16px;
+      outline: none; font-family: inherit; margin-bottom: 20px; transition: border-color 0.2s;
+    }
+    .field-input:focus { border-color: var(--primary-light); }
+    .field-input::placeholder { color: var(--text-muted); }
+    .field-select {
+      width: 100%; background: var(--bg-input); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 14px 16px; color: var(--text); font-size: 16px;
+      outline: none; font-family: inherit; margin-bottom: 20px; appearance: none;
+      -webkit-appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237A8FAD' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+      transition: border-color 0.2s;
+    }
+    .field-select:focus { border-color: var(--primary-light); }
+    .field-select option { background: #0A1624; color: var(--text); }
 
     /* ── SHARED COMPONENTS ── */
     .btn-primary {
       width: 100%; padding: 16px; border-radius: 16px; border: none;
       background: var(--gradient); color: white; font-size: 16px; font-weight: 700;
       cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
-      box-shadow: 0 4px 24px rgba(124,58,237,0.4);
+      box-shadow: 0 4px 24px rgba(27,79,138,0.4);
     }
-    .btn-primary:active { transform: scale(0.98); box-shadow: 0 2px 12px rgba(124,58,237,0.3); }
+    .btn-primary:active { transform: scale(0.98); box-shadow: 0 2px 12px rgba(27,79,138,0.3); }
     .btn-secondary {
       width: 100%; padding: 16px; border-radius: 16px; border: 1.5px solid var(--border);
       background: transparent; color: var(--text); font-size: 16px; font-weight: 600;
@@ -107,18 +166,16 @@
     .btn-icon {
       width: 44px; height: 44px; border-radius: 12px; border: 1.5px solid var(--border);
       background: var(--bg-card); color: var(--text); font-size: 18px;
-      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: all 0.2s; flex-shrink: 0;
     }
     .btn-icon:active { transform: scale(0.93); background: var(--bg-input); }
-    .chip {
-      display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px;
-      border-radius: 50px; font-size: 12px; font-weight: 600; background: rgba(124,58,237,0.2); color: var(--text-accent);
-    }
-    .chip.rose { background: rgba(236,72,153,0.2); color: var(--secondary-light); }
-    .chip.green { background: rgba(16,185,129,0.2); color: #6EE7B7; }
-    .chip.yellow { background: rgba(245,158,11,0.2); color: #FCD34D; }
-
-    /* ── SCROLLABLE SCREEN BODY ── */
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; }
+    .chip-blue { background: rgba(27,79,138,0.3); color: var(--text-accent); }
+    .chip-gold { background: rgba(201,168,76,0.2); color: var(--accent-light); }
+    .chip-green { background: rgba(16,185,129,0.2); color: #6EE7B7; }
+    .chip-red { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+    .chip-gray { background: rgba(255,255,255,0.08); color: var(--text-muted); }
     .screen-body {
       flex: 1; overflow-y: auto; overflow-x: hidden;
       padding: 0 20px; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px);
@@ -126,18 +183,22 @@
     }
     .screen-header {
       padding: calc(var(--safe-top) + 16px) 20px 0;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
     }
+    .section-title { font-size: 17px; font-weight: 700; margin-bottom: 12px; margin-top: 20px; }
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+    .row { display: flex; align-items: center; gap: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .hidden { display: none !important; }
 
     /* ── BOTTOM NAV ── */
     #bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
       height: calc(var(--nav-h) + var(--safe-bottom));
-      background: rgba(12, 8, 28, 0.95); backdrop-filter: blur(20px);
+      background: rgba(5, 8, 18, 0.96); backdrop-filter: blur(24px);
       border-top: 1px solid var(--border);
-      display: flex; align-items: flex-start; padding-top: 8px;
-      z-index: 100; transition: opacity 0.3s; display: none;
+      display: none; align-items: flex-start; padding-top: 8px;
+      z-index: 100;
     }
     .nav-item {
       flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -146,168 +207,124 @@
     .nav-item:active { transform: scale(0.9); }
     .nav-icon { font-size: 22px; transition: all 0.2s; }
     .nav-label { font-size: 10px; font-weight: 600; color: var(--text-muted); transition: color 0.2s; letter-spacing: 0.3px; }
-    .nav-item.active .nav-label { color: var(--primary-light); }
+    .nav-item.active .nav-label { color: var(--accent-light); }
     .nav-item.active .nav-icon { animation: navIconBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
     @keyframes navIconBounce { 0%{transform:translateY(0) scale(1)} 35%{transform:translateY(-6px) scale(1.2)} 65%{transform:translateY(-1px) scale(0.96)} 100%{transform:translateY(-2px) scale(1)} }
-    .nav-scan-btn {
-      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-      cursor: pointer; user-select: none;
-    }
-    .nav-scan-inner {
-      width: 52px; height: 52px; border-radius: 16px; background: var(--gradient);
-      display: flex; align-items: center; justify-content: center; font-size: 22px;
-      box-shadow: 0 4px 20px rgba(124,58,237,0.5); margin-top: -20px;
-      transition: all 0.2s;
-    }
-    .nav-scan-btn:active .nav-scan-inner { transform: scale(0.93); }
-    .nav-scan-label { font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.3px; }
 
     /* ── HOME ── */
+    #home { background: var(--bg); }
     .greeting { font-size: 13px; color: var(--text-muted); }
     .greeting-name { font-size: 22px; font-weight: 700; }
-    .avatar { width: 42px; height: 42px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
-    .glow-card {
+    .avatar { width: 42px; height: 42px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: all 0.2s; }
+    .avatar:active { transform: scale(0.93); }
+    .hero-card {
       background: var(--gradient-card); border: 1px solid var(--border);
-      border-radius: 20px; padding: 20px; margin-bottom: 16px;
-      backdrop-filter: blur(10px); position: relative; overflow: hidden;
+      border-radius: 20px; padding: 20px; margin: 16px 0;
+      position: relative; overflow: hidden;
     }
-    .glow-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 20%, rgba(236,72,153,0.15) 0%, transparent 60%); pointer-events: none; }
-    .card-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-    .skin-score-row { display: flex; align-items: flex-end; gap: 12px; }
-    .score-num { font-size: 56px; font-weight: 800; line-height: 1; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .score-info { padding-bottom: 8px; }
-    .score-label { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-    .score-sub { font-size: 13px; color: var(--text-muted); }
-    .score-bar-wrap { background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; margin-top: 16px; }
-    .score-bar { height: 100%; border-radius: 4px; background: var(--gradient); transition: width 1s ease; }
-    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-    .quick-card {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px;
-      padding: 18px 16px; cursor: pointer; transition: all 0.2s;
+    .hero-card::before {
+      content: ''; position: absolute; top: -30px; right: -30px; width: 140px; height: 140px;
+      border-radius: 50%; background: radial-gradient(ellipse, rgba(201,168,76,0.12) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .quick-card:active { transform: scale(0.97); background: var(--bg-card2); }
-    .quick-card .qc-icon { font-size: 26px; margin-bottom: 10px; }
-    .quick-card .qc-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
-    .quick-card .qc-sub { font-size: 12px; color: var(--text-muted); }
-    .section-title { font-size: 17px; font-weight: 700; margin-bottom: 12px; }
-    .activity-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .activity-item:last-child { border-bottom: none; }
-    .act-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(124,58,237,0.2); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-    .act-info { flex: 1; }
-    .act-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-    .act-sub { font-size: 12px; color: var(--text-muted); }
-    .act-badge { font-size: 12px; font-weight: 700; }
+    .hero-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; }
+    .new-case-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .new-case-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.4; }
+    .state-pick-btn {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px; border-radius: 13px; border: 1.5px solid var(--border);
+      background: var(--bg-input); cursor: pointer; margin-bottom: 12px; transition: all 0.2s;
+      font-size: 15px; color: var(--text-muted); font-weight: 500;
+    }
+    .state-pick-btn.chosen { border-color: var(--accent); color: var(--accent-light); font-weight: 700; background: rgba(201,168,76,0.08); }
+    .state-pick-btn:active { transform: scale(0.99); }
+    .issue-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .issue-card {
+      padding: 15px 12px; border-radius: 15px; border: 1.5px solid var(--border);
+      background: var(--bg-card); text-align: center; cursor: pointer;
+      transition: all 0.2s; user-select: none;
+    }
+    .issue-card:active { transform: scale(0.96); }
+    .issue-card.selected { border-color: var(--accent); background: rgba(201,168,76,0.1); animation: cardPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes cardPop { 0%{transform:scale(1)} 40%{transform:scale(0.94)} 70%{transform:scale(1.05)} 100%{transform:scale(1)} }
+    .issue-icon { font-size: 24px; margin-bottom: 6px; }
+    .issue-label { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .case-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 14px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;
+    }
+    .case-item:active { background: var(--bg-card2); transform: scale(0.99); }
+    .case-item-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(27,79,138,0.25); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .case-item-info { flex: 1; }
+    .case-item-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .case-item-sub { font-size: 12px; color: var(--text-muted); }
+    .empty-state { text-align: center; padding: 28px 16px; }
+    .empty-icon { font-size: 44px; margin-bottom: 10px; opacity: 0.6; }
+    .empty-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .empty-sub { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
 
-    /* ── SCAN ── */
-    #scan { background: #000; }
-    .scan-header { position: absolute; top: 0; left: 0; right: 0; padding: calc(var(--safe-top) + 16px) 20px 16px; z-index: 10; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%); }
-    .scan-title { font-size: 18px; font-weight: 700; }
-    .scan-area { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .scan-frame {
-      width: 280px; height: 340px; border-radius: 140px / 160px;
-      border: 2.5px solid rgba(139,92,246,0.6); position: relative;
-      display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2000px rgba(0,0,0,0.6);
+    /* ── ADVISOR CHAT ── */
+    #advisor { background: var(--bg); }
+    .advisor-header {
+      padding: calc(var(--safe-top) + 14px) 16px 12px;
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
     }
-    .scan-frame::before, .scan-frame::after {
-      content: ''; position: absolute; border-radius: 50%;
-      animation: scanring 2s linear infinite;
-    }
-    .scan-frame::before { inset: -8px; border: 2px solid rgba(124,58,237,0.3); }
-    .scan-frame::after { inset: -16px; border: 2px solid rgba(236,72,153,0.2); animation-delay: 0.5s; }
-    @keyframes scanring { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1.03)} }
-    .scan-line {
-      position: absolute; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.8) 50%, transparent 100%);
-      animation: scanline 2s ease-in-out infinite;
-      border-radius: 1px;
-    }
-    @keyframes scanline { 0%{top:10%} 50%{top:90%} 100%{top:10%} }
-    .scan-guide { color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 500; margin-top: 24px; }
-    .scan-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; padding-bottom: calc(20px + var(--safe-bottom) + var(--nav-h)); display: flex; flex-direction: column; align-items: center; gap: 16px; }
-    .scan-btn {
-      width: 72px; height: 72px; border-radius: 50%; border: 3px solid white;
-      background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 28px;
-      cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 24px rgba(124,58,237,0.5);
-      position: relative;
-    }
-    .scan-btn:active { transform: scale(0.92); }
-    .scan-btn::before, .scan-btn::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; background: var(--gradient); opacity: 0; animation: scanPulse 2s ease-out infinite; z-index: -1; }
-    .scan-btn::after { animation-delay: 1s; }
-    @keyframes scanPulse { 0%{transform:scale(1);opacity:0.5} 100%{transform:scale(1.9);opacity:0} }
-    .scan-options { display: flex; gap: 20px; }
-    .scan-opt { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
-    .scan-opt-icon { width: 46px; height: 46px; border-radius: 14px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px; }
-    .scan-opt-label { font-size: 11px; color: rgba(255,255,255,0.6); }
-    .scan-analyzing {
-      position: absolute; inset: 0; background: rgba(8,11,26,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; opacity: 0; pointer-events: none; transition: opacity 0.4s;
-    }
-    .scan-analyzing.show { opacity: 1; pointer-events: all; }
-    .analyze-ring { width: 100px; height: 100px; border-radius: 50%; border: 3px solid rgba(139,92,246,0.15); border-top-color: var(--primary-light); border-right-color: rgba(139,92,246,0.4); animation: spin 0.8s linear infinite; position: relative; }
-    .analyze-ring::after { content: ''; position: absolute; inset: -14px; border-radius: 50%; border: 2px solid transparent; border-bottom-color: var(--secondary); border-left-color: rgba(236,72,153,0.3); animation: spinReverse 1.5s linear infinite; }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    @keyframes spinReverse { to{transform:rotate(-360deg)} }
-    .analyze-text { font-size: 16px; font-weight: 600; color: var(--text-muted); }
-    .analyze-steps { font-size: 13px; color: var(--text-muted); }
-
-    /* ── ANALYSIS ── */
-    #analysis { background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.25) 0%, transparent 60%), var(--bg); }
-    .analysis-score-card { text-align: center; padding: 32px 20px; }
-    .score-ring-wrap { width: 140px; height: 140px; margin: 0 auto 16px; position: relative; }
-    .score-ring-wrap svg { transform: rotate(-90deg); }
-    .score-ring-wrap .score-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .score-big { font-size: 42px; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
-    .score-small { font-size: 12px; color: var(--text-muted); }
-    .concern-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-    .concern-item { display: flex; align-items: center; gap: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
-    .concern-sev { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .concern-sev.mild { background: #6EE7B7; }
-    .concern-sev.moderate { background: #FCD34D; }
-    .concern-sev.severe { background: #F87171; }
-    .concern-name { font-size: 14px; font-weight: 600; flex: 1; }
-    .concern-pct { font-size: 13px; color: var(--text-muted); }
-    .rec-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 10px; }
-    .rec-step { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-accent); margin-bottom: 6px; }
-    .rec-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-    .rec-desc { font-size: 13px; color: var(--text-muted); }
-    .rec-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-
-    /* ── AGENT CHAT ── */
-    #agent { background: var(--bg); }
-    .agent-header { padding: calc(var(--safe-top) + 16px) 20px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .agent-avatar { width: 44px; height: 44px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: var(--glow); }
-    .agent-info { flex: 1; }
-    .agent-name { font-size: 17px; font-weight: 700; }
-    .agent-status { font-size: 12px; color: #6EE7B7; display: flex; align-items: center; gap: 4px; }
-    .agent-dot { width: 6px; height: 6px; border-radius: 50%; background: #6EE7B7; animation: blink 2s ease infinite; }
+    .advisor-avatar { width: 44px; height: 44px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: var(--glow); flex-shrink: 0; }
+    .advisor-info { flex: 1; }
+    .advisor-name { font-size: 17px; font-weight: 700; }
+    .advisor-status { font-size: 12px; color: #6EE7B7; display: flex; align-items: center; gap: 4px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #6EE7B7; animation: blink 2s ease infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    .chat-body { flex: 1; overflow-y: auto; padding: 16px 16px 0; -webkit-overflow-scrolling: touch; }
-    .msg-row { display: flex; margin-bottom: 14px; align-items: flex-end; gap: 8px; }
+    .case-ctx-bar {
+      padding: 9px 16px; background: rgba(27,79,138,0.14);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .ctx-label { font-size: 13px; font-weight: 600; flex: 1; color: var(--text); }
+    .ctx-state { font-size: 12px; color: var(--accent-light); }
+    .chat-body { flex: 1; overflow-y: auto; padding: 14px 14px 0; -webkit-overflow-scrolling: touch; }
+    .msg-row { display: flex; margin-bottom: 12px; align-items: flex-end; gap: 8px; }
     .msg-row.user { flex-direction: row-reverse; }
-    .msg-avatar { width: 30px; height: 30px; border-radius: 10px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-    .msg-avatar.user { background: rgba(255,255,255,0.1); }
+    .msg-avatar { width: 28px; height: 28px; border-radius: 9px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+    .msg-avatar.user { background: rgba(255,255,255,0.1); font-size: 12px; }
     .msg-bubble {
-      max-width: 80%; padding: 12px 14px; border-radius: 18px;
-      font-size: 14px; line-height: 1.5; border: 1px solid transparent;
+      max-width: 80%; padding: 11px 14px; border-radius: 18px;
+      font-size: 14px; line-height: 1.55; border: 1px solid transparent;
     }
     .msg-row.ai .msg-bubble { background: var(--bg-card); border-color: var(--border); border-bottom-left-radius: 4px; color: var(--text); }
     .msg-row.user .msg-bubble { background: var(--gradient); color: white; border-bottom-right-radius: 4px; }
     .tool-card {
-      max-width: 90%; background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3);
-      border-radius: 16px; padding: 14px; margin-bottom: 14px; overflow: hidden;
+      max-width: 92%; background: rgba(27,79,138,0.14); border: 1px solid rgba(37,99,235,0.3);
+      border-radius: 16px; padding: 14px; margin-bottom: 12px; overflow: hidden;
     }
     .tool-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .tool-icon { font-size: 16px; }
-    .tool-name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-accent); }
-    .tool-result { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+    .tool-name { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-accent); flex: 1; }
+    .tool-result { font-size: 13px; color: var(--text-muted); line-height: 1.55; }
     .tool-result strong { color: var(--text); }
+    .tool-result ul { padding-left: 16px; margin-top: 4px; }
+    .tool-result li { margin-bottom: 4px; }
     .typing-indicator { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
     .typing-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); animation: typing 1.2s ease infinite; }
     .typing-dot:nth-child(2) { animation-delay: 0.2s; }
     .typing-dot:nth-child(3) { animation-delay: 0.4s; }
     @keyframes typing { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+    .disclaimer-banner {
+      margin: 8px 14px; padding: 9px 13px; border-radius: 11px;
+      background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.22);
+      font-size: 11px; color: var(--accent-light); line-height: 1.45; flex-shrink: 0;
+    }
+    .starter-pills { display: flex; gap: 8px; flex-wrap: wrap; padding: 6px 14px 10px; }
+    .starter-pill {
+      padding: 8px 14px; border-radius: 50px; border: 1px solid var(--border);
+      font-size: 12px; font-weight: 500; color: var(--text-muted); cursor: pointer;
+      transition: all 0.2s; white-space: nowrap; background: var(--bg-card);
+    }
+    .starter-pill:active { background: rgba(27,79,138,0.25); color: var(--text); }
     .chat-input-area {
-      padding: 12px 16px; padding-bottom: calc(12px + var(--safe-bottom));
-      border-top: 1px solid var(--border); background: rgba(12,8,28,0.9); backdrop-filter: blur(10px);
+      padding: 11px 14px; padding-bottom: calc(11px + var(--safe-bottom));
+      border-top: 1px solid var(--border); background: rgba(5,8,18,0.96); backdrop-filter: blur(12px);
       display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0;
     }
     .chat-input {
@@ -320,1163 +337,1135 @@
     .chat-send {
       width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--gradient);
       color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: all 0.2s; box-shadow: 0 4px 16px rgba(124,58,237,0.4);
+      flex-shrink: 0; transition: all 0.2s; box-shadow: 0 4px 16px rgba(27,79,138,0.4);
     }
     .chat-send:active { transform: scale(0.9); }
-    .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
-    .starter-pills { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 12px; }
-    .starter-pill { padding: 8px 14px; border-radius: 50px; border: 1px solid var(--border); font-size: 12px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; background: var(--bg-card); }
-    .starter-pill:active { background: rgba(124,58,237,0.2); color: var(--text); }
+    .chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    /* ── ROUTINE ── */
-    #routine { background: var(--bg); }
-    .routine-tabs { display: flex; gap: 0; background: var(--bg-card2); border-radius: 14px; padding: 4px; margin-bottom: 20px; }
-    .routine-tab { flex: 1; padding: 10px; border-radius: 11px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: var(--text-muted); }
-    .routine-tab.active { background: var(--gradient); color: white; }
-    .routine-step { display: flex; align-items: flex-start; gap: 14px; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 10px; }
-    .step-num { width: 30px; height: 30px; border-radius: 10px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
-    .step-check { width: 30px; height: 30px; border-radius: 10px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; cursor: pointer; transition: all 0.2s; }
-    .step-check.done { background: rgba(110,231,183,0.2); border-color: #6EE7B7; }
-    .step-content { flex: 1; }
-    .step-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
-    .step-product { font-size: 13px; color: var(--text-accent); margin-bottom: 3px; }
-    .step-desc { font-size: 12px; color: var(--text-muted); }
-    .streak-card { display: flex; align-items: center; gap: 12px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 16px; padding: 14px 16px; margin-bottom: 20px; }
-    .streak-icon { font-size: 28px; }
-    .streak-info { flex: 1; }
-    .streak-title { font-size: 14px; font-weight: 700; }
-    .streak-sub { font-size: 12px; color: var(--text-muted); }
-    .streak-num { font-size: 24px; font-weight: 800; color: #FCD34D; }
+    /* ── DOCUMENTS ── */
+    #documents { background: var(--bg); }
+    .doc-case-bar {
+      padding: 10px 20px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .doc-case-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+    .doc-case-name { font-size: 15px; font-weight: 700; }
+    .form-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 15px; margin-bottom: 10px;
+    }
+    .form-status { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .form-status.needed { background: rgba(255,255,255,0.2); border: 2px solid var(--text-muted); }
+    .form-status.in-progress { background: var(--accent); animation: blink 2s infinite; }
+    .form-status.complete { background: #6EE7B7; }
+    .form-info { flex: 1; }
+    .form-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .form-number { font-size: 12px; color: var(--accent-light); font-weight: 600; }
+    .form-court { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .fill-btn {
+      padding: 9px 14px; border-radius: 10px; border: 1.5px solid rgba(201,168,76,0.4);
+      background: rgba(201,168,76,0.08); color: var(--accent-light); font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .fill-btn:active { background: rgba(201,168,76,0.18); }
+    .doc-empty { text-align: center; padding: 56px 24px; }
+    .doc-empty-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.7; }
+    .doc-empty-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .doc-empty-sub { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
 
     /* ── SETTINGS ── */
     #settings { background: var(--bg); }
-    .settings-section { margin-bottom: 24px; }
-    .settings-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; padding: 0 4px; }
-    .settings-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-    .settings-row { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s; }
-    .settings-row:last-child { border-bottom: none; }
-    .settings-row:active { background: rgba(255,255,255,0.04); }
-    .settings-row-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-    .settings-row-text { flex: 1; }
-    .settings-row-title { font-size: 15px; font-weight: 500; }
-    .settings-row-sub { font-size: 12px; color: var(--text-muted); }
-    .settings-chevron { color: var(--text-muted); font-size: 16px; }
-    .settings-input {
-      width: 100%; background: transparent; border: none; outline: none;
-      color: var(--text); font-size: 14px; font-family: monospace; letter-spacing: 1px;
+    .profile-header {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      padding: 28px 20px 20px;
     }
-    .settings-input::placeholder { color: var(--text-muted); }
-    .profile-header { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 28px 20px; }
     .profile-avatar { width: 80px; height: 80px; border-radius: 24px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 36px; box-shadow: var(--glow); }
     .profile-name { font-size: 22px; font-weight: 700; }
     .profile-sub { font-size: 14px; color: var(--text-muted); }
-    .profile-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .settings-section { margin-bottom: 24px; }
+    .settings-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; padding: 0 2px; }
+    .settings-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .settings-row { display: flex; align-items: center; gap: 12px; padding: 15px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.2s; }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row.tappable { cursor: pointer; }
+    .settings-row.tappable:active { background: rgba(255,255,255,0.03); }
+    .row-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .row-text { flex: 1; }
+    .row-title { font-size: 15px; font-weight: 500; }
+    .row-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .row-chevron { color: var(--text-muted); font-size: 16px; }
+    .settings-input { width: 100%; background: transparent; border: none; outline: none; color: var(--text); font-size: 14px; font-family: monospace; letter-spacing: 0.5px; }
+    .settings-input::placeholder { color: var(--text-muted); font-family: inherit; letter-spacing: 0; font-size: 13px; }
+    .disclaimer-box {
+      background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.22);
+      border-radius: 14px; padding: 16px; margin-bottom: 24px;
+    }
+    .disclaimer-title { font-size: 13px; font-weight: 800; color: var(--accent-light); margin-bottom: 8px; letter-spacing: 0.3px; }
+    .disclaimer-text { font-size: 12px; color: var(--text-muted); line-height: 1.65; }
 
-    /* ── API KEY MODAL ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+      z-index: 200; display: flex; align-items: flex-end;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
     .modal-overlay.show { opacity: 1; pointer-events: all; }
-    .modal-sheet { background: #130D27; border-radius: 24px 24px 0 0; padding: 24px; padding-bottom: calc(24px + var(--safe-bottom)); width: 100%; border: 1px solid var(--border); border-bottom: none; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); }
+    .modal-sheet {
+      background: #090F1E; border-radius: 24px 24px 0 0; padding: 20px 20px 0;
+      padding-bottom: calc(16px + var(--safe-bottom)); width: 100%;
+      border: 1px solid var(--border); border-bottom: none;
+      transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+      max-height: 85vh; display: flex; flex-direction: column;
+    }
     .modal-overlay.show .modal-sheet { transform: translateY(0); }
-    .modal-handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); margin: 0 auto 20px; }
-    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-    .modal-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
-    .modal-input { width: 100%; background: var(--bg-input); border: 1.5px solid var(--border); border-radius: 14px; padding: 14px 16px; color: var(--text); font-size: 14px; outline: none; font-family: monospace; letter-spacing: 1px; margin-bottom: 16px; }
-    .modal-input:focus { border-color: var(--primary-light); }
-    .modal-input::placeholder { color: var(--text-muted); font-family: -apple-system, sans-serif; letter-spacing: 0; }
+    .modal-handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); margin: 0 auto 18px; flex-shrink: 0; }
+    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 14px; flex-shrink: 0; }
+    .modal-search {
+      width: 100%; background: var(--bg-input); border: 1.5px solid var(--border); border-radius: 13px;
+      padding: 12px 16px; color: var(--text); font-size: 15px; outline: none; font-family: inherit;
+      margin-bottom: 10px; flex-shrink: 0; transition: border-color 0.2s;
+    }
+    .modal-search:focus { border-color: var(--primary-light); }
+    .modal-search::placeholder { color: var(--text-muted); }
+    .state-list { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+    .state-list-item {
+      padding: 14px 16px; border-radius: 11px; cursor: pointer; font-size: 15px; font-weight: 500;
+      transition: background 0.15s; color: var(--text);
+    }
+    .state-list-item:active { background: rgba(27,79,138,0.22); }
+    .state-list-item.active { background: rgba(27,79,138,0.22); color: var(--accent-light); font-weight: 700; }
+    .modal-content-wrap { flex: 1; overflow-y: auto; }
 
     /* ── UTILITIES ── */
-    .mt-16 { margin-top: 16px; }
-    .mb-16 { margin-bottom: 16px; }
-    .text-center { text-align: center; }
-    .row { display: flex; align-items: center; gap: 8px; }
-    .flex-1 { flex: 1; }
-    .hidden { display: none !important; }
-    .divider { height: 1px; background: var(--border); margin: 16px 0; }
-    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
     @keyframes shimmer { to{background-position:-200% 0} }
-
-    /* ── PROGRESS BARS ── */
-    .progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 6px; }
-    .progress-fill { height: 100%; border-radius: 4px; background: var(--gradient); transition: width 1s ease; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════ SPLASH ═══════════════════════════════════════ -->
+<!-- ══════════════════════ SPLASH ══════════════════════ -->
 <div id="splash" class="screen">
-  <div class="splash-logo">✨</div>
-  <div class="splash-title">GlowAI</div>
-  <div class="splash-sub">Your AI-powered skin coach</div>
+  <div class="splash-logo">
+    <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="25" y="5" width="2.5" height="38" fill="white" rx="1.25"/>
+      <rect x="11" y="7" width="30" height="2.5" fill="white" rx="1.25"/>
+      <line x1="11" y1="8.25" x2="3" y2="20" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="11" y1="8.25" x2="19" y2="20" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M3 20 Q11 26 19 20" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="41" y1="8.25" x2="33" y2="20" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="41" y1="8.25" x2="49" y2="20" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M33 20 Q41 26 49 20" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <rect x="20" y="43" width="12" height="3" fill="white" rx="1.5"/>
+    </svg>
+  </div>
+  <div class="splash-title">CourtAide</div>
+  <div class="splash-sub">Your AI-powered legal assistant</div>
   <div class="splash-loader"><div class="splash-loader-bar"></div></div>
 </div>
 
-<!-- ═══════════════════════════════════════ ONBOARDING ═══════════════════════════════════════ -->
-<div id="onboarding" class="screen">
-  <div class="screen-header" style="padding-bottom:16px">
-    <div>
-      <div style="font-size:13px;color:var(--text-muted)">Step <span id="ob-step-label">1</span> of 3</div>
-      <div style="font-size:20px;font-weight:700">Tell us about your skin</div>
+<!-- ══════════════════════ AUTH ══════════════════════ -->
+<div id="auth" class="screen">
+  <div class="auth-logo">
+    <svg viewBox="0 0 30 30" fill="none">
+      <rect x="14" y="2" width="2" height="22" fill="white" rx="1"/>
+      <rect x="6" y="4" width="18" height="1.8" fill="white" rx="0.9"/>
+      <line x1="6" y1="4.9" x2="1" y2="13" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+      <line x1="6" y1="4.9" x2="11" y2="13" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M1 13 Q6 17 11 13" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+      <line x1="24" y1="4.9" x2="19" y2="13" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+      <line x1="24" y1="4.9" x2="29" y2="13" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M19 13 Q24 17 29 13" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+      <rect x="11" y="25" width="8" height="2.2" fill="white" rx="1.1"/>
+    </svg>
+  </div>
+  <div class="auth-title" id="auth-title">Welcome back</div>
+  <div class="auth-sub" id="auth-sub">Scanning your biometrics to securely access your cases</div>
+  <div class="face-scan-wrap">
+    <div class="face-outer-ring"></div>
+    <div class="face-spin-ring" id="face-spin-1"></div>
+    <div class="face-spin-ring2" id="face-spin-2"></div>
+    <div class="face-inner">
+      <svg viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Face outline -->
+        <ellipse cx="38" cy="36" rx="22" ry="26" fill="none" stroke="rgba(147,184,220,0.5)" stroke-width="1.5"/>
+        <!-- Eyes -->
+        <ellipse cx="29" cy="32" rx="3" ry="3.5" fill="rgba(147,184,220,0.6)"/>
+        <ellipse cx="47" cy="32" rx="3" ry="3.5" fill="rgba(147,184,220,0.6)"/>
+        <!-- Nose bridge -->
+        <path d="M38 35 L35 44 L41 44" fill="none" stroke="rgba(147,184,220,0.4)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Mouth -->
+        <path d="M30 50 Q38 55 46 50" fill="none" stroke="rgba(147,184,220,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- Corner brackets -->
+        <path d="M14 22 L14 14 L22 14" fill="none" stroke="rgba(201,168,76,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M62 22 L62 14 L54 14" fill="none" stroke="rgba(201,168,76,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M14 58 L14 66 L22 66" fill="none" stroke="rgba(201,168,76,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M62 58 L62 66 L54 66" fill="none" stroke="rgba(201,168,76,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="scan-beam" id="scan-beam"></div>
     </div>
   </div>
-  <div class="ob-progress" style="padding:0 20px;margin-bottom:24px">
-    <div class="ob-dot active" id="ob-dot-1"></div>
-    <div class="ob-dot" id="ob-dot-2"></div>
-    <div class="ob-dot" id="ob-dot-3"></div>
+  <button class="auth-btn" id="auth-btn" onclick="handleAuthBtn()">🔐 Enable Face ID</button>
+  <div class="auth-status" id="auth-status"></div>
+</div>
+
+<!-- ══════════════════════ SETUP ══════════════════════ -->
+<div id="setup" class="screen">
+  <div class="setup-header">
+    <div class="setup-eyebrow">Getting Started</div>
+    <div class="setup-title">Create your<br>legal profile</div>
+    <div class="setup-sub">We'll personalize your CourtAide experience based on your location and needs.</div>
   </div>
-  <div class="ob-content" id="ob-content"></div>
-  <div class="ob-footer">
-    <button class="btn-primary" id="ob-next-btn">Continue</button>
+  <div class="setup-body">
+    <div class="field-label">Your Name</div>
+    <input class="field-input" id="setup-name" type="text" placeholder="Full name" autocomplete="name">
+
+    <div class="field-label">Home State</div>
+    <select class="field-select" id="setup-state">
+      <option value="">Select your state...</option>
+    </select>
+
+    <div class="field-label">Date of Birth</div>
+    <input class="field-input" id="setup-dob" type="date">
+
+    <div style="height:8px"></div>
+  </div>
+  <div class="setup-footer">
+    <button class="btn-primary" onclick="completeSetup()">Continue →</button>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════ HOME ═══════════════════════════════════════ -->
+<!-- ══════════════════════ HOME ══════════════════════ -->
 <div id="home" class="screen">
   <div class="screen-header">
     <div>
-      <div class="greeting" id="greeting">Good morning 🌙</div>
-      <div class="greeting-name" id="greeting-name">Loading...</div>
+      <div class="greeting" id="greeting">Good morning</div>
+      <div class="greeting-name" id="greeting-name">CourtAide</div>
     </div>
-    <div class="avatar" onclick="showScreen('settings')">✨</div>
-  </div>
-  <div class="screen-body" id="home-body">
-    <!-- Skin Score Card -->
-    <div class="glow-card mt-16">
-      <div class="card-label">Skin Health Score</div>
-      <div class="skin-score-row">
-        <div class="score-num" id="home-score">78</div>
-        <div class="score-info">
-          <div class="score-label" id="home-score-label">Looking Good</div>
-          <div class="score-sub" id="home-score-sub">+3 from last week</div>
-        </div>
-      </div>
-      <div class="score-bar-wrap"><div class="score-bar" id="home-score-bar" style="width:78%"></div></div>
-      <div class="row mt-16" style="gap:8px;flex-wrap:wrap" id="home-concern-chips"></div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-grid">
-      <div class="quick-card" onclick="showScreen('scan')">
-        <div class="qc-icon">📸</div>
-        <div class="qc-title">Scan Skin</div>
-        <div class="qc-sub">AI analysis</div>
-      </div>
-      <div class="quick-card" onclick="showScreen('agent')">
-        <div class="qc-icon">🤖</div>
-        <div class="qc-title">GlowAI Agent</div>
-        <div class="qc-sub">Ask anything</div>
-      </div>
-      <div class="quick-card" onclick="showScreen('routine')">
-        <div class="qc-icon">🌿</div>
-        <div class="qc-title">My Routine</div>
-        <div class="qc-sub">Today's steps</div>
-      </div>
-      <div class="quick-card" onclick="openModal()">
-        <div class="qc-icon">⚡</div>
-        <div class="qc-title">Insights</div>
-        <div class="qc-sub">Weekly report</div>
-      </div>
-    </div>
-
-    <!-- Streak -->
-    <div class="streak-card">
-      <div class="streak-icon">🔥</div>
-      <div class="streak-info">
-        <div class="streak-title">Skincare Streak</div>
-        <div class="streak-sub">Keep it up!</div>
-      </div>
-      <div class="streak-num" id="home-streak">7</div>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="section-title">Recent Activity</div>
-    <div id="home-activity">
-      <div class="activity-item">
-        <div class="act-icon">📊</div>
-        <div class="act-info">
-          <div class="act-title">Skin Analysis</div>
-          <div class="act-sub">Yesterday · Score 78</div>
-        </div>
-        <div class="act-badge" style="color:var(--text-accent)">78</div>
-      </div>
-      <div class="activity-item">
-        <div class="act-icon">✅</div>
-        <div class="act-info">
-          <div class="act-title">Evening Routine</div>
-          <div class="act-sub">Yesterday · 5 steps</div>
-        </div>
-        <div class="act-badge" style="color:#6EE7B7">Done</div>
-      </div>
-      <div class="activity-item">
-        <div class="act-icon">💬</div>
-        <div class="act-info">
-          <div class="act-title">AI Chat</div>
-          <div class="act-sub">2 days ago · Hydration tips</div>
-        </div>
-        <div class="act-badge" style="color:var(--text-muted)">→</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════ SCAN ═══════════════════════════════════════ -->
-<div id="scan" class="screen">
-  <div class="scan-header">
-    <div class="btn-icon" onclick="showScreen('home')">←</div>
-    <div class="scan-title">Skin Scan</div>
-    <div class="btn-icon" onclick="">⚙️</div>
-  </div>
-  <div class="scan-area">
-    <div class="scan-frame">
-      <div class="scan-line"></div>
-    </div>
-    <div class="scan-guide">Position your face in the frame</div>
-  </div>
-  <div class="scan-footer">
-    <div class="scan-options">
-      <div class="scan-opt" onclick="document.getElementById('file-input').click()">
-        <div class="scan-opt-icon">🖼️</div>
-        <div class="scan-opt-label">Gallery</div>
-      </div>
-    </div>
-    <div class="scan-btn" onclick="startScan()">📸</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.4);text-align:center">Tap to analyze · Tap gallery to upload</div>
-  </div>
-  <div class="scan-analyzing" id="scan-analyzing">
-    <div class="analyze-ring"></div>
-    <div style="font-size:24px">🔬</div>
-    <div class="analyze-text">Analyzing your skin...</div>
-    <div class="analyze-steps" id="analyze-step">Detecting skin type</div>
-  </div>
-  <input type="file" id="file-input" accept="image/*" capture="user" style="display:none" onchange="handleFileSelect(event)">
-</div>
-
-<!-- ═══════════════════════════════════════ ANALYSIS ═══════════════════════════════════════ -->
-<div id="analysis" class="screen">
-  <div class="screen-header">
-    <div class="btn-icon" onclick="showScreen('home')">←</div>
-    <div style="font-size:18px;font-weight:700">Analysis Results</div>
-    <div class="btn-icon" onclick="shareAnalysis()">↑</div>
+    <div class="avatar" onclick="showScreen('settings')">⚖️</div>
   </div>
   <div class="screen-body">
-    <!-- Score Ring -->
-    <div class="analysis-score-card">
-      <div class="score-ring-wrap">
-        <svg width="140" height="140" viewBox="0 0 140 140">
-          <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10"/>
-          <circle id="score-ring" cx="70" cy="70" r="60" fill="none" stroke="url(#grad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="95"/>
-          <defs>
-            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#7C3AED"/>
-              <stop offset="100%" stop-color="#EC4899"/>
-            </linearGradient>
-          </defs>
-        </svg>
-        <div class="score-center">
-          <div class="score-big" id="analysis-score-num">78</div>
-          <div class="score-small">/ 100</div>
-        </div>
+    <!-- New Case Card -->
+    <div class="hero-card">
+      <div class="hero-label">New Case</div>
+      <div class="new-case-title">Start a new matter</div>
+      <div class="new-case-sub">Select your state and issue type to get step-by-step legal guidance.</div>
+
+      <div class="state-pick-btn" id="state-pick-btn" onclick="openStateModal()">
+        <span id="state-pick-label">Select your state</span>
+        <span>›</span>
       </div>
-      <div style="font-size:22px;font-weight:700;margin-bottom:6px" id="analysis-score-label">Looking Good ✨</div>
-      <div style="font-size:14px;color:var(--text-muted)" id="analysis-date">Analyzed just now</div>
-      <div class="row mt-16" style="justify-content:center;gap:8px;flex-wrap:wrap" id="analysis-chips"></div>
+
+      <div class="issue-grid" id="issue-grid"></div>
+
+      <button class="btn-primary" id="start-case-btn" onclick="startCase()" style="opacity:0.4;pointer-events:none">
+        Start with AI Advisor →
+      </button>
     </div>
 
-    <!-- Detected Concerns -->
-    <div class="section-title">Detected Concerns</div>
-    <div class="concern-list" id="concern-list"></div>
+    <!-- Active Case -->
+    <div id="active-case-section" class="hidden">
+      <div class="section-title">Active Case</div>
+      <div id="active-case-card"></div>
+    </div>
 
-    <!-- Recommendations -->
-    <div class="section-title mt-16">Recommendations</div>
-    <div id="rec-list"></div>
-
-    <!-- Actions -->
-    <div style="display:flex;gap:10px;margin-top:20px">
-      <button class="btn-primary" style="flex:1" onclick="buildRoutineFromAnalysis()">Build Routine</button>
-      <button class="btn-secondary" style="flex:1" onclick="showScreen('agent')">Ask GlowAI</button>
+    <!-- Past Cases -->
+    <div id="past-cases-section">
+      <div class="section-title">Case History</div>
+      <div id="past-cases-list"></div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════ AGENT ═══════════════════════════════════════ -->
-<div id="agent" class="screen">
-  <div class="agent-header">
-    <div class="agent-avatar">✨</div>
-    <div class="agent-info">
-      <div class="agent-name">GlowAI Agent</div>
-      <div class="agent-status"><div class="agent-dot"></div> Online · Ready to help</div>
+<!-- ══════════════════════ ADVISOR ══════════════════════ -->
+<div id="advisor" class="screen">
+  <div class="advisor-header">
+    <div class="advisor-avatar">⚖️</div>
+    <div class="advisor-info">
+      <div class="advisor-name">CourtAide Advisor</div>
+      <div class="advisor-status"><div class="status-dot"></div> Online · Ready to help</div>
     </div>
-    <div class="btn-icon" onclick="clearChat()">🗑️</div>
+    <div class="btn-icon" onclick="clearChat()" style="font-size:16px">🗑️</div>
+  </div>
+  <div class="case-ctx-bar" id="case-ctx-bar">
+    <span style="font-size:15px">📋</span>
+    <span class="ctx-label" id="ctx-label">No active case</span>
+    <span class="ctx-state" id="ctx-state"></span>
+  </div>
+  <div class="disclaimer-banner">
+    ⚠️ CourtAide provides legal <strong>information</strong>, not legal advice. Always consult a licensed attorney for your specific situation.
   </div>
   <div class="chat-body" id="chat-body"></div>
   <div class="starter-pills" id="starter-pills">
-    <div class="starter-pill" onclick="sendStarter(this)">Analyze my skin</div>
-    <div class="starter-pill" onclick="sendStarter(this)">Build my routine</div>
-    <div class="starter-pill" onclick="sendStarter(this)">Explain retinol</div>
-    <div class="starter-pill" onclick="sendStarter(this)">Help with acne</div>
-    <div class="starter-pill" onclick="sendStarter(this)">Best moisturizer?</div>
+    <div class="starter-pill" onclick="sendStarter(this)">What forms do I need?</div>
+    <div class="starter-pill" onclick="sendStarter(this)">Explain my rights</div>
+    <div class="starter-pill" onclick="sendStarter(this)">What's my strategy?</div>
+    <div class="starter-pill" onclick="sendStarter(this)">Relevant laws</div>
   </div>
   <div class="chat-input-area">
-    <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask GlowAI anything..." onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+    <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask CourtAide anything..." onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
     <button class="chat-send" id="chat-send" onclick="sendMessage()">➤</button>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════ ROUTINE ═══════════════════════════════════════ -->
-<div id="routine" class="screen">
+<!-- ══════════════════════ DOCUMENTS ══════════════════════ -->
+<div id="documents" class="screen">
   <div class="screen-header">
-    <div style="font-size:22px;font-weight:700">My Routine</div>
-    <div class="btn-icon" onclick="showScreen('agent')">✏️</div>
+    <div>
+      <div style="font-size:22px;font-weight:800">Documents</div>
+      <div style="font-size:14px;color:var(--text-muted);margin-top:2px">Court forms &amp; filings</div>
+    </div>
+    <div class="btn-icon" onclick="navTo('advisor')" style="font-size:16px">💬</div>
   </div>
-  <div class="screen-body">
-    <div class="streak-card">
-      <div class="streak-icon">🔥</div>
-      <div class="streak-info">
-        <div class="streak-title">Day Streak</div>
-        <div class="streak-sub">Consistent skincare</div>
-      </div>
-      <div class="streak-num" id="routine-streak">7</div>
+  <div class="doc-case-bar" id="doc-case-bar" style="display:none">
+    <div class="doc-case-label">Active Case</div>
+    <div class="doc-case-name" id="doc-case-name">—</div>
+  </div>
+  <div class="screen-body" id="docs-body">
+    <div class="doc-empty" id="docs-empty">
+      <div class="doc-empty-icon">📄</div>
+      <div class="doc-empty-title">No forms yet</div>
+      <div class="doc-empty-sub">Start a case and chat with the AI Advisor — it will identify the specific court forms you need and list them here.</div>
+      <button class="btn-primary" style="max-width:260px;margin:0 auto" onclick="navTo('advisor')">Open AI Advisor</button>
     </div>
-    <div class="routine-tabs">
-      <div class="routine-tab active" id="tab-am" onclick="switchTab('am')">☀️ Morning</div>
-      <div class="routine-tab" id="tab-pm" onclick="switchTab('pm')">🌙 Evening</div>
-    </div>
-    <div id="routine-steps"></div>
-    <div style="margin-top:16px">
-      <button class="btn-primary" onclick="markAllDone()">✓ Mark All Done</button>
-    </div>
+    <div id="forms-list" class="hidden"></div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════ SETTINGS ═══════════════════════════════════════ -->
+<!-- ══════════════════════ SETTINGS ══════════════════════ -->
 <div id="settings" class="screen">
   <div class="screen-header">
     <div class="btn-icon" onclick="showScreen('home')">←</div>
-    <div style="font-size:18px;font-weight:700">Settings</div>
+    <div style="font-size:18px;font-weight:700">Profile &amp; Settings</div>
     <div style="width:44px"></div>
   </div>
   <div class="screen-body">
     <div class="profile-header">
-      <div class="profile-avatar">✨</div>
-      <div class="profile-name" id="profile-name">Your Name</div>
-      <div class="profile-sub" id="profile-skin-type">Skin type loading...</div>
-      <div class="profile-chips" id="profile-chips"></div>
+      <div class="profile-avatar">⚖️</div>
+      <div class="profile-name" id="profile-name">Loading...</div>
+      <div class="profile-sub" id="profile-sub">—</div>
+    </div>
+
+    <div class="disclaimer-box">
+      <div class="disclaimer-title">⚠️ Legal Disclaimer</div>
+      <div class="disclaimer-text">CourtAide provides legal information, not legal advice. It is not a substitute for an attorney. Laws vary by jurisdiction. Always consult a licensed attorney for your specific situation. AI-generated content may contain errors — verify all information before filing any court documents.</div>
     </div>
 
     <div class="settings-section">
       <div class="settings-label">AI Configuration</div>
       <div class="settings-card">
         <div class="settings-row" style="cursor:default">
-          <div class="settings-row-icon" style="background:rgba(124,58,237,0.2)">🔑</div>
-          <div class="settings-row-text">
-            <div class="settings-row-title">Anthropic API Key</div>
+          <div class="row-icon" style="background:rgba(27,79,138,0.25)">🔑</div>
+          <div class="row-text">
+            <div class="row-title">Anthropic API Key</div>
             <input class="settings-input" id="api-key-input" type="password" placeholder="sk-ant-..." oninput="saveApiKey(this.value)">
           </div>
         </div>
         <div class="settings-row" style="cursor:default">
-          <div class="settings-row-icon" style="background:rgba(16,185,129,0.2)">🤖</div>
-          <div class="settings-row-text">
-            <div class="settings-row-title">AI Model</div>
-            <div class="settings-row-sub">claude-sonnet-4-6 (Latest)</div>
+          <div class="row-icon" style="background:rgba(16,185,129,0.18)">🤖</div>
+          <div class="row-text">
+            <div class="row-title">AI Model</div>
+            <div class="row-sub">claude-sonnet-4-6 · Latest</div>
           </div>
         </div>
       </div>
     </div>
 
     <div class="settings-section">
-      <div class="settings-label">Skin Profile</div>
+      <div class="settings-label">Profile</div>
       <div class="settings-card">
-        <div class="settings-row" onclick="restartOnboarding()">
-          <div class="settings-row-icon" style="background:rgba(236,72,153,0.2)">🌸</div>
-          <div class="settings-row-text">
-            <div class="settings-row-title">Skin Assessment</div>
-            <div class="settings-row-sub" id="settings-skin-sub">Retake quiz</div>
+        <div class="settings-row tappable" onclick="resetProfile()">
+          <div class="row-icon" style="background:rgba(201,168,76,0.18)">👤</div>
+          <div class="row-text">
+            <div class="row-title">Edit Profile</div>
+            <div class="row-sub" id="settings-profile-sub">Name · State</div>
           </div>
-          <div class="settings-chevron">›</div>
+          <div class="row-chevron">›</div>
         </div>
-        <div class="settings-row" onclick="">
-          <div class="settings-row-icon" style="background:rgba(245,158,11,0.2)">📊</div>
-          <div class="settings-row-text">
-            <div class="settings-row-title">Progress History</div>
-            <div class="settings-row-sub">View scan history</div>
+        <div class="settings-row tappable" onclick="clearAllCases()">
+          <div class="row-icon" style="background:rgba(239,68,68,0.18)">🗑️</div>
+          <div class="row-text">
+            <div class="row-title">Clear All Cases</div>
+            <div class="row-sub">Delete all case history</div>
           </div>
-          <div class="settings-chevron">›</div>
+          <div class="row-chevron">›</div>
         </div>
       </div>
     </div>
 
     <div class="settings-section">
-      <div class="settings-label">App</div>
+      <div class="settings-label">About</div>
       <div class="settings-card">
-        <div class="settings-row" onclick="clearChat();showScreen('agent')">
-          <div class="settings-row-icon" style="background:rgba(239,68,68,0.2)">🗑️</div>
-          <div class="settings-row-text">
-            <div class="settings-row-title">Clear Chat History</div>
+        <div class="settings-row" style="cursor:default">
+          <div class="row-icon" style="background:rgba(99,102,241,0.18)">ℹ️</div>
+          <div class="row-text">
+            <div class="row-title">CourtAide</div>
+            <div class="row-sub">v1.0.0 · Powered by Claude AI</div>
           </div>
-          <div class="settings-chevron">›</div>
-        </div>
-        <div class="settings-row" onclick="">
-          <div class="settings-row-icon" style="background:rgba(99,102,241,0.2)">ℹ️</div>
-          <div class="settings-row-text">
-            <div class="settings-row-title">About GlowAI</div>
-            <div class="settings-row-sub">v1.0.0 · Powered by Claude</div>
-          </div>
-          <div class="settings-chevron">›</div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════ BOTTOM NAV ═══════════════════════════════════════ -->
+<!-- ══════════════════════ BOTTOM NAV ══════════════════════ -->
 <nav id="bottom-nav">
   <div class="nav-item active" id="nav-home" onclick="navTo('home')">
-    <div class="nav-icon">🏠</div>
+    <div class="nav-icon">⚖️</div>
     <div class="nav-label">Home</div>
   </div>
-  <div class="nav-scan-btn" onclick="navTo('scan')">
-    <div class="nav-scan-inner">📸</div>
-    <div class="nav-scan-label">Scan</div>
+  <div class="nav-item" id="nav-advisor" onclick="navTo('advisor')">
+    <div class="nav-icon">💬</div>
+    <div class="nav-label">Advisor</div>
   </div>
-  <div class="nav-item" id="nav-agent" onclick="navTo('agent')">
-    <div class="nav-icon">✨</div>
-    <div class="nav-label">GlowAI</div>
+  <div class="nav-item" id="nav-documents" onclick="navTo('documents')">
+    <div class="nav-icon">📄</div>
+    <div class="nav-label">Documents</div>
   </div>
-  <div class="nav-item" id="nav-routine" onclick="navTo('routine')">
-    <div class="nav-icon">🌿</div>
-    <div class="nav-label">Routine</div>
+  <div class="nav-item" id="nav-settings" onclick="showScreen('settings')">
+    <div class="nav-icon">👤</div>
+    <div class="nav-label">Profile</div>
   </div>
 </nav>
 
-<!-- ═══════════════════════════════════════ MODAL ═══════════════════════════════════════ -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+<!-- ══════════════════════ STATE MODAL ══════════════════════ -->
+<div class="modal-overlay" id="state-modal" onclick="closeStateModal(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div id="modal-content"></div>
+    <div class="modal-title">Select State</div>
+    <input class="modal-search" id="state-search" type="text" placeholder="Search states..." oninput="filterStates(this.value)">
+    <div class="state-list" id="state-list"></div>
   </div>
 </div>
 
+<!-- ══════════════════════ TOAST ══════════════════════ -->
+
 <script>
+// ══════════════════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════════════════
+const US_STATES = [
+  'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut',
+  'Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa',
+  'Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan',
+  'Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire',
+  'New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio',
+  'Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota',
+  'Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia',
+  'Wisconsin','Wyoming'
+];
+
+const ISSUE_CATEGORIES = [
+  { id: 'family',      icon: '👨‍👩‍👧', label: 'Family Law' },
+  { id: 'criminal',    icon: '🔒',     label: 'Criminal Defense' },
+  { id: 'civil',       icon: '🤝',     label: 'Civil Dispute' },
+  { id: 'landlord',    icon: '🏠',     label: 'Landlord/Tenant' },
+  { id: 'employment',  icon: '💼',     label: 'Employment' },
+  { id: 'smallclaims', icon: '💰',     label: 'Small Claims' },
+  { id: 'traffic',     icon: '🚗',     label: 'Traffic' },
+  { id: 'immigration', icon: '🌎',     label: 'Immigration' },
+  { id: 'bankruptcy',  icon: '📊',     label: 'Bankruptcy' },
+  { id: 'estate',      icon: '📜',     label: 'Estate/Probate' },
+];
+
 // ══════════════════════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════════════════════
 const state = {
-  profile: JSON.parse(localStorage.getItem('glowai_profile') || 'null'),
-  routine: JSON.parse(localStorage.getItem('glowai_routine') || 'null'),
-  lastAnalysis: JSON.parse(localStorage.getItem('glowai_analysis') || 'null'),
-  chatHistory: JSON.parse(localStorage.getItem('glowai_chat') || '[]'),
-  streak: parseInt(localStorage.getItem('glowai_streak') || '7'),
-  apiKey: localStorage.getItem('glowai_apikey') || '',
-  currentScreen: 'splash',
-  activeTab: 'am',
-  obStep: 1,
-  obData: { skinType: null, concerns: [], goals: [] }
+  profile:          JSON.parse(localStorage.getItem('courtaide_profile') || 'null'),
+  currentCase:      JSON.parse(localStorage.getItem('courtaide_current_case') || 'null'),
+  cases:            JSON.parse(localStorage.getItem('courtaide_cases') || '[]'),
+  apiKey:           localStorage.getItem('courtaide_apikey') || '',
+  biometricEnabled: localStorage.getItem('courtaide_biometric') === 'true',
+  authenticated:    false,
+  currentScreen:    'splash',
+  // home screen selection
+  selectedState:    null,
+  selectedIssue:    null,
 };
+
+function saveState() {
+  localStorage.setItem('courtaide_profile', JSON.stringify(state.profile));
+  localStorage.setItem('courtaide_current_case', JSON.stringify(state.currentCase));
+  localStorage.setItem('courtaide_cases', JSON.stringify(state.cases));
+}
 
 // ══════════════════════════════════════════════════════════════════════
 //  SCREEN MANAGEMENT
 // ══════════════════════════════════════════════════════════════════════
-const NAV_SCREENS = ['home', 'agent', 'routine'];
-const FULL_SCREENS = ['scan', 'analysis', 'onboarding', 'settings', 'splash'];
+const NAV_SCREENS = ['home', 'advisor', 'documents'];
 
 function showScreen(id) {
   const prev = document.querySelector('.screen.active');
-  if (prev) { prev.classList.remove('active'); }
+  if (prev) prev.classList.remove('active');
   const next = document.getElementById(id);
-  if (next) { next.classList.add('active'); }
+  if (next) next.classList.add('active');
   state.currentScreen = id;
   const nav = document.getElementById('bottom-nav');
-  nav.style.display = FULL_SCREENS.includes(id) ? 'none' : 'flex';
-  // Update nav active states
-  ['home','agent','routine'].forEach(s => {
+  const noNav = ['splash', 'auth', 'setup', 'settings'];
+  nav.style.display = noNav.includes(id) ? 'none' : 'flex';
+  ['home','advisor','documents'].forEach(s => {
     const el = document.getElementById('nav-' + s);
     if (el) el.classList.toggle('active', s === id);
   });
+  const navSettings = document.getElementById('nav-settings');
+  if (navSettings) navSettings.classList.toggle('active', id === 'settings');
 }
 
 function navTo(id) {
   showScreen(id);
-  if (id === 'agent' && state.chatHistory.length === 0) {
-    initChat();
-  }
-  if (id === 'home') { updateHome(); }
-  if (id === 'routine') { renderRoutine(); }
+  if (id === 'home') updateHome();
+  if (id === 'advisor') initAdvisor();
+  if (id === 'documents') renderDocuments();
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  ONBOARDING
+//  SPLASH → AUTH → SETUP FLOW
 // ══════════════════════════════════════════════════════════════════════
-const SKIN_TYPES = [
-  { id: 'normal', icon: '🌿', label: 'Normal', desc: 'Balanced skin' },
-  { id: 'dry', icon: '🏜️', label: 'Dry', desc: 'Tight, flaky' },
-  { id: 'oily', icon: '✨', label: 'Oily', desc: 'Shiny, pores' },
-  { id: 'combo', icon: '☯️', label: 'Combination', desc: 'Mixed zones' },
-];
-const SKIN_CONCERNS = ['Acne', 'Dark Spots', 'Wrinkles', 'Redness', 'Dullness', 'Dryness', 'Oiliness', 'Large Pores', 'Dark Circles', 'Uneven Tone', 'Sensitivity', 'Texture'];
-const SKIN_GOALS = [
-  { id: 'hydration', icon: '💧', label: 'Hydration', desc: 'Plump, dewy' },
-  { id: 'clarity', icon: '✨', label: 'Clear Skin', desc: 'Blemish-free' },
-  { id: 'antiage', icon: '⏳', label: 'Anti-Aging', desc: 'Youthful glow' },
-  { id: 'glow', icon: '🌟', label: 'Radiant Glow', desc: 'Luminous' },
-];
-
-function renderObStep() {
-  const content = document.getElementById('ob-content');
-  document.getElementById('ob-step-label').textContent = state.obStep;
-  [1,2,3].forEach(i => {
-    document.getElementById('ob-dot-' + i).classList.toggle('active', i <= state.obStep);
+function boot() {
+  showScreen('splash');
+  // Populate state select in setup
+  const sel = document.getElementById('setup-state');
+  US_STATES.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    sel.appendChild(opt);
   });
-  if (state.obStep === 1) {
-    content.innerHTML = `
-      <div class="ob-title">What's your<br>skin type?</div>
-      <div class="ob-sub">We'll personalize your experience based on your skin.</div>
-      <div class="option-grid">
-        ${SKIN_TYPES.map(t => `
-          <div class="option-card ${state.obData.skinType === t.id ? 'selected' : ''}" onclick="selectSkinType('${t.id}', this)">
-            <div class="icon">${t.icon}</div>
-            <div class="label">${t.label}</div>
-            <div class="desc">${t.desc}</div>
-          </div>
-        `).join('')}
-      </div>`;
-  } else if (state.obStep === 2) {
-    content.innerHTML = `
-      <div class="ob-title">What are your<br>main concerns?</div>
-      <div class="ob-sub">Select all that apply. We'll focus on what matters most to you.</div>
-      <div style="padding-bottom:16px">
-        ${SKIN_CONCERNS.map(c => `
-          <span class="concern-chip ${state.obData.concerns.includes(c) ? 'selected' : ''}" onclick="toggleConcern('${c}', this)">
-            ${getConcernEmoji(c)} ${c}
-          </span>
-        `).join('')}
-      </div>`;
-  } else {
-    content.innerHTML = `
-      <div class="ob-title">What's your<br>main goal?</div>
-      <div class="ob-sub">Choose your primary skincare goal — we can work on everything!</div>
-      <div class="option-grid">
-        ${SKIN_GOALS.map(g => `
-          <div class="option-card ${state.obData.goals.includes(g.id) ? 'selected' : ''}" onclick="toggleGoal('${g.id}', this)">
-            <div class="icon">${g.icon}</div>
-            <div class="label">${g.label}</div>
-            <div class="desc">${g.desc}</div>
-          </div>
-        `).join('')}
-      </div>`;
-  }
+  // Render issue grid on home
+  renderIssueGrid();
+
+  setTimeout(() => {
+    if (!state.profile) {
+      showScreen('setup');
+    } else if (state.biometricEnabled) {
+      showAuthReturn();
+    } else {
+      // Profile exists but biometric not enabled yet — go home
+      state.authenticated = true;
+      enterApp();
+    }
+  }, 2400);
 }
-function getConcernEmoji(c) {
-  const map = {Acne:'🔴','Dark Spots':'🟤',Wrinkles:'〰️',Redness:'🌹',Dullness:'😶',Dryness:'🌵',Oiliness:'💦','Large Pores':'🔬','Dark Circles':'👁️','Uneven Tone':'🎨',Sensitivity:'🌸',Texture:'🪨'};
-  return map[c] || '•';
+
+function showAuthReturn() {
+  // Return user: show auto-scanning auth
+  document.getElementById('auth-title').textContent = 'Welcome back, ' + (state.profile?.name?.split(' ')[0] || 'Counselor');
+  document.getElementById('auth-sub').textContent = 'Verifying your identity to access your cases...';
+  document.getElementById('auth-btn').textContent = '🔐 Authenticating...';
+  document.getElementById('auth-btn').disabled = true;
+  document.getElementById('auth-btn').style.opacity = '0.5';
+  document.getElementById('scan-beam').classList.remove('hidden-beam');
+  showScreen('auth');
+
+  // Auto-authenticate after 1.5s
+  setTimeout(() => {
+    document.getElementById('auth-status').textContent = '✓ Identity verified';
+    document.getElementById('auth-status').style.color = '#6EE7B7';
+    setTimeout(() => {
+      state.authenticated = true;
+      enterApp();
+    }, 600);
+  }, 1500);
 }
-function selectSkinType(id, el) {
-  state.obData.skinType = id;
-  document.querySelectorAll('#ob-content .option-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+
+function showAuthSetup() {
+  // First-time: prompt to enable Face ID
+  document.getElementById('auth-title').textContent = 'Secure your account';
+  document.getElementById('auth-sub').textContent = 'Enable biometric authentication to quickly and securely access your cases.';
+  document.getElementById('auth-btn').textContent = '🔐 Enable Face ID / Fingerprint';
+  document.getElementById('auth-btn').disabled = false;
+  document.getElementById('auth-btn').style.opacity = '1';
+  document.getElementById('scan-beam').classList.add('hidden-beam');
+  showScreen('auth');
 }
-function toggleConcern(c, el) {
-  const i = state.obData.concerns.indexOf(c);
-  if (i >= 0) { state.obData.concerns.splice(i, 1); el.classList.remove('selected'); }
-  else { state.obData.concerns.push(c); el.classList.add('selected'); }
+
+function handleAuthBtn() {
+  const btn = document.getElementById('auth-btn');
+  if (btn.disabled) return;
+  // Enable biometric
+  state.biometricEnabled = true;
+  localStorage.setItem('courtaide_biometric', 'true');
+  btn.textContent = '✓ Biometrics Enabled';
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  document.getElementById('auth-status').textContent = 'Face ID enabled successfully';
+  document.getElementById('auth-status').style.color = '#6EE7B7';
+  document.getElementById('scan-beam').classList.remove('hidden-beam');
+  setTimeout(() => {
+    state.authenticated = true;
+    enterApp();
+  }, 1000);
 }
-function toggleGoal(id, el) {
-  const i = state.obData.goals.indexOf(id);
-  if (i >= 0) { state.obData.goals.splice(i, 1); el.classList.remove('selected'); }
-  else { state.obData.goals.push(id); el.classList.add('selected'); }
-}
-document.getElementById('ob-next-btn').onclick = function() {
-  if (state.obStep === 1 && !state.obData.skinType) {
-    this.style.animation = 'shake 0.3s ease'; setTimeout(() => this.style.animation='', 300); return;
-  }
-  if (state.obStep < 3) { state.obStep++; renderObStep(); }
-  else { completeOnboarding(); }
-};
-function completeOnboarding() {
-  const skinTypeMap = { normal: 'Normal', dry: 'Dry', oily: 'Oily', combo: 'Combination' };
-  state.profile = {
-    skinType: skinTypeMap[state.obData.skinType] || 'Normal',
-    skinTypeId: state.obData.skinType,
-    concerns: state.obData.concerns,
-    goals: state.obData.goals,
-    name: 'You',
-    score: 72 + Math.floor(Math.random() * 15)
-  };
-  localStorage.setItem('glowai_profile', JSON.stringify(state.profile));
-  state.routine = buildDefaultRoutine(state.profile);
-  localStorage.setItem('glowai_routine', JSON.stringify(state.routine));
+
+function enterApp() {
   updateHome();
-  renderRoutine();
+  renderDocuments();
   showScreen('home');
   document.getElementById('bottom-nav').style.display = 'flex';
 }
-function restartOnboarding() {
-  state.obStep = 1; state.obData = { skinType: null, concerns: [], goals: [] };
-  renderObStep(); showScreen('onboarding');
-  document.getElementById('bottom-nav').style.display = 'none';
+
+// ══════════════════════════════════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════════════════════════════════
+function completeSetup() {
+  const name = document.getElementById('setup-name').value.trim();
+  const homeState = document.getElementById('setup-state').value;
+  const dob = document.getElementById('setup-dob').value;
+
+  if (!name) { shakeBtn('setup-footer'); return; }
+  if (!homeState) { shakeEl('setup-state'); return; }
+
+  state.profile = { name, homeState, dob, createdAt: new Date().toISOString() };
+  saveState();
+  updateSettings();
+  showAuthSetup();
+}
+
+function shakeEl(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.animation = 'shake 0.3s ease';
+  el.style.borderColor = 'rgba(239,68,68,0.6)';
+  setTimeout(() => { el.style.animation = ''; el.style.borderColor = ''; }, 300);
+}
+function shakeBtn(cls) {
+  const el = document.querySelector('.' + cls + ' .btn-primary');
+  if (!el) return;
+  el.style.animation = 'shake 0.3s ease';
+  setTimeout(() => el.style.animation = '', 300);
 }
 
 // ══════════════════════════════════════════════════════════════════════
 //  HOME
 // ══════════════════════════════════════════════════════════════════════
+function renderIssueGrid() {
+  const grid = document.getElementById('issue-grid');
+  grid.innerHTML = ISSUE_CATEGORIES.map(cat => `
+    <div class="issue-card" id="issue-${cat.id}" onclick="selectIssue('${cat.id}', '${cat.label}', this)">
+      <div class="issue-icon">${cat.icon}</div>
+      <div class="issue-label">${cat.label}</div>
+    </div>
+  `).join('');
+}
+
 function updateHome() {
   if (!state.profile) return;
   const h = new Date().getHours();
-  const greeting = h < 12 ? 'Good morning ☀️' : h < 18 ? 'Good afternoon 🌤️' : 'Good evening 🌙';
-  document.getElementById('greeting').textContent = greeting;
-  document.getElementById('greeting-name').textContent = 'Welcome back!';
-  const score = state.profile.score || 78;
-  document.getElementById('home-score').textContent = score;
-  document.getElementById('home-score-bar').style.width = score + '%';
-  const label = score >= 90 ? 'Excellent! 🌟' : score >= 75 ? 'Looking Good ✨' : score >= 60 ? 'Room to Grow 🌱' : 'Needs Attention 💪';
-  document.getElementById('home-score-label').textContent = label;
-  document.getElementById('home-streak').textContent = state.streak;
-  document.getElementById('routine-streak').textContent = state.streak;
-  const chips = document.getElementById('home-concern-chips');
-  chips.innerHTML = (state.profile.concerns || []).slice(0, 3).map(c => `<span class="chip rose">${getConcernEmoji(c)} ${c}</span>`).join('');
+  const greet = h < 12 ? 'Good morning ☀️' : h < 18 ? 'Good afternoon 🌤️' : 'Good evening 🌙';
+  document.getElementById('greeting').textContent = greet;
+  document.getElementById('greeting-name').textContent = state.profile.name;
+
+  // Restore selections if current case exists
+  if (state.currentCase) {
+    state.selectedState = state.currentCase.caseState;
+    state.selectedIssue = state.currentCase.issueType;
+    updateStatePickerUI(state.currentCase.caseState);
+    const issueEl = document.getElementById('issue-' + state.currentCase.issueType);
+    if (issueEl) issueEl.classList.add('selected');
+    checkStartBtn();
+  }
+
+  // Active case
+  const activeSection = document.getElementById('active-case-section');
+  const activeCard = document.getElementById('active-case-card');
+  if (state.currentCase) {
+    activeSection.classList.remove('hidden');
+    const cat = ISSUE_CATEGORIES.find(c => c.id === state.currentCase.issueType);
+    activeCard.innerHTML = `
+      <div class="case-item" onclick="navTo('advisor')">
+        <div class="case-item-icon">${cat ? cat.icon : '⚖️'}</div>
+        <div class="case-item-info">
+          <div class="case-item-title">${state.currentCase.issueLabel}</div>
+          <div class="case-item-sub">${state.currentCase.caseState} · ${(state.currentCase.chatHistory || []).length} messages</div>
+        </div>
+        <span class="chip chip-gold">Active</span>
+      </div>`;
+  } else {
+    activeSection.classList.add('hidden');
+  }
+
+  // Past cases
+  const pastList = document.getElementById('past-cases-list');
+  const completed = state.cases.filter(c => c !== state.currentCase);
+  if (completed.length === 0) {
+    pastList.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No past cases yet</div>
+        <div class="empty-sub">Your completed cases will appear here.</div>
+      </div>`;
+  } else {
+    pastList.innerHTML = completed.slice().reverse().slice(0, 5).map(c => {
+      const cat = ISSUE_CATEGORIES.find(i => i.id === c.issueType);
+      return `
+        <div class="case-item" onclick="loadCase('${c.id}')">
+          <div class="case-item-icon">${cat ? cat.icon : '⚖️'}</div>
+          <div class="case-item-info">
+            <div class="case-item-title">${c.issueLabel}</div>
+            <div class="case-item-sub">${c.caseState} · ${new Date(c.createdAt).toLocaleDateString()}</div>
+          </div>
+          <span class="chip chip-gray">View</span>
+        </div>`;
+    }).join('');
+  }
+
   updateSettings();
 }
-function updateSettings() {
-  if (!state.profile) return;
-  document.getElementById('profile-name').textContent = state.profile.name || 'Your Profile';
-  document.getElementById('profile-skin-type').textContent = state.profile.skinType + ' Skin';
-  document.getElementById('settings-skin-sub').textContent = state.profile.skinType + ' · ' + (state.profile.concerns || []).length + ' concerns';
-  const chips = document.getElementById('profile-chips');
-  chips.innerHTML = (state.profile.concerns || []).map(c => `<span class="chip rose">${getConcernEmoji(c)} ${c}</span>`).join('');
-  document.getElementById('api-key-input').value = state.apiKey;
+
+function updateStatePickerUI(stateName) {
+  const btn = document.getElementById('state-pick-btn');
+  const label = document.getElementById('state-pick-label');
+  if (stateName) {
+    btn.classList.add('chosen');
+    label.textContent = '📍 ' + stateName;
+  } else {
+    btn.classList.remove('chosen');
+    label.textContent = 'Select your state';
+  }
 }
-function saveApiKey(val) {
-  state.apiKey = val;
-  localStorage.setItem('glowai_apikey', val);
+
+function selectIssue(id, label, el) {
+  document.querySelectorAll('.issue-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedIssue = id;
+  state.selectedIssueLabel = label;
+  checkStartBtn();
+}
+
+function checkStartBtn() {
+  const btn = document.getElementById('start-case-btn');
+  const ready = state.selectedState && state.selectedIssue;
+  btn.style.opacity = ready ? '1' : '0.4';
+  btn.style.pointerEvents = ready ? 'auto' : 'none';
+}
+
+function startCase() {
+  if (!state.selectedState || !state.selectedIssue) return;
+  const cat = ISSUE_CATEGORIES.find(c => c.id === state.selectedIssue);
+
+  // Archive current case if exists
+  if (state.currentCase) {
+    state.cases.push(state.currentCase);
+  }
+
+  state.currentCase = {
+    id: Date.now().toString(),
+    caseState: state.selectedState,
+    issueType: state.selectedIssue,
+    issueLabel: cat ? cat.label : state.selectedIssueLabel,
+    chatHistory: [],
+    forms: [],
+    createdAt: new Date().toISOString(),
+  };
+  saveState();
+  updateCaseContext();
+  navTo('advisor');
+  // Seed initial context message
+  setTimeout(() => sendCaseContext(), 200);
+}
+
+function loadCase(id) {
+  const found = state.cases.find(c => c.id === id);
+  if (!found) return;
+  // Swap with current
+  if (state.currentCase) state.cases.push(state.currentCase);
+  state.currentCase = found;
+  state.cases = state.cases.filter(c => c.id !== id);
+  saveState();
+  updateCaseContext();
+  navTo('advisor');
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  SCAN & ANALYSIS
+//  STATE MODAL
 // ══════════════════════════════════════════════════════════════════════
-function startScan() {
-  document.getElementById('file-input').click();
+function openStateModal() {
+  renderStateList(US_STATES);
+  document.getElementById('state-search').value = '';
+  document.getElementById('state-modal').classList.add('show');
+  setTimeout(() => document.getElementById('state-search').focus(), 300);
 }
-function handleFileSelect(e) {
-  if (e.target.files && e.target.files[0]) {
-    runAnalysis();
+
+function closeStateModal(e) {
+  if (!e || e.target === document.getElementById('state-modal')) {
+    document.getElementById('state-modal').classList.remove('show');
   }
 }
-const ANALYZE_STEPS = ['Detecting skin type...', 'Mapping skin zones...', 'Analyzing texture...', 'Checking hydration levels...', 'Identifying concerns...', 'Generating recommendations...'];
-function runAnalysis() {
-  const analyzing = document.getElementById('scan-analyzing');
-  analyzing.classList.add('show');
-  let step = 0;
-  const interval = setInterval(() => {
-    document.getElementById('analyze-step').textContent = ANALYZE_STEPS[step % ANALYZE_STEPS.length];
-    step++;
-    if (step >= ANALYZE_STEPS.length) {
-      clearInterval(interval);
-      setTimeout(() => {
-        analyzing.classList.remove('show');
-        showAnalysisResults();
-      }, 600);
-    }
-  }, 600);
-}
-function showAnalysisResults() {
-  const profile = state.profile || { skinType: 'Normal', concerns: ['Dryness', 'Dullness'], score: 72 };
-  const score = 65 + Math.floor(Math.random() * 25);
-  const concerns = (profile.concerns || ['Dryness', 'Dullness']).slice(0, 4).map((c, i) => ({
-    name: c, severity: ['mild','moderate','severe'][Math.min(i, 2)], pct: 85 - i * 18
-  }));
-  const analysis = { score, concerns, date: new Date().toISOString(), skinType: profile.skinType };
-  state.lastAnalysis = analysis;
-  state.profile.score = score;
-  localStorage.setItem('glowai_analysis', JSON.stringify(analysis));
-  localStorage.setItem('glowai_profile', JSON.stringify(state.profile));
-  renderAnalysis(analysis);
-  showScreen('analysis');
-}
-function renderAnalysis(a) {
-  document.getElementById('analysis-score-num').textContent = a.score;
-  const label = a.score >= 90 ? 'Radiant! 🌟' : a.score >= 75 ? 'Looking Good ✨' : a.score >= 60 ? 'Room to Grow 🌱' : 'Needs Attention 💪';
-  document.getElementById('analysis-score-label').textContent = label;
-  document.getElementById('analysis-date').textContent = 'Analyzed just now · ' + a.skinType + ' Skin';
-  // Ring
-  const circumference = 2 * Math.PI * 60;
-  const offset = circumference - (a.score / 100) * circumference;
-  document.getElementById('score-ring').setAttribute('stroke-dashoffset', offset);
-  // Chips
-  document.getElementById('analysis-chips').innerHTML = (a.concerns || []).slice(0,3).map(c => `<span class="chip rose">${c.name}</span>`).join('');
-  // Concerns
-  document.getElementById('concern-list').innerHTML = (a.concerns || []).map(c => `
-    <div class="concern-item">
-      <div class="concern-sev ${c.severity}"></div>
-      <div class="concern-name">${c.name}</div>
-      <div style="flex:1">
-        <div class="progress-bar"><div class="progress-fill" style="width:${c.pct}%"></div></div>
-      </div>
-      <div class="concern-pct">${c.pct}%</div>
-    </div>
-  `).join('');
-  // Recommendations
-  const recs = getRecommendations(a);
-  document.getElementById('rec-list').innerHTML = recs.map(r => `
-    <div class="rec-card">
-      <div class="rec-step">${r.step}</div>
-      <div class="rec-name">${r.name}</div>
-      <div class="rec-desc">${r.desc}</div>
-      <div class="rec-tags">${r.tags.map(t => `<span class="chip">${t}</span>`).join('')}</div>
-    </div>
+
+function renderStateList(list) {
+  const container = document.getElementById('state-list');
+  container.innerHTML = list.map(s => `
+    <div class="state-list-item ${state.selectedState === s ? 'active' : ''}" onclick="pickState('${s}')">${s}</div>
   `).join('');
 }
-function getRecommendations(a) {
-  const base = [
-    { step: '💧 Step 1 · Cleanser', name: 'Gentle Hydrating Cleanser', desc: 'A sulfate-free cleanser to remove impurities without stripping moisture. Use AM & PM.', tags: ['Gentle', 'Hydrating'] },
-    { step: '⚡ Step 2 · Treatment', name: 'Niacinamide 10% Serum', desc: 'Minimizes pores, controls oil, and brightens dark spots. Apply after cleansing.', tags: ['Pore-Control', 'Brightening'] },
-    { step: '🌸 Step 3 · Moisturizer', name: 'Barrier Repair Cream', desc: 'Ceramide-rich formula to strengthen the skin barrier and lock in hydration.', tags: ['Ceramides', 'Barrier'] },
-    { step: '☀️ Step 4 · Sun Protection', name: 'SPF 50+ Sunscreen', desc: 'Broad spectrum protection — the most important anti-aging step. Apply every morning.', tags: ['SPF50+', 'Anti-aging'] },
-  ];
-  if ((a.concerns || []).some(c => c.name === 'Acne')) {
-    base.splice(1, 0, { step: '🎯 Treatment · Acne', name: 'Salicylic Acid 2%', desc: 'Exfoliates inside pores to clear and prevent breakouts. Use 2-3x per week.', tags: ['BHA', 'Acne-Fighting'] });
-  }
-  return base;
+
+function filterStates(query) {
+  const filtered = query ? US_STATES.filter(s => s.toLowerCase().startsWith(query.toLowerCase())) : US_STATES;
+  renderStateList(filtered);
 }
-function buildRoutineFromAnalysis() {
-  state.routine = buildDefaultRoutine(state.profile);
-  localStorage.setItem('glowai_routine', JSON.stringify(state.routine));
-  renderRoutine();
-  showScreen('routine');
-  navTo('routine');
-}
-function shareAnalysis() {
-  openModal(`
-    <div class="modal-title">Share Analysis</div>
-    <div class="modal-sub">Your skin score: ${state.lastAnalysis?.score || 78}/100 — share your progress!</div>
-    <button class="btn-primary" onclick="closeModal()">Copy Link</button>
-  `);
+
+function pickState(stateName) {
+  state.selectedState = stateName;
+  updateStatePickerUI(stateName);
+  checkStartBtn();
+  document.getElementById('state-modal').classList.remove('show');
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  ROUTINE
-// ══════════════════════════════════════════════════════════════════════
-function buildDefaultRoutine(profile) {
-  const skinType = profile?.skinTypeId || 'normal';
-  const concerns = profile?.concerns || [];
-  const am = [
-    { name: 'Cleanse', product: 'Gentle Hydrating Cleanser', desc: 'Splash with lukewarm water, apply cleanser for 60 seconds', done: false, icon: '💦' },
-    { name: 'Vitamin C Serum', product: 'Ascorbic Acid 15%', desc: 'Apply 3-4 drops on damp skin. Brightens and protects.', done: false, icon: '🌟' },
-    { name: 'Moisturize', product: 'Daily Moisturizing Lotion', desc: 'Apply while skin is still slightly damp for best absorption', done: false, icon: '🌸' },
-    { name: 'SPF Protection', product: 'Mineral Sunscreen SPF 50', desc: 'Last step! Apply generously — reapply every 2 hours outdoors', done: false, icon: '☀️' },
-  ];
-  if (concerns.includes('Acne') || skinType === 'oily') {
-    am.splice(1, 0, { name: 'Niacinamide Serum', product: 'The Ordinary Niacinamide 10%', desc: 'Helps control oil and minimize pores', done: false, icon: '⚗️' });
-  }
-  const pm = [
-    { name: 'Double Cleanse', product: 'Oil Cleanser + Foam Cleanser', desc: 'Remove sunscreen and makeup with oil, then foam cleanser', done: false, icon: '🧴' },
-    { name: 'Toner', product: 'Hydrating Toner', desc: 'Pat gently into skin to balance pH and prep for serums', done: false, icon: '💧' },
-    { name: 'Treatment Serum', product: concerns.includes('Dark Spots') ? 'Alpha Arbutin 2%' : 'Hyaluronic Acid 2%', desc: 'Targets your main concern. Apply to damp skin.', done: false, icon: '⚡' },
-    { name: 'Retinol', product: 'Retinol 0.3% in Squalane', desc: 'Start 2x/week. Gradually increase. The gold standard for anti-aging.', done: false, icon: '🔬' },
-    { name: 'Night Moisturizer', product: 'Rich Barrier Cream', desc: 'Lock everything in with a richer cream. Let skin repair overnight.', done: false, icon: '🌙' },
-  ];
-  return { am, pm };
-}
-function switchTab(tab) {
-  state.activeTab = tab;
-  document.getElementById('tab-am').classList.toggle('active', tab === 'am');
-  document.getElementById('tab-pm').classList.toggle('active', tab === 'pm');
-  renderRoutine();
-}
-function renderRoutine() {
-  if (!state.routine) {
-    state.routine = buildDefaultRoutine(state.profile);
-    localStorage.setItem('glowai_routine', JSON.stringify(state.routine));
-  }
-  const steps = state.routine[state.activeTab] || [];
-  const container = document.getElementById('routine-steps');
-  container.innerHTML = steps.map((step, i) => `
-    <div class="routine-step">
-      <div class="step-check ${step.done ? 'done' : ''}" onclick="toggleStep('${state.activeTab}', ${i})">
-        ${step.done ? '✓' : step.icon || '○'}
-      </div>
-      <div class="step-content">
-        <div class="step-name" style="${step.done ? 'text-decoration:line-through;opacity:0.5' : ''}">${step.name}</div>
-        <div class="step-product">${step.product}</div>
-        <div class="step-desc">${step.desc}</div>
-      </div>
-    </div>
-  `).join('');
-}
-function toggleStep(tab, idx) {
-  state.routine[tab][idx].done = !state.routine[tab][idx].done;
-  localStorage.setItem('glowai_routine', JSON.stringify(state.routine));
-  renderRoutine();
-  const allDone = state.routine[tab].every(s => s.done);
-  if (allDone) { showToast('🎉 ' + (tab === 'am' ? 'Morning' : 'Evening') + ' routine complete!'); }
-}
-function markAllDone() {
-  state.routine[state.activeTab].forEach(s => s.done = true);
-  localStorage.setItem('glowai_routine', JSON.stringify(state.routine));
-  renderRoutine();
-  showToast('🎉 All done! Great job! 🔥');
-  state.streak++;
-  localStorage.setItem('glowai_streak', state.streak);
-  document.getElementById('routine-streak').textContent = state.streak;
-}
-
-// ══════════════════════════════════════════════════════════════════════
-//  AGENTIC AI CHAT
+//  ADVISOR / CHAT
 // ══════════════════════════════════════════════════════════════════════
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-sonnet-4-6';
-const SYSTEM_PROMPT = `You are Glow, an expert AI skincare assistant. You are warm, encouraging, and knowledgeable.
 
-You have access to tools to help users with their skincare journey. Use tools proactively and multiple tools in sequence to give the best experience.
+function getSystemPrompt() {
+  const c = state.currentCase;
+  if (!c) return 'You are CourtAide, an AI legal assistant. Help the user understand their legal situation and guide them through court procedures.';
+  return `You are CourtAide, an AI legal assistant helping a user in ${c.caseState} with a ${c.issueLabel} matter.
 
-The user's profile:
-- Skin type: {{SKIN_TYPE}}
-- Main concerns: {{CONCERNS}}
-- Skincare goals: {{GOALS}}
+- You are NOT a licensed attorney; always recommend consulting one for serious matters
+- Be practical, clear, and step-by-step
+- Use tools proactively to analyze the situation, recommend strategy, and identify forms
+- Focus on self-representation (pro se) guidance when the user cannot afford an attorney
+- Cite specific state laws and court rules when relevant
+- Ask targeted questions to understand the full situation before advising
+- When you identify required forms, always use the identify_required_forms tool so they appear in the Documents tab
 
-Your personality:
-- Warm, encouraging, and motivating
-- Evidence-based recommendations (cite ingredient science when relevant)
-- Proactive: suggest next steps without being asked
-- Agentic: use multiple tools in sequence to build complete skincare plans
-- Always reference the user's specific profile when making recommendations
+Legal Disclaimer: Always remind the user that CourtAide provides legal information, not legal advice, and is not a substitute for a licensed attorney.`;
+}
 
-When using tools:
-- analyze_skin_concerns: Use when discussing skin issues in depth
-- recommend_products: Use when suggesting specific products
-- build_routine: Use when creating or updating the user's routine
-- explain_ingredient: Use when an ingredient is mentioned
-- track_skin_progress: Use when the user shares updates about their skin
-
-After using tools, summarize what you did and suggest next steps.`;
-
-const TOOLS = [
+const LEGAL_TOOLS = [
   {
-    name: 'analyze_skin_concerns',
-    description: 'Perform a detailed analysis of the user\'s skin concerns and generate a structured assessment with severity levels and priority ranking.',
+    name: 'analyze_legal_situation',
+    description: 'Understand key facts, timeline, and parties involved in the legal situation. Use this early to get a clear picture of the case.',
     input_schema: {
       type: 'object',
       properties: {
-        concerns: { type: 'array', items: { type: 'string' }, description: 'List of skin concerns to analyze' },
-        skin_type: { type: 'string', description: 'User skin type (oily/dry/combination/normal/sensitive)' },
-        severity: { type: 'string', enum: ['mild', 'moderate', 'severe'], description: 'Overall severity' },
-        priority_concern: { type: 'string', description: 'The most important concern to address first' }
+        situation_summary: { type: 'string', description: 'Brief summary of the legal situation' },
+        key_facts: { type: 'array', items: { type: 'string' }, description: 'Key facts identified' },
+        parties_involved: { type: 'array', items: { type: 'string' }, description: 'Parties involved' },
+        urgency: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'Urgency level' },
+        strengths: { type: 'array', items: { type: 'string' }, description: 'Strengths of the user\'s position' },
+        weaknesses: { type: 'array', items: { type: 'string' }, description: 'Potential weaknesses or challenges' }
       },
-      required: ['concerns', 'skin_type']
+      required: ['situation_summary', 'key_facts', 'urgency']
     }
   },
   {
-    name: 'recommend_products',
-    description: 'Search and recommend specific skincare products based on skin type and concerns.',
+    name: 'recommend_legal_strategy',
+    description: 'Recommend common legal strategies for the issue type in the given state, with concrete next steps.',
     input_schema: {
       type: 'object',
       properties: {
-        skin_type: { type: 'string' },
-        concerns: { type: 'array', items: { type: 'string' } },
-        budget: { type: 'string', enum: ['budget', 'mid-range', 'luxury'], description: 'Price range preference' },
-        routine_step: { type: 'string', description: 'Which routine step (cleanser/toner/serum/moisturizer/spf/treatment)' }
+        issue_type: { type: 'string' },
+        state: { type: 'string' },
+        strategies: { type: 'array', items: { type: 'string' }, description: 'Recommended legal strategies' },
+        next_steps: { type: 'array', items: { type: 'string' }, description: 'Concrete next steps in priority order' },
+        timeline_estimate: { type: 'string', description: 'Estimated timeline for resolution' },
+        cost_estimate: { type: 'string', description: 'Estimated cost if self-representing' }
       },
-      required: ['skin_type', 'concerns', 'routine_step']
+      required: ['issue_type', 'state', 'strategies', 'next_steps']
     }
   },
   {
-    name: 'build_routine',
-    description: 'Build or update a complete personalized skincare routine (AM and PM) based on user\'s profile.',
+    name: 'identify_required_forms',
+    description: 'List specific court forms needed for the case. This populates the Documents tab. Use whenever forms are discussed.',
     input_schema: {
       type: 'object',
       properties: {
-        skin_type: { type: 'string' },
-        concerns: { type: 'array', items: { type: 'string' } },
-        time_commitment: { type: 'string', enum: ['minimal', 'moderate', 'dedicated'], description: 'How much time for skincare' },
-        focus: { type: 'string', description: 'Main goal (hydration/anti-aging/acne/brightening)' }
+        issue_type: { type: 'string' },
+        state: { type: 'string' },
+        forms: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', description: 'Form name' },
+              number: { type: 'string', description: 'Form number/code if known' },
+              court: { type: 'string', description: 'Court that uses this form' },
+              purpose: { type: 'string', description: 'What this form is for' }
+            },
+            required: ['name', 'purpose']
+          },
+          description: 'List of required court forms'
+        }
       },
-      required: ['skin_type', 'concerns']
+      required: ['issue_type', 'state', 'forms']
     }
   },
   {
-    name: 'explain_ingredient',
-    description: 'Provide detailed scientific explanation of a skincare ingredient including benefits, usage, compatibility, and who should use it.',
+    name: 'draft_document_section',
+    description: 'Guide the user through filling a specific section of a court form with sample language.',
     input_schema: {
       type: 'object',
       properties: {
-        ingredient: { type: 'string', description: 'Ingredient name (e.g., retinol, niacinamide, hyaluronic acid)' },
-        skin_type: { type: 'string', description: 'User\'s skin type for personalized advice' },
-        concern: { type: 'string', description: 'The skin concern this ingredient should address' }
+        form_name: { type: 'string' },
+        section: { type: 'string', description: 'Section name or number' },
+        instructions: { type: 'string', description: 'Detailed instructions for this section' },
+        sample_language: { type: 'string', description: 'Sample or template language the user can adapt' },
+        warnings: { type: 'array', items: { type: 'string' }, description: 'Important warnings for this section' }
       },
-      required: ['ingredient']
+      required: ['form_name', 'section', 'instructions', 'sample_language']
     }
   },
   {
-    name: 'track_skin_progress',
-    description: 'Log a skin progress entry and return trend insights based on historical data.',
+    name: 'cite_relevant_laws',
+    description: 'Reference relevant statutes, rules, and case law for the state and issue type.',
     input_schema: {
       type: 'object',
       properties: {
-        skin_score: { type: 'number', description: 'Overall skin health score 0-100' },
-        notes: { type: 'string', description: 'User observations about their skin' },
-        concerns_improved: { type: 'array', items: { type: 'string' }, description: 'Concerns that have improved' },
-        concerns_worsened: { type: 'array', items: { type: 'string' }, description: 'Concerns that have worsened' }
+        state: { type: 'string' },
+        issue_type: { type: 'string' },
+        statutes: { type: 'array', items: { type: 'string' }, description: 'Relevant statutes with citations' },
+        key_provisions: { type: 'array', items: { type: 'string' }, description: 'Most relevant provisions to this case' },
+        deadlines: { type: 'array', items: { type: 'string' }, description: 'Important legal deadlines (statutes of limitations, etc.)' }
       },
-      required: ['skin_score']
+      required: ['state', 'issue_type', 'statutes']
     }
   }
 ];
 
-// Tool execution (client-side handlers)
+// Tool execution (client-side)
 function executeTool(name, input) {
   switch (name) {
-    case 'analyze_skin_concerns': {
-      const { concerns, skin_type, severity = 'moderate', priority_concern } = input;
+    case 'analyze_legal_situation': {
       return {
-        analysis: {
-          skin_type,
-          concerns_analyzed: concerns.map((c, i) => ({
-            concern: c,
-            severity: ['mild','moderate','severe'][Math.min(i, 2)],
-            priority: i + 1,
-            key_ingredient: getKeyIngredient(c)
-          })),
-          priority_concern: priority_concern || concerns[0],
-          overall_severity: severity,
-          score: state.profile?.score || 72
-        },
-        recommendation: `Focus first on ${priority_concern || concerns[0]}. Key ingredients: ${concerns.slice(0,3).map(getKeyIngredient).join(', ')}.`
+        analysis_complete: true,
+        situation_summary: input.situation_summary,
+        key_facts_count: (input.key_facts || []).length,
+        key_facts: input.key_facts || [],
+        parties: input.parties_involved || [],
+        urgency: input.urgency,
+        strengths: input.strengths || [],
+        weaknesses: input.weaknesses || [],
+        recommendation: 'Analysis complete. Use recommend_legal_strategy to get next steps.'
       };
     }
-    case 'recommend_products': {
-      const { skin_type, concerns, budget = 'mid-range', routine_step } = input;
-      const products = getProductDatabase(skin_type, concerns, budget, routine_step);
-      return { step: routine_step, budget, products, count: products.length };
-    }
-    case 'build_routine': {
-      const { skin_type, concerns, time_commitment = 'moderate', focus } = input;
-      const routine = buildDefaultRoutine({ skinType: skin_type, skinTypeId: skin_type.toLowerCase(), concerns });
-      state.routine = routine;
-      localStorage.setItem('glowai_routine', JSON.stringify(routine));
-      renderRoutine();
+    case 'recommend_legal_strategy': {
       return {
-        routine_built: true,
-        am_steps: routine.am.length,
-        pm_steps: routine.pm.length,
-        focus: focus || 'comprehensive care',
-        time_estimate: time_commitment === 'minimal' ? '5 min' : time_commitment === 'moderate' ? '10-15 min' : '20+ min',
-        message: 'Your routine has been updated in the Routine tab!'
+        strategy_count: (input.strategies || []).length,
+        strategies: input.strategies || [],
+        next_steps: input.next_steps || [],
+        timeline: input.timeline_estimate || 'Varies',
+        cost: input.cost_estimate || 'Varies by complexity',
+        note: 'Consult a licensed attorney to validate this strategy for your specific situation.'
       };
     }
-    case 'explain_ingredient': {
-      const { ingredient, skin_type, concern } = input;
-      return getIngredientInfo(ingredient, skin_type);
-    }
-    case 'track_skin_progress': {
-      const { skin_score, notes, concerns_improved = [], concerns_worsened = [] } = input;
-      const entry = { date: new Date().toISOString(), score: skin_score, notes, concerns_improved, concerns_worsened };
-      const history = JSON.parse(localStorage.getItem('glowai_progress') || '[]');
-      history.push(entry);
-      localStorage.setItem('glowai_progress', JSON.stringify(history));
-      if (state.profile) { state.profile.score = skin_score; localStorage.setItem('glowai_profile', JSON.stringify(state.profile)); }
+    case 'identify_required_forms': {
+      // Store forms in current case
+      if (state.currentCase) {
+        const newForms = (input.forms || []).map(f => ({
+          ...f,
+          status: 'needed',
+          id: Date.now() + Math.random()
+        }));
+        // Merge without duplicates
+        const existing = state.currentCase.forms || [];
+        newForms.forEach(nf => {
+          if (!existing.find(ef => ef.name === nf.name)) existing.push(nf);
+        });
+        state.currentCase.forms = existing;
+        saveState();
+        renderDocuments();
+      }
       return {
-        logged: true, score: skin_score, date: entry.date,
-        trend: history.length > 1 ? (skin_score > history[history.length-2].score ? 'improving' : 'declining') : 'baseline',
-        total_entries: history.length,
-        improvements: concerns_improved
+        forms_identified: (input.forms || []).length,
+        forms: input.forms || [],
+        message: 'Forms added to your Documents tab. Tap "Documents" to view them.'
       };
     }
-    default: return { error: 'Unknown tool' };
+    case 'draft_document_section': {
+      return {
+        form: input.form_name,
+        section: input.section,
+        instructions: input.instructions,
+        sample_language: input.sample_language,
+        warnings: input.warnings || [],
+        note: 'Always verify this language with the actual court form and local rules.'
+      };
+    }
+    case 'cite_relevant_laws': {
+      return {
+        state: input.state,
+        issue_type: input.issue_type,
+        statutes: input.statutes || [],
+        key_provisions: input.key_provisions || [],
+        deadlines: input.deadlines || [],
+        disclaimer: 'Laws change frequently. Always verify current statutes at your state legislature website.'
+      };
+    }
+    default: return { error: 'Unknown tool: ' + name };
   }
 }
 
-function getKeyIngredient(concern) {
-  const map = {
-    'Acne': 'Salicylic Acid', 'Dark Spots': 'Vitamin C / Alpha Arbutin', 'Wrinkles': 'Retinol',
-    'Redness': 'Centella Asiatica', 'Dullness': 'Niacinamide', 'Dryness': 'Hyaluronic Acid',
-    'Oiliness': 'Niacinamide', 'Large Pores': 'BHA', 'Dark Circles': 'Caffeine / Vitamin K',
-    'Uneven Tone': 'Vitamin C', 'Sensitivity': 'Ceramides', 'Texture': 'AHA'
-  };
-  return map[concern] || 'Antioxidants';
-}
-function getProductDatabase(skinType, concerns, budget, step) {
-  const db = {
-    cleanser: [
-      { name: 'CeraVe Hydrating Cleanser', brand: 'CeraVe', price: '$14', type: 'budget', best_for: ['dry','normal'] },
-      { name: 'La Roche-Posay Toleriane Purifying Foaming Cleanser', brand: 'La Roche-Posay', price: '$20', type: 'mid-range', best_for: ['oily','combo'] },
-      { name: 'Tatcha The Rice Wash', brand: 'Tatcha', price: '$38', type: 'luxury', best_for: ['normal','dry'] },
-    ],
-    moisturizer: [
-      { name: 'CeraVe Moisturizing Cream', brand: 'CeraVe', price: '$18', type: 'budget', best_for: ['dry','sensitive'] },
-      { name: 'Neutrogena Hydro Boost', brand: 'Neutrogena', price: '$22', type: 'budget', best_for: ['oily','combo'] },
-      { name: 'Drunk Elephant Lala Whipped Cream', brand: 'Drunk Elephant', price: '$44', type: 'luxury', best_for: ['all'] },
-    ],
-    serum: [
-      { name: 'The Ordinary Niacinamide 10%', brand: 'The Ordinary', price: '$6', type: 'budget', best_for: ['oily','combo','acne'] },
-      { name: 'Paula\'s Choice Vitamin C 15%', brand: "Paula's Choice", price: '$49', type: 'luxury', best_for: ['dull','aging'] },
-      { name: 'The Ordinary Hyaluronic Acid 2%', brand: 'The Ordinary', price: '$8', type: 'budget', best_for: ['dry','all'] },
-    ],
-    spf: [
-      { name: 'EltaMD UV Clear SPF 46', brand: 'EltaMD', price: '$39', type: 'mid-range', best_for: ['acne','sensitive'] },
-      { name: 'La Roche-Posay Anthelios SPF 60', brand: 'La Roche-Posay', price: '$35', type: 'mid-range', best_for: ['all'] },
-    ],
-    treatment: [
-      { name: 'Differin Gel (Adapalene 0.1%)', brand: 'Differin', price: '$25', type: 'mid-range', best_for: ['acne'] },
-      { name: 'The Ordinary Salicylic Acid 2%', brand: 'The Ordinary', price: '$7', type: 'budget', best_for: ['oily','acne'] },
-      { name: 'Glycolic Acid 7% Toning Solution', brand: 'The Ordinary', price: '$9', type: 'budget', best_for: ['texture','dull'] },
-    ]
-  };
-  return (db[step] || db.moisturizer).filter(p => p.type === budget || budget === 'mid-range').slice(0, 3);
-}
-function getIngredientInfo(ingredient, skinType) {
-  const data = {
-    retinol: { name: 'Retinol (Vitamin A)', benefits: ['Reduces fine lines and wrinkles', 'Increases cell turnover', 'Fades dark spots', 'Improves texture'], how_to_use: 'Start with 0.1-0.3%, 2x/week at night. Gradually increase. Always use SPF!', avoid_with: ['AHA/BHA', 'Vitamin C', 'Benzoyl Peroxide'], best_for: ['anti-aging', 'acne', 'texture'], concentration: '0.1% - 1%' },
-    niacinamide: { name: 'Niacinamide (Vitamin B3)', benefits: ['Minimizes pores', 'Controls sebum', 'Brightens dark spots', 'Strengthens barrier', 'Anti-inflammatory'], how_to_use: 'Apply 5-10% concentration after cleansing. Can be used AM and PM.', avoid_with: ['High-concentration Vitamin C (temporary flushing)'], best_for: ['oily skin', 'large pores', 'dark spots', 'all skin types'], concentration: '5% - 10%' },
-    'hyaluronic acid': { name: 'Hyaluronic Acid', benefits: ['Deep hydration (holds 1000x its weight in water)', 'Plumps fine lines', 'Suits all skin types', 'Boosts other products'], how_to_use: 'Apply to DAMP skin. Layer moisturizer on top to seal it in. Use AM & PM.', avoid_with: ['Nothing — plays well with all!'], best_for: ['dry skin', 'dehydration', 'all skin types'], concentration: '1% - 2%' },
-    'vitamin c': { name: 'Vitamin C (L-Ascorbic Acid)', benefits: ['Brightens skin', 'Fades hyperpigmentation', 'Antioxidant protection', 'Boosts collagen'], how_to_use: 'Apply AM before SPF. Store in a cool, dark place. Stable at pH < 3.5.', avoid_with: ['Niacinamide (apply separately)', 'Retinol (use at different times)'], best_for: ['dark spots', 'dull skin', 'anti-aging'], concentration: '10% - 20%' },
-    'salicylic acid': { name: 'Salicylic Acid (BHA)', benefits: ['Exfoliates inside pores', 'Unclogs blackheads', 'Reduces acne', 'Oil control'], how_to_use: 'Start 2-3x/week. Apply to affected areas after cleansing. Avoid around eyes.', avoid_with: ['Other exfoliants (AHA)', 'Retinol (same night)'], best_for: ['acne', 'oily skin', 'blackheads', 'large pores'], concentration: '0.5% - 2%' },
-    ceramides: { name: 'Ceramides', benefits: ['Repairs skin barrier', 'Locks in moisture', 'Reduces sensitivity', 'Protects from environmental damage'], how_to_use: 'Works best in moisturizers. Use AM & PM as the last cream step before SPF.', avoid_with: ['Nothing — extremely gentle and compatible'], best_for: ['dry skin', 'sensitive skin', 'eczema', 'damaged barrier'], concentration: 'Variable (complex formulas)' }
-  };
-  const key = ingredient.toLowerCase().replace(/\s+/g, ' ').trim();
-  return data[key] || {
-    name: ingredient,
-    benefits: ['Beneficial for skin health', 'Addresses your specific concerns'],
-    how_to_use: 'Follow product instructions. Patch test first.',
-    avoid_with: ['Check for interactions with your current routine'],
-    best_for: ['Various skin types'],
-    concentration: 'Varies by product'
-  };
+// Tool result formatting
+function formatToolResult(name, input, result) {
+  switch (name) {
+    case 'analyze_legal_situation':
+      return `<strong>Situation:</strong> ${result.situation_summary}<br>
+        <strong>Urgency:</strong> ${result.urgency}<br>
+        ${result.key_facts.length ? '<strong>Key Facts:</strong><ul>' + result.key_facts.map(f => `<li>${f}</li>`).join('') + '</ul>' : ''}
+        ${result.strengths.length ? '<strong>Strengths:</strong> ' + result.strengths.join('; ') : ''}`;
+    case 'recommend_legal_strategy':
+      return `<strong>Strategies (${result.strategy_count}):</strong>
+        <ul>${result.strategies.map(s => `<li>${s}</li>`).join('')}</ul>
+        <strong>Next Steps:</strong>
+        <ul>${result.next_steps.map((s,i) => `<li>${i+1}. ${s}</li>`).join('')}</ul>
+        <strong>Timeline:</strong> ${result.timeline}`;
+    case 'identify_required_forms':
+      return `<strong>${result.forms_identified} form(s) identified</strong><br>
+        ${result.forms.map(f => `• <strong>${f.name}</strong>${f.number ? ' (' + f.number + ')' : ''} — ${f.purpose}`).join('<br>')}
+        <br><em>✓ Added to your Documents tab</em>`;
+    case 'draft_document_section':
+      return `<strong>Form:</strong> ${result.form} — ${result.section}<br>
+        <strong>Instructions:</strong> ${result.instructions}<br>
+        <strong>Sample Language:</strong><br><em>"${result.sample_language}"</em>
+        ${result.warnings.length ? '<br><strong>⚠️ Warnings:</strong><ul>' + result.warnings.map(w => `<li>${w}</li>`).join('') + '</ul>' : ''}`;
+    case 'cite_relevant_laws':
+      return `<strong>Relevant Statutes for ${result.state}:</strong>
+        <ul>${result.statutes.map(s => `<li>${s}</li>`).join('')}</ul>
+        ${result.deadlines.length ? '<strong>⏰ Deadlines:</strong><ul>' + result.deadlines.map(d => `<li>${d}</li>`).join('') + '</ul>' : ''}
+        <em>⚠️ ${result.disclaimer}</em>`;
+    default:
+      return escapeHtml(JSON.stringify(result, null, 2)).slice(0, 300);
+  }
 }
 
-// ── Chat UI ──
-function initChat() {
+const TOOL_LABELS = {
+  analyze_legal_situation: '🔍 Situation Analysis',
+  recommend_legal_strategy: '🎯 Legal Strategy',
+  identify_required_forms: '📄 Required Forms',
+  draft_document_section: '✍️ Document Drafting',
+  cite_relevant_laws: '📚 Relevant Laws',
+};
+
+// ── Advisor init ──
+function updateCaseContext() {
+  const c = state.currentCase;
+  const bar = document.getElementById('case-ctx-bar');
+  const label = document.getElementById('ctx-label');
+  const ctxState = document.getElementById('ctx-state');
+  if (c) {
+    const cat = ISSUE_CATEGORIES.find(i => i.id === c.issueType);
+    label.textContent = (cat ? cat.icon + ' ' : '') + c.issueLabel;
+    ctxState.textContent = c.caseState;
+  } else {
+    label.textContent = 'No active case';
+    ctxState.textContent = '';
+  }
+}
+
+function initAdvisor() {
+  updateCaseContext();
   const chatBody = document.getElementById('chat-body');
-  if (state.chatHistory.length > 0) {
+  if (chatBody.children.length === 0) {
     renderChatHistory();
-    return;
+    if (chatBody.children.length === 0) {
+      addWelcomeMessage();
+    }
   }
-  const profile = state.profile;
-  const greeting = profile
-    ? `Hi! I'm your GlowAI Agent ✨ I can see you have **${profile.skinType} skin** with concerns about **${(profile.concerns || []).join(', ')}**.\n\nI can analyze your skin, build personalized routines, explain ingredients, and track your progress — all through our conversation.\n\nWhat would you like to work on today?`
-    : `Hi! I'm Glow, your personal AI skincare assistant ✨\n\nI can help you with:\n• 🔬 Skin analysis & assessments\n• 🌿 Personalized routine building\n• ⚗️ Ingredient explanations\n• 📊 Progress tracking\n\nWhat brings you here today?`;
-  addAIMessage(greeting);
 }
+
+function addWelcomeMessage() {
+  const c = state.currentCase;
+  const msg = c
+    ? `Hello! I'm CourtAide, your AI legal assistant ⚖️\n\nI can see you're working on a **${c.issueLabel}** matter in **${c.caseState}**.\n\nI can help you:\n• 🔍 Analyze your legal situation\n• 🎯 Develop a legal strategy\n• 📄 Identify required court forms\n• ✍️ Guide you through filling documents\n• 📚 Cite relevant state laws\n\nTell me about your situation and I'll get started right away.\n\n⚠️ *I provide legal information, not legal advice. Please consult a licensed attorney for your specific situation.*`
+    : `Hello! I'm CourtAide, your AI legal assistant ⚖️\n\nI can help you navigate court procedures and paperwork. To get started, go to **Home** and select a state and issue type, then tap "Start with AI Advisor."\n\nOr just describe your legal situation and I'll do my best to help.\n\n⚠️ *I provide legal information, not legal advice. Always consult a licensed attorney.*`;
+  addAIMessage(msg);
+}
+
+function sendCaseContext() {
+  const c = state.currentCase;
+  if (!c) return;
+  addWelcomeMessage();
+}
+
 function renderChatHistory() {
   const chatBody = document.getElementById('chat-body');
   chatBody.innerHTML = '';
-  state.chatHistory.forEach(msg => {
-    if (msg.role === 'assistant') {
-      if (typeof msg.content === 'string') {
-        addAIMessage(msg.content, false);
-      } else if (Array.isArray(msg.content)) {
-        msg.content.forEach(block => {
-          if (block.type === 'text') addAIMessage(block.text, false);
-          if (block.type === 'tool_use') {
-            const result = msg.tool_results?.[block.id];
-            if (result) addToolCard(block.name, block.input, result, false);
-          }
-        });
+  const history = state.currentCase?.chatHistory || [];
+  history.forEach(msg => {
+    if (msg.role === 'user') {
+      addUserMessage(msg.text, false);
+    } else if (msg.role === 'assistant') {
+      if (msg.text) addAIMessage(msg.text, false);
+      if (msg.toolCards) {
+        msg.toolCards.forEach(tc => addToolCard(tc.name, tc.input, tc.result, false));
       }
-    } else if (msg.role === 'user') {
-      const text = typeof msg.content === 'string' ? msg.content
-        : (msg.content || []).find(b => b.type === 'text')?.text || '';
-      if (text) addUserMessage(text, false);
     }
   });
-  scrollChat();
+  if (history.length > 0) {
+    document.getElementById('starter-pills').style.display = 'none';
+    scrollChat();
+  }
 }
+
+// ── Chat UI ──
 function addAIMessage(text, scroll = true) {
   const chatBody = document.getElementById('chat-body');
   const div = document.createElement('div');
   div.className = 'msg-row ai';
-  div.innerHTML = `
-    <div class="msg-avatar">✨</div>
-    <div class="msg-bubble">${formatMessage(text)}</div>`;
+  div.innerHTML = `<div class="msg-avatar">⚖️</div><div class="msg-bubble">${formatMessage(text)}</div>`;
   chatBody.appendChild(div);
   if (scroll) scrollChat();
 }
+
 function addUserMessage(text, scroll = true) {
   const chatBody = document.getElementById('chat-body');
   const div = document.createElement('div');
   div.className = 'msg-row user';
-  div.innerHTML = `
-    <div class="msg-avatar user">👤</div>
-    <div class="msg-bubble">${escapeHtml(text)}</div>`;
+  div.innerHTML = `<div class="msg-avatar user">👤</div><div class="msg-bubble">${escapeHtml(text)}</div>`;
   chatBody.appendChild(div);
   if (scroll) scrollChat();
-  // Hide starter pills after first message
   document.getElementById('starter-pills').style.display = 'none';
 }
+
 function addToolCard(toolName, input, result, scroll = true) {
   const chatBody = document.getElementById('chat-body');
   const div = document.createElement('div');
   div.className = 'tool-card';
-  const labels = {
-    analyze_skin_concerns: '🔬 Skin Analysis', recommend_products: '🛒 Product Recommendations',
-    build_routine: '📋 Routine Builder', explain_ingredient: '⚗️ Ingredient Info', track_skin_progress: '📊 Progress Tracker'
-  };
   div.innerHTML = `
     <div class="tool-header">
-      <div class="tool-name">${labels[toolName] || toolName}</div>
-      <span class="chip green" style="font-size:10px">Complete</span>
+      <div class="tool-name">${TOOL_LABELS[toolName] || toolName}</div>
+      <span class="chip chip-green" style="font-size:10px">✓ Done</span>
     </div>
     <div class="tool-result">${formatToolResult(toolName, input, result)}</div>`;
   chatBody.appendChild(div);
   if (scroll) scrollChat();
 }
-function formatToolResult(name, input, result) {
-  if (name === 'analyze_skin_concerns') {
-    const r = result.analysis;
-    return `<strong>Skin Type:</strong> ${r.skin_type}<br>
-      <strong>Score:</strong> ${r.score}/100<br>
-      <strong>Priority:</strong> ${r.priority_concern}<br>
-      <strong>Concerns:</strong> ${(r.concerns_analyzed || []).map(c => `${c.concern} (${c.severity})`).join(', ')}<br>
-      <strong>Key ingredients:</strong> ${(r.concerns_analyzed || []).map(c => c.key_ingredient).join(', ')}`;
-  }
-  if (name === 'recommend_products') {
-    const products = result.products || [];
-    return `<strong>Step:</strong> ${result.step}<br>` + products.map(p => `• <strong>${p.name}</strong> ${p.price}`).join('<br>');
-  }
-  if (name === 'build_routine') {
-    return `<strong>✅ Routine updated!</strong><br>
-      AM: ${result.am_steps} steps · PM: ${result.pm_steps} steps<br>
-      Focus: ${result.focus}<br>
-      Time: ~${result.time_estimate} per session`;
-  }
-  if (name === 'explain_ingredient') {
-    const r = result;
-    return `<strong>${r.name}</strong><br>
-      <strong>Benefits:</strong> ${(r.benefits || []).slice(0,3).join(', ')}<br>
-      <strong>How to use:</strong> ${r.how_to_use?.slice(0,100) || ''}...<br>
-      <strong>Best for:</strong> ${(r.best_for || []).join(', ')}`;
-  }
-  if (name === 'track_skin_progress') {
-    return `<strong>Score logged:</strong> ${result.score}/100<br>
-      <strong>Trend:</strong> ${result.trend} 📈<br>
-      <strong>Entries tracked:</strong> ${result.total_entries}`;
-  }
-  return JSON.stringify(result, null, 2).slice(0, 200);
-}
+
 function addTypingIndicator() {
   const chatBody = document.getElementById('chat-body');
   const div = document.createElement('div');
   div.className = 'msg-row ai'; div.id = 'typing-indicator';
-  div.innerHTML = `<div class="msg-avatar">✨</div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  div.innerHTML = `<div class="msg-avatar">⚖️</div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
   chatBody.appendChild(div);
   scrollChat();
 }
+
 function removeTypingIndicator() {
   const el = document.getElementById('typing-indicator');
   if (el) el.remove();
 }
+
 function scrollChat() {
   const cb = document.getElementById('chat-body');
   requestAnimationFrame(() => { cb.scrollTop = cb.scrollHeight; });
 }
+
 function formatMessage(text) {
   return escapeHtml(text)
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:4px">$1</code>')
+    .replace(/`(.+?)`/g, '<code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:4px;font-size:13px">$1</code>')
+    .replace(/\n• /g, '<br>• ')
     .replace(/\n/g, '<br>');
 }
+
 function escapeHtml(text) {
   return (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── Send Message ──
+// ── Send / Receive ──
 async function sendMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
@@ -1485,52 +1474,51 @@ async function sendMessage() {
   addUserMessage(text);
   await callClaude(text);
 }
+
 function sendStarter(el) {
   const text = el.textContent.trim();
   document.getElementById('chat-input').value = text;
   sendMessage();
 }
+
 function handleChatKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
+
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 100) + 'px';
 }
+
 function clearChat() {
-  state.chatHistory = [];
-  localStorage.removeItem('glowai_chat');
+  if (state.currentCase) {
+    state.currentCase.chatHistory = [];
+    saveState();
+  }
   document.getElementById('chat-body').innerHTML = '';
   document.getElementById('starter-pills').style.display = 'flex';
-  initChat();
+  addWelcomeMessage();
 }
 
-// ── Claude API Call (Agentic Loop) ──
+// ── Agentic Claude API Loop ──
 async function callClaude(userText) {
   const sendBtn = document.getElementById('chat-send');
   sendBtn.disabled = true;
   addTypingIndicator();
 
-  // Build API messages from history + new message
-  const profile = state.profile;
-  const systemPrompt = SYSTEM_PROMPT
-    .replace('{{SKIN_TYPE}}', profile?.skinType || 'Unknown')
-    .replace('{{CONCERNS}}', (profile?.concerns || []).join(', ') || 'None specified')
-    .replace('{{GOALS}}', (profile?.goals || []).join(', ') || 'General skincare');
-
-  // Flatten history for API
-  const apiMessages = buildApiMessages(userText);
-
-  // If no API key, use demo mode
+  // Demo mode
   if (!state.apiKey) {
     removeTypingIndicator();
-    const demoResponse = getDemoResponse(userText, profile);
-    addAIMessage(demoResponse);
-    saveToHistory('user', userText);
-    saveToHistory('assistant', demoResponse);
+    const demo = getDemoResponse(userText);
+    addAIMessage(demo);
+    saveChatMsg('user', userText);
+    saveChatMsg('assistant', demo);
     sendBtn.disabled = false;
     return;
   }
+
+  const systemPrompt = getSystemPrompt();
+  const apiMessages = buildApiMessages(userText);
 
   try {
     let response = await fetch(CLAUDE_API, {
@@ -1539,13 +1527,13 @@ async function callClaude(userText) {
         'Content-Type': 'application/json',
         'x-api-key': state.apiKey,
         'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'messages-2023-06-01'
+        'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 2048,
         system: systemPrompt,
-        tools: TOOLS,
+        tools: LEGAL_TOOLS,
         messages: apiMessages
       })
     });
@@ -1558,24 +1546,25 @@ async function callClaude(userText) {
     let data = await response.json();
     removeTypingIndicator();
 
-    // Agentic loop: handle tool use
+    // Track tool cards for history
+    const sessionToolCards = [];
+
+    // Agentic loop
     while (data.stop_reason === 'tool_use') {
       const toolUseBlocks = data.content.filter(b => b.type === 'tool_use');
       const textBlocks = data.content.filter(b => b.type === 'text');
 
-      // Show any text before tool use
       textBlocks.forEach(b => { if (b.text?.trim()) addAIMessage(b.text); });
 
-      // Execute all tools
       const toolResults = [];
-      for (const toolBlock of toolUseBlocks) {
-        const result = executeTool(toolBlock.name, toolBlock.input);
-        addToolCard(toolBlock.name, toolBlock.input, result);
-        toolResults.push({ type: 'tool_result', tool_use_id: toolBlock.id, content: JSON.stringify(result) });
+      for (const tb of toolUseBlocks) {
+        const result = executeTool(tb.name, tb.input);
+        addToolCard(tb.name, tb.input, result);
+        sessionToolCards.push({ name: tb.name, input: tb.input, result });
+        toolResults.push({ type: 'tool_result', tool_use_id: tb.id, content: JSON.stringify(result) });
       }
 
-      // Continue with tool results
-      const continuationMessages = [
+      const continuationMsgs = [
         ...apiMessages,
         { role: 'assistant', content: data.content },
         { role: 'user', content: toolResults }
@@ -1587,34 +1576,34 @@ async function callClaude(userText) {
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': state.apiKey,
-          'anthropic-version': '2023-06-01'
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
           model: MODEL,
           max_tokens: 2048,
           system: systemPrompt,
-          tools: TOOLS,
-          messages: continuationMessages
+          tools: LEGAL_TOOLS,
+          messages: continuationMsgs
         })
       });
-
       if (!response.ok) throw new Error('API continuation error');
       data = await response.json();
       removeTypingIndicator();
     }
 
-    // Final text response
     const finalText = data.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
     if (finalText?.trim()) addAIMessage(finalText);
 
-    // Save to history
-    saveToHistory('user', userText);
-    saveToHistory('assistant', data.content.filter(b => b.type === 'text').map(b => b.text).join('\n') || '');
+    saveChatMsg('user', userText);
+    saveChatMsg('assistant', finalText || '', sessionToolCards);
 
   } catch (err) {
     removeTypingIndicator();
-    const errMsg = err.message.includes('401') ? 'Invalid API key. Please update it in Settings.' : err.message.includes('Failed to fetch') ? 'Connection error. Check your internet and try again.' : `Error: ${err.message}`;
-    addAIMessage(`⚠️ ${errMsg}\n\nTip: Add your Anthropic API key in Settings to unlock full AI capabilities.`);
+    const msg = err.message.includes('401') ? 'Invalid API key. Please update it in Settings → Profile.' :
+      err.message.includes('Failed to fetch') ? 'Connection error. Check your internet connection.' :
+      `Error: ${err.message}`;
+    addAIMessage(`⚠️ ${msg}\n\nTip: Add your Anthropic API key in Settings to unlock full AI capabilities.`);
   }
 
   sendBtn.disabled = false;
@@ -1622,8 +1611,7 @@ async function callClaude(userText) {
 
 function buildApiMessages(newUserText) {
   const messages = [];
-  // Include recent history (last 10 exchanges)
-  const history = state.chatHistory.slice(-20);
+  const history = (state.currentCase?.chatHistory || []).slice(-16);
   history.forEach(msg => {
     if (msg.role === 'user' && msg.text) {
       messages.push({ role: 'user', content: msg.text });
@@ -1635,49 +1623,119 @@ function buildApiMessages(newUserText) {
   return messages;
 }
 
-function saveToHistory(role, text) {
-  state.chatHistory.push({ role, text });
-  if (state.chatHistory.length > 40) state.chatHistory = state.chatHistory.slice(-40);
-  localStorage.setItem('glowai_chat', JSON.stringify(state.chatHistory));
+function saveChatMsg(role, text, toolCards) {
+  if (!state.currentCase) return;
+  if (!state.currentCase.chatHistory) state.currentCase.chatHistory = [];
+  state.currentCase.chatHistory.push({ role, text, toolCards });
+  if (state.currentCase.chatHistory.length > 40) {
+    state.currentCase.chatHistory = state.currentCase.chatHistory.slice(-40);
+  }
+  saveState();
 }
 
-// Demo responses when no API key
-function getDemoResponse(text, profile) {
+// ── Demo responses ──
+function getDemoResponse(text) {
   const lower = text.toLowerCase();
-  const skinType = profile?.skinType || 'your skin type';
-  const concerns = (profile?.concerns || []).join(', ') || 'your concerns';
+  const c = state.currentCase;
+  const issue = c?.issueLabel || 'legal';
+  const st = c?.caseState || 'your state';
 
-  if (lower.includes('routine') || lower.includes('regimen')) {
-    return `I'd love to build you a personalized routine! 🌿\n\nBased on your **${skinType}** skin and concerns (${concerns}), here's what I recommend:\n\n**☀️ Morning:**\n1. Gentle hydrating cleanser\n2. Vitamin C serum (for brightness)\n3. Lightweight moisturizer\n4. SPF 50+ (non-negotiable!)\n\n**🌙 Evening:**\n1. Double cleanse (oil + foam)\n2. Treatment serum (targeting ${(profile?.concerns || ['your main concern'])[0]})\n3. Retinol 0.3% (start 2x/week)\n4. Rich night cream\n\nI've updated your Routine tab with these steps! 🎉\n\n*Add your Anthropic API key in Settings to get fully personalized AI recommendations.*`;
+  if (lower.includes('form') || lower.includes('document') || lower.includes('file') || lower.includes('paper')) {
+    return `For a **${issue}** case in **${st}**, you'll typically need these forms:\n\n**Court Filing Documents:**\n• Complaint/Petition — Initiates your case\n• Summons — Notifies the other party\n• Certificate of Service — Proves delivery\n\n**Supporting Documents:**\n• Financial affidavit (if fees are involved)\n• Evidence exhibits\n• Proposed order (for judge's review)\n\nThese are general forms — exact requirements vary by county. Check your **${st} Courts** website for the official form library.\n\n📄 *Add your API key in Settings to have CourtAide automatically identify the exact forms for your case and add them to your Documents tab.*`;
   }
-  if (lower.includes('acne') || lower.includes('breakout') || lower.includes('pimple')) {
-    return `Acne can be frustrating, but the good news is — it's very treatable! 🎯\n\n**My top recommendations:**\n\n• **Salicylic Acid 2%** — exfoliates inside pores, prevents future breakouts. Use 2-3x/week.\n• **Niacinamide 10%** — reduces inflammation and sebum production. Daily use is fine.\n• **Benzoyl Peroxide 2.5%** — kills acne-causing bacteria. Use as spot treatment.\n• **Non-comedogenic SPF** — EltaMD UV Clear is perfect for acne-prone skin.\n\n**Key habits:**\n- Change pillowcase 2x/week 🛏️\n- Don't touch your face\n- Clean your phone screen daily\n\nWould you like me to analyze your specific breakout pattern or build an acne-fighting routine?`;
+
+  if (lower.includes('strategy') || lower.includes('next step') || lower.includes('what should i do') || lower.includes('how do i')) {
+    return `Here's a general strategy for a **${issue}** case in **${st}**:\n\n**Step 1: Gather Evidence**\n• Document everything with dates, names, and details\n• Keep all written communications (emails, texts, letters)\n• Take photos/videos if relevant\n\n**Step 2: Know Your Deadlines**\n• Statutes of limitations vary — don't miss filing deadlines\n• Check your local court rules for response times\n\n**Step 3: File Your Case**\n• Visit the ${st} court self-help center (most courthouses have one)\n• File your initial documents at the clerk's office\n• Pay or request a fee waiver (if eligible)\n\n**Step 4: Serve the Other Party**\n• Follow your state's service requirements\n• File proof of service with the court\n\nWant me to go deeper on any of these steps?\n\n*💡 Add your Anthropic API key in Settings for full AI-powered legal guidance.*`;
   }
-  if (lower.includes('ingredient') || lower.includes('retinol') || lower.includes('niacinamide') || lower.includes('vitamin c') || lower.includes('explain')) {
-    const ingredient = lower.includes('retinol') ? 'Retinol' : lower.includes('niacinamide') ? 'Niacinamide' : lower.includes('vitamin c') ? 'Vitamin C' : 'this ingredient';
-    const info = getIngredientInfo(ingredient.toLowerCase());
-    return `Let me break down **${info.name}** for you ⚗️\n\n**Benefits:**\n${(info.benefits || []).map(b => `• ${b}`).join('\n')}\n\n**How to use:**\n${info.how_to_use}\n\n**Best for:** ${(info.best_for || []).join(', ')}\n\n**Avoid mixing with:** ${(info.avoid_with || ['None noted']).join(', ')}\n\nAnything else you'd like to know about this ingredient?`;
+
+  if (lower.includes('law') || lower.includes('statute') || lower.includes('right') || lower.includes('legal')) {
+    return `Here are some key legal points for **${issue}** cases in **${st}**:\n\n**Your Rights as a Pro Se Litigant:**\n• You have the right to represent yourself in any court\n• Courts must provide you with forms and basic procedural information\n• You can request accommodations if needed\n\n**Important Principles:**\n• **Burden of proof** typically rests on the party making a claim\n• **Evidence rules** apply even to self-represented parties\n• **Deadlines are strict** — courts rarely grant extensions\n\n**Where to Find ${st} Laws:**\n• ${st} Legislature website: Search your state + "legislature" for official statutes\n• ${st} Courts website: Local rules and procedures\n• Legal aid organizations often have free resources\n\n⚠️ *Laws change frequently — always verify current statutes.*\n\n*Add your API key in Settings for specific statute citations.*`;
   }
-  if (lower.includes('moisturizer') || lower.includes('hydrat')) {
-    return `Hydration is the foundation of healthy skin! 💧\n\nFor **${skinType} skin**, I recommend:\n\n**Budget-friendly:**\n• CeraVe Moisturizing Cream ($18) — ceramides + hyaluronic acid, fragrance-free\n• Neutrogena Hydro Boost ($22) — lightweight gel for oily/combo skin\n\n**Mid-range:**\n• First Aid Beauty Ultra Repair Cream ($34) — intense moisture for dry skin\n• Tatcha Water Cream ($68) — Japanese botanicals, silky finish\n\n**Key ingredients to look for:**\n• Hyaluronic Acid — draws water into skin\n• Ceramides — repairs the moisture barrier\n• Glycerin — humectant, attracts moisture\n\nWant me to narrow this down based on your budget?`;
+
+  if (lower.includes('cost') || lower.includes('fee') || lower.includes('afford') || lower.includes('free')) {
+    return `**Understanding Court Costs for ${issue} in ${st}:**\n\n**Typical Filing Fees:**\n• Small claims: $30–$100\n• Civil cases: $100–$400\n• Family law: $200–$500+\n\n**Fee Waivers (Free Filing):**\nIf you can't afford fees, you can request a **fee waiver** (also called "in forma pauperis"). You'll need to:\n1. Complete a financial disclosure form\n2. Show your income is below the threshold (usually 125% of federal poverty level)\n3. File it with your initial complaint\n\n**Free Legal Help:**\n• **Legal Aid** — Free for low-income residents\n• **Law school clinics** — Free consultations\n• **Bar association referrals** — Sometimes offer sliding-scale fees\n• **Self-help centers** — At most courthouses, free of charge\n\nWould you like help finding legal aid in ${st}?`;
   }
-  if (lower.includes('analyze') || lower.includes('analysis') || lower.includes('scan')) {
-    return `Great idea! Let me analyze your skin profile 🔬\n\n**Your Skin Assessment:**\n\n📊 **Skin Type:** ${skinType}\n🎯 **Main Concerns:** ${concerns}\n\n**Priority ranking:**\n1. ${(profile?.concerns || ['Hydration'])[0]} — Focus here first\n2. ${(profile?.concerns || ['Dullness', 'Texture'])[1] || 'Barrier health'} — Address once routine is established\n\n**Recommended approach:**\nStart with gentle basics (cleanser + SPF) and add actives gradually over 4-6 weeks. Your skin barrier needs time to adjust!\n\n**My action plan for you:**\n✅ Week 1-2: Cleanser + Moisturizer + SPF only\n✅ Week 3-4: Add your treatment serum\n✅ Week 5+: Introduce retinol (PM, 2x/week)\n\nWant me to build your full routine now?`;
-  }
-  return `That's a great question about skincare! ✨\n\nBased on your **${skinType}** skin profile with concerns around **${concerns}**, here's my take:\n\nThe most important thing is consistency — even a simple 3-step routine done daily beats an elaborate one done inconsistently.\n\n**My top 3 universal tips:**\n1. 🧴 Gentle cleanser (never skip)\n2. 💧 Moisturizer (yes, even oily skin needs it)\n3. ☀️ SPF every morning (the #1 anti-aging tool)\n\nWant me to go deeper on any specific concern? I can also build you a full personalized routine or explain any ingredient you're curious about!\n\n*💡 Add your Anthropic API key in Settings for the full agentic AI experience.*`;
+
+  return `I'm here to help with your **${issue}** matter in **${st}** ⚖️\n\nAs your AI legal assistant, I can help you:\n\n• 🔍 **Analyze** your situation and identify key issues\n• 🎯 **Develop** a legal strategy for your case\n• 📄 **Identify** the court forms you need to file\n• ✍️ **Guide** you through filling out documents\n• 📚 **Cite** relevant ${st} statutes and rules\n\nTell me more about your specific situation — what happened, when, and what outcome you're seeking. The more details you share, the better I can help.\n\n⚠️ *Remember: I provide legal information, not legal advice. For serious matters, always consult a licensed attorney.*\n\n*💡 Add your Anthropic API key in Settings for the full agentic AI experience with live legal research.*`;
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  MODAL
+//  DOCUMENTS
 // ══════════════════════════════════════════════════════════════════════
-function openModal(content) {
-  if (content) document.getElementById('modal-content').innerHTML = content;
-  document.getElementById('modal-overlay').classList.add('show');
-}
-function closeModal(e) {
-  if (!e || e.target === document.getElementById('modal-overlay')) {
-    document.getElementById('modal-overlay').classList.remove('show');
+function renderDocuments() {
+  const forms = state.currentCase?.forms || [];
+  const empty = document.getElementById('docs-empty');
+  const list = document.getElementById('forms-list');
+  const bar = document.getElementById('doc-case-bar');
+  const caseName = document.getElementById('doc-case-name');
+
+  if (state.currentCase) {
+    bar.style.display = 'block';
+    caseName.textContent = state.currentCase.issueLabel + ' · ' + state.currentCase.caseState;
+  } else {
+    bar.style.display = 'none';
   }
+
+  if (forms.length === 0) {
+    empty.classList.remove('hidden');
+    list.classList.add('hidden');
+  } else {
+    empty.classList.add('hidden');
+    list.classList.remove('hidden');
+    list.innerHTML = forms.map(f => `
+      <div class="form-card">
+        <div class="form-status ${f.status || 'needed'}"></div>
+        <div class="form-info">
+          <div class="form-name">${escapeHtml(f.name)}</div>
+          ${f.number ? `<div class="form-number">Form ${escapeHtml(f.number)}</div>` : ''}
+          <div class="form-court">${escapeHtml(f.court || f.purpose || '')}</div>
+        </div>
+        <button class="fill-btn" onclick="fillFormWithAI('${escapeHtml(f.name).replace(/'/g,"\\'")}')">Fill with AI</button>
+      </div>
+    `).join('');
+  }
+}
+
+function fillFormWithAI(formName) {
+  const msg = `Help me fill out the "${formName}" form. Guide me through each section step by step.`;
+  document.getElementById('chat-input').value = msg;
+  navTo('advisor');
+  setTimeout(sendMessage, 300);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════════════════════════════
+function updateSettings() {
+  if (!state.profile) return;
+  document.getElementById('profile-name').textContent = state.profile.name;
+  document.getElementById('profile-sub').textContent = state.profile.homeState + (state.profile.dob ? ' · DOB: ' + state.profile.dob : '');
+  document.getElementById('settings-profile-sub').textContent = state.profile.name + ' · ' + state.profile.homeState;
+  document.getElementById('api-key-input').value = state.apiKey;
+}
+
+function saveApiKey(val) {
+  state.apiKey = val;
+  localStorage.setItem('courtaide_apikey', val);
+}
+
+function resetProfile() {
+  if (!confirm('This will take you back to the setup screen. Continue?')) return;
+  state.profile = null;
+  state.biometricEnabled = false;
+  localStorage.removeItem('courtaide_profile');
+  localStorage.removeItem('courtaide_biometric');
+  showScreen('setup');
+}
+
+function clearAllCases() {
+  if (!confirm('Delete all case history? This cannot be undone.')) return;
+  state.cases = [];
+  state.currentCase = null;
+  saveState();
+  renderDocuments();
+  updateHome();
+  showToast('All cases cleared');
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1685,7 +1743,7 @@ function closeModal(e) {
 // ══════════════════════════════════════════════════════════════════════
 function showToast(msg) {
   const toast = document.createElement('div');
-  toast.style.cssText = 'position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 16px);left:50%;transform:translateX(-50%);background:rgba(26,18,50,0.95);border:1px solid rgba(139,92,246,0.4);color:white;padding:12px 20px;border-radius:50px;font-size:14px;font-weight:600;z-index:300;backdrop-filter:blur(10px);white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);opacity:0;transition:opacity 0.3s';
+  toast.style.cssText = 'position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 20px);left:50%;transform:translateX(-50%);background:rgba(15,30,55,0.97);border:1px solid rgba(37,99,235,0.5);color:white;padding:12px 22px;border-radius:50px;font-size:14px;font-weight:600;z-index:300;backdrop-filter:blur(12px);white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.5);opacity:0;transition:opacity 0.3s';
   toast.textContent = msg;
   document.body.appendChild(toast);
   requestAnimationFrame(() => { toast.style.opacity = '1'; });
@@ -1695,21 +1753,6 @@ function showToast(msg) {
 // ══════════════════════════════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════════════════════════════
-function boot() {
-  showScreen('splash');
-  setTimeout(() => {
-    if (state.profile) {
-      updateHome();
-      renderRoutine();
-      showScreen('home');
-      document.getElementById('bottom-nav').style.display = 'flex';
-    } else {
-      state.obStep = 1;
-      renderObStep();
-      showScreen('onboarding');
-    }
-  }, 2400);
-}
 boot();
 </script>
 </body>

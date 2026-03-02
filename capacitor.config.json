@@ -1,6 +1,6 @@
 {
-  "appId": "com.glowai.app",
-  "appName": "GlowAI",
+  "appId": "com.courtaide.app",
+  "appName": "CourtAide",
   "webDir": "www",
   "server": {
     "androidScheme": "https"

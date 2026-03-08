@@ -6,9 +6,9 @@
 [![Capacitor](https://img.shields.io/badge/Capacitor-119EFF?logo=capacitor&logoColor=white)](https://capacitorjs.com/)
 [![Claude AI](https://img.shields.io/badge/Claude_AI-Anthropic-D97706?logo=anthropic&logoColor=white)](https://anthropic.com/)
 [![GitHub stars](https://img.shields.io/github/stars/808cadger/GlowAI?style=social)](https://github.com/808cadger/GlowAI/stargazers)
-[![YouTube](https://img.shields.io/badge/Demo-YouTube-FF0000?logo=youtube&logoColor=white)]https://youtube.com/shorts/hZ4eWWJPNtQ?feature=share
+[![YouTube](https://img.shields.io/badge/Demo-YouTube-FF0000?logo=youtube&logoColor=white)](https://youtube.com/shorts/hZ4eWWJPNtQ?si=SpxomMIwYOcc5Zp-)
 
-**Demo Video:** [Watch on YouTube](https://youtube.com/shorts/HjhoHTewcf8)
+**Demo Video:** [Watch on YouTube](https://youtube.com/shorts/hZ4eWWJPNtQ?si=SpxomMIwYOcc5Zp-)
 
 An AI-powered skincare mobile app built with Capacitor and Claude AI (Anthropic). Features a full multi-screen SPA with an agentic AI assistant that analyzes your skin, builds personalized routines, and tracks your progress.
 

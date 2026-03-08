@@ -1,5 +1,6 @@
 # GlowAI
 
+https://youtube.com/shorts/hZ4eWWJPNtQ?feature=share
 [![GitHub last commit](https://img.shields.io/github/last-commit/808cadger/GlowAI)](https://github.com/808cadger/GlowAI/commits/main)
 [![GitHub repo size](https://img.shields.io/github/repo-size/808cadger/GlowAI)](https://github.com/808cadger/GlowAI)
 [![Capacitor](https://img.shields.io/badge/Capacitor-119EFF?logo=capacitor&logoColor=white)](https://capacitorjs.com/)

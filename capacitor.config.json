@@ -1,0 +1,8 @@
+{
+  "appId": "com.glowai.app",
+  "appName": "GlowAI",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

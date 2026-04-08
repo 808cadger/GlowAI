@@ -1,0 +1,14 @@
+node_modules/
+www/scan.bundle.js
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/app/release/
+backend/__pycache__/
+backend/*.pyc
+backend/.venv/
+backend/.env
+*.apk
+*.aab
+.DS_Store

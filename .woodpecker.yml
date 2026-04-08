@@ -1,0 +1,71 @@
+# GlowAI — .woodpecker.yml  // Aloha from Pearl City!
+# Codeberg CI (Woodpecker v2): npm build → cap sync → Gradle APK → artifact
+# Secrets to configure in Codeberg repo Settings → Secrets:
+#   ANTHROPIC_API_KEY, API_TOKEN (optional — only needed for backend deploy steps)
+
+when:
+  - event: push
+    branch: main
+  - event: pull_request
+
+steps:
+  # ── Step 1: JS build + Capacitor sync ─────────────────────────────────────
+  - name: js-build
+    image: node:22-alpine
+    commands:
+      - npm ci
+      - npm run build                          # esbuild → www/scan.bundle.js
+      - npx cap sync android --no-open
+
+  # ── Step 2: Gradle APK (debug) ────────────────────────────────────────────
+  - name: apk-debug
+    image: openjdk:21-jdk-slim
+    environment:
+      ANDROID_HOME: /opt/android-sdk
+    commands:
+      # Install Android SDK command-line tools
+      - apt-get update -q && apt-get install -yq wget unzip
+      - mkdir -p /opt/android-sdk/cmdline-tools
+      - wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdline.zip
+      - unzip -q /tmp/cmdline.zip -d /opt/android-sdk/cmdline-tools
+      - mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest
+      - yes | /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null
+      - /opt/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools" > /dev/null
+      - echo "sdk.dir=/opt/android-sdk" > android/local.properties
+      - cd android && ./gradlew assembleDebug --no-daemon --quiet
+
+  # ── Step 3: Publish APK artifact ──────────────────────────────────────────
+  - name: publish-artifact
+    image: alpine
+    commands:
+      - mkdir -p artifacts
+      - cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/glowai-debug.apk
+      - echo "APK ready at artifacts/glowai-debug.apk"
+    when:
+      branch: main
+
+  # ── Step 4: Deploy PWA to Codeberg Pages ──────────────────────────────────
+  - name: deploy-pages
+    image: alpine/git
+    secrets: []  # No extra secrets needed for Pages push
+    commands:
+      - git config user.email "ci@glowai"
+      - git config user.name  "GlowAI CI"
+      # Push www/ to the pages branch (served at cadger808.codeberg.page/glowai)
+      - git subtree push --prefix=www origin pages
+    when:
+      branch: main
+      event: push
+
+# NOTE: For release APK signing, add these secrets and uncomment below:
+#   KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+#
+# Release signing step (replace apk-debug with this):
+#   - name: apk-release
+#     commands:
+#       - echo "$KEYSTORE_BASE64" | base64 -d > android/app/glowai.keystore
+#       - cd android && ./gradlew assembleRelease \
+#           -Pandroid.injected.signing.store.file=glowai.keystore \
+#           -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+#           -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+#           -Pandroid.injected.signing.key.password=$KEY_PASSWORD

@@ -4,6 +4,7 @@
 
 import base64
 import json
+import logging
 import re
 import uuid
 from contextlib import asynccontextmanager
@@ -12,7 +13,8 @@ import anthropic
 from fastapi import Depends, FastAPI, HTTPException, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select, delete
+from pydantic import BaseModel, Field
+from sqlalchemy import select, delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -24,14 +26,22 @@ from .schemas import (
     ScanRequest, ScanResponse, SuggestedAppointment,
 )
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s — %(message)s",
+)
+log = logging.getLogger("glowai.api")
 
-# ── Lifespan: create tables on startup ───────────────────────────────────────
+
+# ── Lifespan ──────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    log.info("GlowAI API started — tables ready")
     yield
     await engine.dispose()
+    log.info("GlowAI API shutdown — engine disposed")
 
 
 app = FastAPI(title="GlowAI API", version="1.0.0", lifespan=lifespan)
@@ -54,11 +64,11 @@ def require_token(creds: HTTPAuthorizationCredentials | None = Security(bearer_s
     return creds.credentials
 
 
-# ── Claude Vision ────────────────────────────────────────────────────────────
+# ── Claude Vision ─────────────────────────────────────────────────────────────
 SKIN_PROMPT = """Analyze this skin photo carefully.
 Return ONLY a valid JSON object — no markdown, no explanation — with exactly this structure:
 {
-  "skin_type": "dry|oily|combination|normal|sensitive",
+  "skin_type": "dry|oily|combination|normal|sensitive|unknown",
   "issues": ["list of observed issues, e.g. acne, dark_spots, redness, dryness, oiliness, aging, uneven_tone"],
   "recommendations": ["3-5 actionable skincare tips"],
   "suggested_appointment": {
@@ -67,11 +77,12 @@ Return ONLY a valid JSON object — no markdown, no explanation — with exactly
     "reason": "one sentence reason"
   }
 }
-If you cannot clearly see skin in the image, still return the JSON with skin_type "unknown" and empty arrays."""
+IMPORTANT: These observations are for informational screening only — not a medical diagnosis.
+If you cannot clearly see skin, return skin_type "unknown" and empty arrays."""
 
 
 @retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=1, min=2, max=8))
-async def call_claude_vision(b64_image: str) -> dict:
+async def call_claude_vision(b64_image: str) -> tuple[dict, str]:
     client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
     msg = await client.messages.create(
         model="claude-opus-4-6",
@@ -79,17 +90,12 @@ async def call_claude_vision(b64_image: str) -> dict:
         messages=[{
             "role": "user",
             "content": [
-                {
-                    "type": "image",
-                    "source": {"type": "base64", "media_type": "image/jpeg", "data": b64_image},
-                },
+                {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": b64_image}},
                 {"type": "text", "text": SKIN_PROMPT},
             ],
         }],
     )
     raw = msg.content[0].text.strip()
-
-    # Strip accidental markdown fences
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
     return json.loads(raw), raw
@@ -102,20 +108,26 @@ async def scan_skin(
     db: AsyncSession = Depends(get_db),
     _: str = Depends(require_token),
 ):
-    # Validate base64
     try:
         base64.b64decode(body.image_base64, validate=True)
     except Exception:
         raise HTTPException(400, "Invalid base64 image data")
 
+    log.info("scan requested user_id=%s", body.user_id)
+
     try:
         parsed, raw = await call_claude_vision(body.image_base64)
     except json.JSONDecodeError:
+        log.error("Claude returned non-JSON for scan user_id=%s", body.user_id)
         raise HTTPException(502, "AI response was not valid JSON")
     except Exception as e:
+        log.error("Vision API error user_id=%s err=%s", body.user_id, e)
         raise HTTPException(502, f"Vision API error: {str(e)}")
 
     suggested = parsed.get("suggested_appointment", {})
+    if suggested.get("urgency") == "urgent":
+        log.warning("urgent scan result user_id=%s issues=%s", body.user_id, parsed.get("issues"))
+
     record = ScanResult(
         user_id=body.user_id,
         skin_type=parsed.get("skin_type", "unknown"),
@@ -129,6 +141,7 @@ async def scan_skin(
     db.add(record)
     await db.commit()
     await db.refresh(record)
+    log.info("scan saved id=%s skin_type=%s", record.id, record.skin_type)
 
     return ScanResponse(
         id=record.id,
@@ -171,6 +184,7 @@ async def create_appointment(
     db.add(appt)
     await db.commit()
     await db.refresh(appt)
+    log.info("appointment created id=%s user_id=%s", appt.id, appt.user_id)
     return appt
 
 
@@ -211,25 +225,38 @@ class ChatMessage(BaseModel):
     content: str
 
 class ChatRequest(BaseModel):
-    message: str = Field(..., max_length=500)
+    message: str = Field(..., min_length=1, max_length=500)
     history: list[ChatMessage] = []
     user_id: str = Field(default="default", max_length=100)
 
-CHAT_SYSTEM = """You are GlowAI Assistant — a friendly, knowledgeable AI skincare advisor.
-Keep replies concise (2–4 sentences max). Ask one follow-up question to keep the conversation going.
-Focus on: skin types, routines, ingredients, concerns (acne, aging, dryness, oiliness), and appointments.
-Use occasional emojis. When relevant, suggest the user scan their face with the camera for a personalized analysis.
-Never diagnose medical conditions — recommend seeing a dermatologist for serious concerns.
-Tone: warm, encouraging, Hawaii-inspired (occasional Aloha/Mahalo)."""
+CHAT_SYSTEM = """You are GlowAI Assistant — a friendly AI skincare guide, not a medical provider.
+
+HARD RULES (never break these):
+- Never diagnose skin conditions, diseases, or medical disorders.
+- Never recommend prescription medications, dosages, or treatments.
+- Never contradict or override advice from a licensed dermatologist or doctor.
+- Never interpret moles, lesions, or growths as benign or malignant — always refer to a doctor.
+- If a user describes symptoms that sound urgent (sudden rash, severe irritation, spreading lesion), say: "That sounds like something a dermatologist should see in person — please book an appointment or visit urgent care."
+
+WHAT YOU CAN DO:
+- Discuss general skincare routines, ingredients, skin types, and over-the-counter products.
+- Suggest when a dermatologist visit might be helpful (framed as a recommendation, not a diagnosis).
+- Help users understand their GlowAI scan results as informational observations, not medical findings.
+- Answer questions about appointments in the app.
+
+TONE: Warm, concise (2–4 sentences), encouraging. Occasional Aloha/Mahalo. Ask one follow-up question."""
 
 @app.post("/api/chat")
 async def chat(
     body: ChatRequest,
     _: str = Depends(require_token),
 ):
+    log.info("chat message user_id=%s len=%d", body.user_id, len(body.message))
     client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
-    messages = [{"role": m.role if m.role == "user" else "assistant", "content": m.content}
-                for m in body.history[-8:]]
+    messages = [
+        {"role": m.role if m.role in ("user", "assistant") else "user", "content": m.content}
+        for m in body.history[-8:]
+    ]
     messages.append({"role": "user", "content": body.message})
 
     resp = await client.messages.create(
@@ -238,10 +265,21 @@ async def chat(
         system=CHAT_SYSTEM,
         messages=messages,
     )
-    return {"reply": resp.content[0].text.strip()}
+    reply = resp.content[0].text.strip()
+    log.info("chat reply user_id=%s len=%d", body.user_id, len(reply))
+    return {"reply": reply}
 
 
-# ── Health check ──────────────────────────────────────────────────────────────
+# ── Health checks ─────────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "glowai-api"}
+
+@app.get("/health/db")
+async def health_db(db: AsyncSession = Depends(get_db)):
+    try:
+        await db.execute(text("SELECT 1"))
+        return {"status": "ok", "db": "reachable"}
+    except Exception as e:
+        log.error("DB health check failed: %s", e)
+        raise HTTPException(503, f"Database unreachable: {e}")

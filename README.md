@@ -116,6 +116,9 @@ Download from [Releases](https://github.com/808cadger/glowai/releases) — insta
 
 ---
 
-## License
+## Credits
 
-MIT — handcrafted in Pearl City, Hawaii. // Aloha! 🌺
+Handcrafted in Pearl City, Hawaii. // Aloha! 🌺
+---
+
+© 2026 cadger808 — All rights reserved.

@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#c96442" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>GlowAI</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./theme.css" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
-<body>
+<body data-app-theme="glowai">
 <div id="app">
 
   <!-- ── Persistent Header ── -->
@@ -30,13 +31,20 @@
 
   <!-- ══ SCREEN: Home ══ -->
   <main class="screen" id="screenHome" role="main">
-    <!-- AI Chatbot Widget -->
+    <section class="hero-shell">
+      <div class="hero-copy">
+        <p class="eyebrow">Luxury skin consult companion</p>
+        <h1 class="hero-title">Editorial skin scans for premium consults.</h1>
+        <p class="hero-subtitle">A richer scan-first dashboard with a polished luxury feel.</p>
+      </div>
+    </section>
+
     <div class="chat-widget" id="chatWidget">
       <div class="chat-widget-header">
-        <div class="chat-bot-avatar">✨</div>
+        <div class="chat-bot-avatar">G</div>
         <div class="chat-bot-info">
           <span class="chat-bot-name">GlowAI Assistant</span>
-          <span class="chat-bot-status">● Online</span>
+          <span class="chat-bot-status">Online</span>
         </div>
       </div>
       <div class="chat-messages" id="chatMessages" role="log" aria-live="polite"></div>
@@ -51,45 +59,49 @@
       </form>
     </div>
 
-    <!-- Scan CTA -->
     <button class="scan-cta" onclick="glowApp.navigate('analysis')" aria-label="Scan your face">
       <span class="scan-cta-icon">📸</span>
       <span class="scan-cta-text">
-        <span class="scan-cta-label">Scan Your Face</span>
-        <span class="scan-cta-sub">AI-powered skin analysis — tap to start</span>
+        <span class="scan-cta-label">Start A Skin Scan</span>
+        <span class="scan-cta-sub">Lead with the hero moment: capture, assess, and step into a polished recommendation flow</span>
       </span>
       <svg class="scan-cta-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="9 18 15 12 9 6"/>
       </svg>
     </button>
 
+    <div class="concern-picker concern-picker-home">
+      <div class="concern-picker-title">Focus Concerns</div>
+      <div class="concern-chip-row" aria-label="Select skin concerns"></div>
+    </div>
+
     <div class="quick-actions">
       <button class="action-card accent" onclick="glowApp.navigate('analysis')" aria-label="Skin Analysis">
         <span class="action-icon">🔬</span>
         <span class="action-label">Skin Analysis</span>
-        <span class="action-sublabel">Scan &amp; report</span>
+        <span class="action-sublabel">Scan and report</span>
       </button>
       <button class="action-card teal" onclick="glowApp.navigate('appointments')" aria-label="Appointments">
         <span class="action-icon">📅</span>
-        <span class="action-label">Appointments</span>
-        <span class="action-sublabel">Personal &amp; work</span>
+        <span class="action-label">Bookings</span>
+        <span class="action-sublabel">Personal and client-ready</span>
       </button>
       <button class="action-card purple" onclick="glowApp.navigate('analysis')" aria-label="History">
         <span class="action-icon">📈</span>
         <span class="action-label">History</span>
         <span class="action-sublabel">Past scans</span>
       </button>
-      <button class="action-card neutral" onclick="glowApp.navigate('analysis')" aria-label="Tips">
+      <button class="action-card neutral" onclick="glowApp.navigate('settings')" aria-label="Tips">
         <span class="action-icon">💡</span>
-        <span class="action-label">Glow Tips</span>
-        <span class="action-sublabel">Daily routine</span>
+        <span class="action-label">Care Setup</span>
+        <span class="action-sublabel">API and consult flow</span>
       </button>
     </div>
 
     <!-- Upcoming appointments peek -->
     <div class="section-header">
-      <span class="section-title">Upcoming</span>
-      <button class="section-link" onclick="glowApp.navigate('appointments')">See all →</button>
+      <span class="section-title">Upcoming Consults</span>
+      <button class="section-link" onclick="glowApp.navigate('appointments')">Open all</button>
     </div>
     <div id="homeApptPreview" class="appt-list" aria-label="Upcoming appointments preview"></div>
   </main>
@@ -129,19 +141,23 @@
           <span class="scan-camera-icon">📸</span>
         </div>
         <h2 class="scan-hero-title">Scan Your Face</h2>
-        <p class="scan-hero-sub">GlowAI uses Claude Vision to analyze your skin type, detect concerns, and recommend your next step.</p>
+        <p class="scan-hero-sub">Capture a clean front-facing image and GlowAI will turn it into skin-type insight, concern detection, and the next best action.</p>
+      </div>
+      <div class="concern-picker">
+        <div class="concern-picker-title">Focus Concerns</div>
+        <div class="concern-chip-row" id="concernChipRow" aria-label="Select skin concerns"></div>
       </div>
       <div class="scan-tips">
-        <div class="scan-tip">💡 Good lighting = better results</div>
-        <div class="scan-tip">📐 Face the camera straight-on</div>
-        <div class="scan-tip">🧹 Remove makeup for accuracy</div>
+        <div class="scan-tip">💡 Use soft, even lighting for cleaner analysis</div>
+        <div class="scan-tip">📐 Face the camera straight-on and fill the frame</div>
+        <div class="scan-tip">🧼 Remove heavy makeup when accuracy matters</div>
       </div>
       <button class="btn-scan" id="btnStartScan" onclick="window.scanModule?.startScan()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M20.94 11A8.994 8.994 0 0012 3a8.994 8.994 0 00-8.94 8M3.06 13A8.994 8.994 0 0012 21a8.994 8.994 0 008.94-8"/></svg>
         Start Scan
       </button>
       <p class="scan-settings-hint">
-        API URL: <button class="scan-settings-link" onclick="glowApp.navigate('settings')">⚙️ Settings</button>
+        API URL: <button class="scan-settings-link" onclick="glowApp.navigate('settings')">Open settings</button>
       </p>
     </div>
 
@@ -161,7 +177,7 @@
       <div class="scan-error-card">
         <span class="scan-error-icon">⚠️</span>
         <p id="scanErrorMsg" class="scan-error-msg"></p>
-        <button class="btn-primary" style="margin-top:1rem;width:100%" onclick="glowApp.setScanState('idle')">Try Again</button>
+        <button class="btn-primary scan-retry-btn" onclick="glowApp.setScanState('idle')">Try Again</button>
       </div>
     </div>
 
@@ -175,17 +191,17 @@
   <!-- ══ SCREEN: Settings ══ -->
   <section class="screen hidden" id="screenSettings" aria-label="Settings">
     <div class="settings-wrap">
-      <div class="form-group" style="margin-top:1rem">
+      <div class="form-group settings-primary-group">
         <label class="form-label" for="settingsApiUrl">Backend API URL</label>
         <input class="form-input" id="settingsApiUrl" type="url" placeholder="http://localhost:8000" autocomplete="off" />
-        <p style="font-size:0.75rem;color:var(--clr-text-muted);margin-top:0.4rem">Railway/Render URL after deploy</p>
+        <p class="settings-help">Railway or Render URL after deploy.</p>
       </div>
       <div class="form-group">
         <label class="form-label" for="settingsToken">API Token</label>
         <input class="form-input" id="settingsToken" type="password" placeholder="your-api-token" autocomplete="off" />
       </div>
-      <button class="btn-primary" style="width:100%;margin-top:0.5rem" onclick="glowApp.saveSettings()">Save Settings</button>
-      <p id="settingsSaved" class="settings-saved hidden">✅ Saved!</p>
+      <button class="btn-primary settings-save-btn" onclick="glowApp.saveSettings()">Save Settings</button>
+      <p id="settingsSaved" class="settings-saved hidden">Saved.</p>
     </div>
   </section>
 
@@ -209,11 +225,11 @@
       </svg>
       Analyze
     </button>
-    <button class="nav-item" id="navProfile" onclick="alert('Profile — coming soon!')" aria-label="Profile">
+    <button class="nav-item" id="navProfile" onclick="glowApp.navigate('settings')" aria-label="Settings">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
       </svg>
-      Profile
+      Settings
     </button>
   </nav>
 
@@ -250,7 +266,7 @@
         <select class="form-select" id="formType"></select>
       </div>
 
-      <div class="form-group" id="formClientGroup" style="display:none">
+      <div class="form-group form-client-group" id="formClientGroup" style="display:none">
         <label class="form-label" for="formClient">Client / Contact</label>
         <input class="form-input" id="formClient" type="text" placeholder="Client name or company" maxlength="80" autocomplete="off" />
       </div>

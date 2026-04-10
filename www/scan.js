@@ -49,6 +49,7 @@ function capturePhotoWeb() {
 async function callScanAPI(base64Image) {
   const base = apiBase();
   if (!base) throw new Error('NO_API_URL');
+  const userConcerns = window.glowApp?.getSelectedConcerns?.() || [];
 
   const resp = await fetch(`${base}/api/scan`, {
     method: 'POST',
@@ -59,6 +60,7 @@ async function callScanAPI(base64Image) {
     body: JSON.stringify({
       image_base64: base64Image,
       user_id: localStorage.getItem('glowai_user_id') || 'default',
+      user_concerns: userConcerns,
     }),
   });
 
@@ -111,6 +113,12 @@ function mockResult() {
   return { ...r, id: 'demo-' + Date.now(), created_at: new Date().toISOString(), _demo: true };
 }
 
+function applySelectedConcerns(result) {
+  const userConcerns = window.glowApp?.getSelectedConcerns?.() || [];
+  const issues = Array.from(new Set([...(result.issues || []), ...userConcerns]));
+  return { ...result, user_concerns: userConcerns, issues };
+}
+
 // ── Main: startScan() ─────────────────────────────────────────────────────────
 async function startScan() {
   const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
@@ -153,17 +161,17 @@ async function startScan() {
     if (!apiBase()) {
       // No backend configured — show demo result after brief delay
       await new Promise(r => setTimeout(r, 1800));
-      result = mockResult();
+      result = applySelectedConcerns(mockResult());
       result._demo = true;
     } else {
-      result = await callScanAPI(b64);
+      result = applySelectedConcerns(await callScanAPI(b64));
     }
     saveScanToHistory(result, b64);
     window.glowApp.showScanResult(result);
   } catch (err) {
     // API configured but unreachable — show demo result with warning
     await new Promise(r => setTimeout(r, 800));
-    const demo = mockResult();
+    const demo = applySelectedConcerns(mockResult());
     demo._demo = true;
     demo._apiError = err.message;
     saveScanToHistory(demo, b64);

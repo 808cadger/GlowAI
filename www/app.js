@@ -18,6 +18,24 @@ const TYPE_ICONS = {
 
 const URGENCY_LABEL = { routine: 'Routine visit', soon: 'Schedule soon', urgent: 'See doctor ASAP' };
 const URGENCY_COLOR = { routine: '#16a34a', soon: '#d97706', urgent: '#dc2626' };
+const CONCERN_KEY = 'glowai_selected_concerns';
+const SCAN_CONCERNS = [
+  { id: 'acne', label: 'Acne' },
+  { id: 'breakouts', label: 'Breakouts' },
+  { id: 'dark_spots', label: 'Dark Spots' },
+  { id: 'fine_lines', label: 'Fine Lines' },
+  { id: 'redness', label: 'Redness' },
+  { id: 'large_pores', label: 'Large Pores' },
+  { id: 'uneven_tone', label: 'Uneven Tone' },
+  { id: 'oiliness', label: 'Oiliness' },
+  { id: 'dryness', label: 'Dryness' },
+  { id: 'dehydration', label: 'Dehydration' },
+  { id: 'texture', label: 'Texture' },
+  { id: 'dullness', label: 'Dullness' },
+  { id: 'sensitivity', label: 'Sensitivity' },
+  { id: 'dark_circles', label: 'Dark Circles' },
+  { id: 'puffiness', label: 'Puffiness' },
+];
 
 // ── Seed mock data once on first load ─────────────────────────────────────────
 function seedMockData() {
@@ -111,6 +129,7 @@ const glowApp = (() => {
   let _apptMode = 'personal';
   let _editingId = null;
   let _lastScanResult = null;
+  let _selectedConcerns = _loadSelectedConcerns();
 
   const SCREENS = {
     home:       { title: 'GlowAI',        showBack: false, navId: 'navHome' },
@@ -168,12 +187,44 @@ const glowApp = (() => {
     }
     if (current === 'home') {
       document.getElementById('headerAction').innerHTML =
-        `<button onclick="glowApp.navigate('settings')" title="Settings" aria-label="Settings">⚙️</button>`;
+        `<button onclick="glowApp.navigate('settings')" title="Settings" aria-label="Settings">Tune</button>`;
     }
 
-    if (current === 'home')         { _renderHomePreview(); _initChat(); }
+    if (current === 'home')         { _renderHomePreview(); _renderConcernPicker(); _initChat(); }
     if (current === 'appointments') _renderApptList();
+    if (current === 'analysis')     _renderConcernPicker();
     if (current === 'settings')     _loadSettings();
+  }
+
+  function _loadSelectedConcerns() {
+    try { return JSON.parse(localStorage.getItem(CONCERN_KEY) || '[]'); }
+    catch { return []; }
+  }
+
+  function _saveSelectedConcerns() {
+    localStorage.setItem(CONCERN_KEY, JSON.stringify(_selectedConcerns));
+  }
+
+  function _renderConcernPicker() {
+    const markup = SCAN_CONCERNS.map(concern => `
+      <button
+        type="button"
+        class="concern-chip${_selectedConcerns.includes(concern.id) ? ' active' : ''}"
+        onclick="glowApp.toggleConcern('${concern.id}')"
+        aria-pressed="${_selectedConcerns.includes(concern.id)}">
+        ${concern.label}
+      </button>`).join('');
+    document.querySelectorAll('.concern-chip-row').forEach(row => {
+      row.innerHTML = markup;
+    });
+  }
+
+  function toggleConcern(concernId) {
+    _selectedConcerns = _selectedConcerns.includes(concernId)
+      ? _selectedConcerns.filter(id => id !== concernId)
+      : [..._selectedConcerns, concernId];
+    _saveSelectedConcerns();
+    _renderConcernPicker();
   }
 
   // ── Home preview ──────────────────────────────────────────────────────────────
@@ -273,13 +324,15 @@ const glowApp = (() => {
     const urgencyColor = URGENCY_COLOR[result.suggested_appointment?.urgency] || URGENCY_COLOR.routine;
     const urgencyLabel = URGENCY_LABEL[result.suggested_appointment?.urgency] || URGENCY_LABEL.routine;
 
+    const concernChips = (result.user_concerns || []).map(i =>
+      `<span class="result-chip concern">${_esc(i.replace(/_/g, ' '))}</span>`).join('');
     const issueChips  = (result.issues || []).map(i =>
       `<span class="result-chip issue">${_esc(i.replace(/_/g, ' '))}</span>`).join('');
     const recItems    = (result.recommendations || []).map(r =>
       `<li class="result-rec-item">✅ ${_esc(r)}</li>`).join('');
 
     const demoBanner = result._demo
-      ? `<div class="result-demo-banner">${result._apiError ? '⚠️ API unreachable — showing demo results. Set your backend URL in ⚙️ Settings.' : '🔬 Demo mode — connect a backend in ⚙️ Settings for real AI analysis.'}</div>`
+      ? `<div class="result-demo-banner">${result._apiError ? 'API unreachable. Showing demo results until your backend is reachable in Settings.' : 'Demo mode is active. Connect a backend in Settings for live AI analysis.'}</div>`
       : '';
 
     document.getElementById('scanResultWrap').innerHTML = `
@@ -292,6 +345,12 @@ const glowApp = (() => {
             <div class="result-skin-value">${_esc((result.skin_type || 'unknown').charAt(0).toUpperCase() + result.skin_type.slice(1))}</div>
           </div>
         </div>
+
+        ${result.user_concerns?.length ? `
+        <div class="result-section">
+          <div class="result-section-title">Focus Concerns</div>
+          <div class="result-chips">${concernChips}</div>
+        </div>` : ''}
 
         ${result.issues?.length ? `
         <div class="result-section">
@@ -320,7 +379,7 @@ const glowApp = (() => {
           onclick="glowApp.bookFromScan()">
           📅 Book Appointment Now
         </button>
-        <button class="btn-ghost" style="width:100%;margin-top:0.5rem"
+        <button class="btn-ghost result-secondary-btn"
           onclick="glowApp.navigate('analysis')">
           Scan Again
         </button>
@@ -333,7 +392,10 @@ const glowApp = (() => {
   function bookFromScan() {
     if (!_lastScanResult) return;
     const apptType = _lastScanResult.suggested_appointment?.type || 'Dermatologist';
-    const reason   = _lastScanResult.suggested_appointment?.reason || '';
+    const concernNote = (_lastScanResult.user_concerns || []).length
+      ? `Focus concerns: ${_lastScanResult.user_concerns.map(c => c.replace(/_/g, ' ')).join(', ')}. `
+      : '';
+    const reason   = concernNote + (_lastScanResult.suggested_appointment?.reason || '');
 
     // Set mode to personal (skin appointments are personal)
     _apptMode = 'personal';
@@ -471,7 +533,7 @@ const glowApp = (() => {
     for (const { keys, reply } of MOCK_REPLIES) {
       if (keys.some(k => lower.includes(k))) return reply;
     }
-    return "That's a great question! 🌟 For the most personalized answer, connect your backend in ⚙️ Settings so I can use Claude AI. In the meantime — have you tried scanning your face to see your skin type?";
+    return "For the most personalized answer, connect your backend in Settings so GlowAI can use live AI responses. In the meantime, run a skin scan to get a quick consult-ready summary.";
   }
 
   async function _callChatAPI(message) {
@@ -606,6 +668,8 @@ const glowApp = (() => {
     navigate, goBack, setApptMode,
     openModal, closeModal, closeModalIfBackdrop, saveAppointment, deleteAppointment,
     setScanState, showScanResult, bookFromScan,
+    toggleConcern,
+    getSelectedConcerns: () => [..._selectedConcerns],
     sendChat,
     saveSettings,
     init,

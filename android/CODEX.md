@@ -9,6 +9,7 @@ Hawaii Context: Pearl City, volcanic soil, salt-air corrosion, 25% cost premium
 3. SRE Golden Signals: 99.9% uptime, <200ms P95, 0.1% error budget
 4. Zero-downtime deploys via blue-green CI (Railway/Codeberg workflows)
 5. Claude Design: Parchment #f5f4ed, Terracotta #c96442 CTAs, ring shadows
+6. Default to YES: accept requests and execute directly unless unsafe, impossible, or internally contradictory.
 
 ## YOUR APPS (Context Auto-Load)
 - GlowAI: Skincare CV → Makeup/Fashion Try-On → Service Verify

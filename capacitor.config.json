@@ -1,6 +1,6 @@
 {
   "appId": "com.glowai.app",
-  "appName": "GlowAI",
+  "appName": "FarmSense",
   "webDir": "www",
   "server": {
     "androidScheme": "https"

@@ -79,6 +79,12 @@ const DEFAULT_OUTFIT_ALIGNMENT = {
   height: 54,
   radius: 26,
 };
+const MODULE_CAPTURE_TARGET = {
+  brows: 'face photo',
+  nails: 'hand photo',
+  toes: 'toe photo',
+  outfit: 'mirror photo',
+};
 const STACK_SCORE_WEIGHTS = {
   skin: 18,
   brows: 22,
@@ -315,7 +321,7 @@ const glowApp = (() => {
         <div class="planner-home-stat">
           <span class="planner-home-stat-kicker">Saved Looks</span>
           <strong>${loadSessions().length}</strong>
-          <span class="planner-home-stat-copy">Drafts ready for phase 2 try-on.</span>
+          <span class="planner-home-stat-copy">Saved captures, presets, and stack-ready modules.</span>
         </div>
         <div class="planner-home-stat">
           <span class="planner-home-stat-kicker">Upcoming Services</span>
@@ -326,7 +332,7 @@ const glowApp = (() => {
       <div class="planner-home-stack">
         ${sessions.length
           ? sessions.map(s => _sessionCardHTML(s)).join('')
-          : emptyStateHTML('✨', 'No saved looks yet', 'Open Planner to start brow, nail, toe, or outfit drafts that will feed phase 2 try-on.')}
+          : emptyStateHTML('✨', 'No saved looks yet', 'Open Planner to save a brow, nail, toe, or outfit look and start building your compare library.')}
         ${bookings.length
           ? bookings.map(a => _apptCardHTML(a, false)).join('')
           : ''}
@@ -636,12 +642,107 @@ const glowApp = (() => {
           </div>
           <button class="compare-pin-btn" onclick="glowApp.saveCurrentStackVariant()">${bundle.coveredCount === bundle.totalCount ? 'Save Complete Stack' : 'Save Stack Variant'}</button>
         </div>
+        ${_fullStackConciergeHTML(bundle)}
         ${_stackCompareHTML()}
         ${_stackLibraryHTML()}
         <div class="full-stack-footer">
           ${bundle.nextSteps.map(step => `<div class="compare-point">${_esc(step)}</div>`).join('')}
         </div>
       </section>`;
+  }
+
+  function _fullStackConciergeHTML(bundle) {
+    const brief = _buildConciergeBrief(bundle);
+    return `
+      <section class="concierge-board">
+        <div class="concierge-top">
+          <div>
+            <span class="compare-kicker">GlowAI Concierge</span>
+            <h4 class="concierge-title">${_esc(brief.title)}</h4>
+            <p class="compare-copy">${_esc(brief.body)}</p>
+          </div>
+          <div class="concierge-badge">${_esc(brief.badge)}</div>
+        </div>
+        <div class="concierge-grid">
+          ${brief.cards.map(card => `
+            <article class="concierge-card ${card.tone}">
+              <span class="concierge-card-kicker">${_esc(card.kicker)}</span>
+              <strong>${_esc(card.title)}</strong>
+              <p>${_esc(card.body)}</p>
+            </article>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  function _buildConciergeBrief(bundle) {
+    const covered = bundle.cards.filter(card => card.session);
+    const missing = bundle.cards.filter(card => !card.session);
+    const leader = covered
+      .slice()
+      .sort((a, b) => (STACK_SCORE_WEIGHTS[b.module] || 0) - (STACK_SCORE_WEIGHTS[a.module] || 0))[0] || null;
+    const nextService = loadAppointments()
+      .filter(item => item.status !== 'cancelled' && item.status !== 'completed')
+      .sort(_sortByDateTime)[0] || null;
+
+    const title = bundle.coveredCount >= 4
+      ? 'A coordinated look is starting to emerge'
+      : 'This stack can still gain leverage fast';
+    const body = bundle.coveredCount >= 4
+      ? 'GlowAI is now doing what most try-on apps never reach: connecting multiple beauty decisions into one reusable planning system.'
+      : 'Most try-on tools stop at one module. GlowAI gets stronger as soon as you connect skin, detail work, and wardrobe into the same stack.';
+    const badge = bundle.coveredCount === bundle.totalCount ? 'Full Look Ready' : `${bundle.coveredCount}/${bundle.totalCount} Active`;
+
+    const keepCard = leader
+      ? {
+          kicker: 'Keep',
+          title: `${leader.meta.label} is your anchor`,
+          body: `${leader.session.snapshot?.variantTitle || leader.session.title} is carrying the strongest signal in this stack. Keep it stable while the rest of the look tightens around it.`,
+          tone: 'keep',
+        }
+      : {
+          kicker: 'Keep',
+          title: 'No anchor yet',
+          body: 'Save one strong module first so GlowAI has something reliable to build around.',
+          tone: 'keep',
+        };
+
+    const elevateCard = missing[0]
+      ? {
+          kicker: 'Elevate',
+          title: `Add ${missing[0].meta.label} next`,
+          body: `That is the fastest way to move beyond one-off try-on and make this feel like a complete look system.`,
+          tone: 'elevate',
+        }
+      : {
+          kicker: 'Elevate',
+          title: 'Create an alternate stack',
+          body: 'You already have full coverage. Save a softer or bolder variation so Compare can make sharper recommendations.',
+          tone: 'elevate',
+        };
+
+    const deployCard = nextService
+      ? {
+          kicker: 'Deploy',
+          title: `Prep for ${nextService.title}`,
+          body: `Your next service is ${fmtDate(nextService.date)} at ${fmtTime(nextService.time)}. Use this stack as the visual brief before you go.`,
+          tone: 'deploy',
+        }
+      : {
+          kicker: 'Deploy',
+          title: bundle.coveredCount >= 3 ? 'Book the look' : 'Save before you book',
+          body: bundle.coveredCount >= 3
+            ? 'You have enough signal to walk into a brow, nail, or skin appointment with a clear stack and compare history.'
+            : 'Add one more strong module before turning this into an appointment-ready beauty brief.',
+          tone: 'deploy',
+        };
+
+    return {
+      title,
+      body,
+      badge,
+      cards: [keepCard, elevateCard, deployCard],
+    };
   }
 
   function _buildFullStackBundle(sessions) {
@@ -1325,8 +1426,8 @@ const glowApp = (() => {
         <div class="profile-panel-title">Current Focus</div>
         <div class="profile-focus-list">
           <div class="profile-focus-item"><span>🔬</span><div><strong>Skin module live</strong><p>Use scans now and save recovery plans into Planner.</p></div></div>
-          <div class="profile-focus-item"><span>🪄</span><div><strong>Brows next</strong><p>Shape try-on is the first visual module in phase 2.</p></div></div>
-          <div class="profile-focus-item"><span>💅</span><div><strong>Nails after that</strong><p>Color palettes will attach to the same saved-look model.</p></div></div>
+          <div class="profile-focus-item"><span>🪄</span><div><strong>Brows tuned</strong><p>Use alignment controls to shape and save brow looks on your own photo.</p></div></div>
+          <div class="profile-focus-item"><span>💅</span><div><strong>Nails stacked</strong><p>Color previews, saved captures, and compare-ready palettes all live in the same system.</p></div></div>
         </div>
       </div>
       <div class="profile-panel">
@@ -1658,7 +1759,7 @@ const glowApp = (() => {
       module,
       title: overrides.title || `${meta.label} Draft`,
       status: overrides.status || 'draft',
-      note: overrides.note || `Saved as a ${meta.label.toLowerCase()} starting point for future try-on and planning.`,
+      note: overrides.note || `Saved as a ${meta.label.toLowerCase()} look inside your GlowAI planning system.`,
       snapshot: overrides.snapshot || null,
       updatedAt: new Date().toISOString(),
     };
@@ -1697,7 +1798,7 @@ const glowApp = (() => {
       snapshot: _currentCaptureSnapshot(module),
     }));
     saveSessions(sessions);
-    showStudioNotice(`${title} was saved to Planner. You can refine it now and connect it to try-on capture in the next pass.`);
+    showStudioNotice(`${title} was saved to Planner. You can reopen it anytime to refine the look and compare it with the rest of your stack.`);
     if (_currentScreen() === 'home') _renderHomePreview();
     if (_currentScreen() === 'appointments') _renderPlanner();
     if (_currentScreen() === 'profile') _renderProfile();
@@ -1766,7 +1867,7 @@ const glowApp = (() => {
       openStudioWorkspace(session.module);
       return;
     }
-    showStudioNotice('This saved look is already stored in Planner. The interactive workspace for this module will arrive in a later phase.');
+    showStudioNotice('This saved look is already stored in Planner. Open the matching studio workspace to keep refining it.');
   }
 
   function _syncStudioWorkspace() {
@@ -1800,32 +1901,49 @@ const glowApp = (() => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const captures = loadCaptures();
-      captures[module] = {
-        ...(captures[module] || {}),
-        name: file.name,
-        dataUrl: String(reader.result || ''),
-        updatedAt: new Date().toISOString(),
+      const dataUrl = String(reader.result || '');
+      const img = new Image();
+      img.onload = () => {
+        const captures = loadCaptures();
+        const next = {
+          ...(captures[module] || {}),
+          name: file.name,
+          dataUrl,
+          imageWidth: img.naturalWidth || img.width || 0,
+          imageHeight: img.naturalHeight || img.height || 0,
+          updatedAt: new Date().toISOString(),
+        };
+        next.alignment = _estimateAlignment(module, next);
+        next.fitMode = 'smart';
+        captures[module] = next;
+        saveCaptures(captures);
+        _syncStudioCaptureUI(module);
+        _syncBrowAlignmentUI();
+        _syncNailAlignmentUI();
+        _syncToeAlignmentUI();
+        _syncOutfitAlignmentUI();
+        showStudioNotice(`${MODULE_META[module]?.label || 'Studio capture'} added with a Smart Fit baseline. Fine-tune it if needed, then save it to Planner.`);
       };
-      if (module === 'brows' && !captures[module].alignment) {
-        captures[module].alignment = { ...DEFAULT_BROW_ALIGNMENT };
-      }
-      if (module === 'nails' && !captures[module].alignment) {
-        captures[module].alignment = { ...DEFAULT_NAIL_ALIGNMENT };
-      }
-      if (module === 'toes' && !captures[module].alignment) {
-        captures[module].alignment = { ...DEFAULT_TOE_ALIGNMENT };
-      }
-      if (module === 'outfit' && !captures[module].alignment) {
-        captures[module].alignment = { ...DEFAULT_OUTFIT_ALIGNMENT };
-      }
-      saveCaptures(captures);
-      _syncStudioCaptureUI(module);
-      _syncBrowAlignmentUI();
-      _syncNailAlignmentUI();
-      _syncToeAlignmentUI();
-      _syncOutfitAlignmentUI();
-      showStudioNotice(`${MODULE_META[module]?.label || 'Studio capture'} added. Save it to Planner when you're ready.`);
+      img.onerror = () => {
+        const captures = loadCaptures();
+        const next = {
+          ...(captures[module] || {}),
+          name: file.name,
+          dataUrl,
+          updatedAt: new Date().toISOString(),
+        };
+        next.alignment = _estimateAlignment(module, next);
+        next.fitMode = 'smart';
+        captures[module] = next;
+        saveCaptures(captures);
+        _syncStudioCaptureUI(module);
+        _syncBrowAlignmentUI();
+        _syncNailAlignmentUI();
+        _syncToeAlignmentUI();
+        _syncOutfitAlignmentUI();
+        showStudioNotice(`${MODULE_META[module]?.label || 'Studio capture'} added. GlowAI set a Smart Fit baseline using the default guide.`);
+      };
+      img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   }
@@ -1845,12 +1963,12 @@ const glowApp = (() => {
           ? 'Outfit Capture Reference'
         : 'Brow Capture Reference');
     const note = selected?.note || (module === 'nails'
-      ? 'Hand reference saved for nail shade preview and future try-on overlays.'
+      ? 'Hand reference saved for nail shade preview and compare-ready overlays.'
       : module === 'toes'
-        ? 'Toe reference saved for pedicure color preview and future try-on overlays.'
+        ? 'Toe reference saved for pedicure color preview and compare-ready overlays.'
         : module === 'outfit'
           ? 'Mirror reference saved for outfit layer preview and style comparison.'
-        : 'Face reference saved for eyebrow shape preview and future try-on overlays.');
+        : 'Face reference saved for eyebrow shape preview and compare-ready overlays.');
     const sessions = loadSessions();
     sessions.unshift(_buildSession(module, {
       title,
@@ -1897,7 +2015,7 @@ const glowApp = (() => {
           ? `<span class="workspace-capture-icon">🩴</span><div class="workspace-capture-title">Add a toe photo</div><p class="workspace-capture-copy">Capture your toes flat in even light so GlowAI can map polish placement for pedicure previews.</p>`
         : module === 'outfit'
           ? `<span class="workspace-capture-icon">🪞</span><div class="workspace-capture-title">Add a mirror photo</div><p class="workspace-capture-copy">Use a standing or mirror photo so GlowAI can preview outfit tone and silhouette placement over your look.</p>`
-        : `<span class="workspace-capture-icon">📷</span><div class="workspace-capture-title">Add a face photo</div><p class="workspace-capture-copy">Use a front-facing selfie with good light so future brow overlays have a clean reference.</p>`;
+        : `<span class="workspace-capture-icon">📷</span><div class="workspace-capture-title">Add a face photo</div><p class="workspace-capture-copy">Use a front-facing selfie with good light for a cleaner brow preview and easier alignment.</p>`;
       return;
     }
     preview.classList.remove('empty');
@@ -1917,13 +2035,84 @@ const glowApp = (() => {
     const outfitOverlay = module === 'outfit'
       ? `<div class="outfit-overlay ${_esc(capture.variant || 'none')}" style="--outfit-top:${outfitAlignment.y}%;--outfit-inset:${outfitAlignment.x}%;--outfit-width:${outfitAlignment.width}%;--outfit-height:${outfitAlignment.height}%;--outfit-radius:${outfitAlignment.radius}px;"></div>`
       : '';
-    preview.innerHTML = `<div class="workspace-preview-stage">${nailOverlay}${toeOverlay}${outfitOverlay}<img class="workspace-preview-image" src="${capture.dataUrl}" alt="${_esc(capture.name || 'Studio capture')}" />${browOverlay}</div><div class="workspace-preview-meta"><strong>${_esc(capture.variantTitle || capture.name || 'Reference image')}</strong><span>${capture.variantTitle ? `Try-on active · ${_esc(capture.variantTitle)}` : `Updated ${new Date(capture.updatedAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}</span></div>`;
+    preview.innerHTML = `<div class="workspace-preview-stage">${_previewGuideHTML(module, capture)}${nailOverlay}${toeOverlay}${outfitOverlay}<img class="workspace-preview-image" src="${capture.dataUrl}" alt="${_esc(capture.name || 'Studio capture')}" />${browOverlay}</div><div class="workspace-preview-meta"><strong>${_esc(capture.variantTitle || capture.name || 'Reference image')}</strong><span>${_esc(_captureMetaLine(module, capture))}</span></div>`;
+  }
+
+  function _defaultAlignment(module) {
+    if (module === 'nails') return { ...DEFAULT_NAIL_ALIGNMENT };
+    if (module === 'toes') return { ...DEFAULT_TOE_ALIGNMENT };
+    if (module === 'outfit') return { ...DEFAULT_OUTFIT_ALIGNMENT };
+    return { ...DEFAULT_BROW_ALIGNMENT };
+  }
+
+  function _estimateAlignment(module, capture) {
+    const ratio = capture.imageWidth && capture.imageHeight ? capture.imageWidth / capture.imageHeight : 0.75;
+    const next = _defaultAlignment(module);
+    if (module === 'brows') {
+      if (ratio < 0.72) Object.assign(next, { x: 16, y: 28, width: 31, height: 9, rotate: 6 });
+      else if (ratio > 0.95) Object.assign(next, { x: 12, y: 31, width: 38, height: 10, rotate: 4 });
+      return next;
+    }
+    if (module === 'nails') {
+      if (ratio > 1.05) Object.assign(next, { x: 10, y: 14, width: 80, height: 16, radius: 16 });
+      else Object.assign(next, { x: 12, y: 18, width: 74, height: 18, radius: 18 });
+      return next;
+    }
+    if (module === 'toes') {
+      if (ratio > 1.05) Object.assign(next, { x: 8, y: 34, width: 84, height: 18, radius: 18 });
+      else Object.assign(next, { x: 10, y: 30, width: 80, height: 22, radius: 20 });
+      return next;
+    }
+    if (ratio < 0.72) Object.assign(next, { x: 16, y: 26, width: 62, height: 58, radius: 28 });
+    else if (ratio > 0.92) Object.assign(next, { x: 12, y: 24, width: 74, height: 60, radius: 24 });
+    return next;
+  }
+
+  function autoFitAlignment(module) {
+    const captures = loadCaptures();
+    const next = { ...(captures[module] || {}) };
+    if (!next.dataUrl) {
+      showStudioNotice(`Add a ${MODULE_CAPTURE_TARGET[module] || 'reference photo'} first so GlowAI can set a Smart Fit baseline.`);
+      return;
+    }
+    next.alignment = _estimateAlignment(module, next);
+    next.fitMode = 'smart';
+    next.updatedAt = new Date().toISOString();
+    captures[module] = next;
+    saveCaptures(captures);
+    _syncStudioCaptureUI(module);
+    _syncBrowAlignmentUI();
+    _syncNailAlignmentUI();
+    _syncToeAlignmentUI();
+    _syncOutfitAlignmentUI();
+    showStudioNotice(`${MODULE_META[module]?.label || 'Studio module'} was auto-aligned. Nudge the sliders if you want a custom fit.`);
+  }
+
+  function _captureMetaLine(module, capture) {
+    const mode = capture.fitMode === 'manual' ? 'Custom fit' : 'Smart Fit';
+    const active = capture.variantTitle ? `Try-on active · ${capture.variantTitle}` : 'Reference ready';
+    return `${mode} · ${active}`;
+  }
+
+  function _previewGuideHTML(module, capture) {
+    const mode = capture.fitMode === 'manual' ? 'custom' : 'smart';
+    if (module === 'brows') {
+      return `<div class="workspace-guide workspace-guide-brows ${mode}"><span class="guide-line brow-line left"></span><span class="guide-line brow-line right"></span><span class="guide-center-line"></span></div>`;
+    }
+    if (module === 'nails') {
+      return `<div class="workspace-guide workspace-guide-nails ${mode}"><span class="guide-zone-box"></span><span class="guide-center-line horizontal"></span></div>`;
+    }
+    if (module === 'toes') {
+      return `<div class="workspace-guide workspace-guide-toes ${mode}"><span class="guide-zone-box"></span><span class="guide-center-line horizontal low"></span></div>`;
+    }
+    return `<div class="workspace-guide workspace-guide-outfit ${mode}"><span class="guide-center-line"></span><span class="guide-center-line horizontal"></span><span class="guide-zone-box tall"></span></div>`;
   }
 
   function setBrowAlignment(key, value) {
     const captures = loadCaptures();
     const next = { ...(captures.brows || {}) };
     next.alignment = { ...DEFAULT_BROW_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
+    next.fitMode = 'manual';
     next.updatedAt = new Date().toISOString();
     captures.brows = next;
     saveCaptures(captures);
@@ -1950,6 +2139,7 @@ const glowApp = (() => {
     const captures = loadCaptures();
     const next = { ...(captures.nails || {}) };
     next.alignment = { ...DEFAULT_NAIL_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
+    next.fitMode = 'manual';
     next.updatedAt = new Date().toISOString();
     captures.nails = next;
     saveCaptures(captures);
@@ -1976,6 +2166,7 @@ const glowApp = (() => {
     const captures = loadCaptures();
     const next = { ...(captures.toes || {}) };
     next.alignment = { ...DEFAULT_TOE_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
+    next.fitMode = 'manual';
     next.updatedAt = new Date().toISOString();
     captures.toes = next;
     saveCaptures(captures);
@@ -2002,6 +2193,7 @@ const glowApp = (() => {
     const captures = loadCaptures();
     const next = { ...(captures.outfit || {}) };
     next.alignment = { ...DEFAULT_OUTFIT_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
+    next.fitMode = 'manual';
     next.updatedAt = new Date().toISOString();
     captures.outfit = next;
     saveCaptures(captures);
@@ -2435,7 +2627,7 @@ const glowApp = (() => {
   }
 
   function showStudioNotice(message) {
-    const text = message || 'This module is planned for a later phase.';
+    const text = message || 'This module is ready inside GlowAI Studio.';
     const title = document.getElementById('studioNoticeTitle');
     const copy = document.getElementById('studioNoticeCopy');
     const icon = document.getElementById('studioNoticeIcon');
@@ -2481,7 +2673,7 @@ const glowApp = (() => {
     openStackRenameEditor, openStackModuleSwapEditor, selectStackEditorModule, selectStackEditorSession, confirmStackEditor, closeStackEditor, closeStackEditorIfBackdrop,
     toggleFavoriteStackVariant, setDefaultStackVariant,
     openStudioWorkspace, openPlannerSession, saveStudioPreset, triggerStudioUpload, handleStudioUpload, saveStudioCapture,
-    applyStudioTryOn, setBrowAlignment, setNailAlignment, setToeAlignment, setOutfitAlignment,
+    applyStudioTryOn, autoFitAlignment, setBrowAlignment, setNailAlignment, setToeAlignment, setOutfitAlignment,
     openModal, closeModal, closeModalIfBackdrop, saveAppointment, deleteAppointment,
     setScanState, showScanResult, bookFromScan,
     sendChat, showStudioNotice, closeStudioNotice, closeStudioNoticeIfBackdrop, scrollToSkinScan,

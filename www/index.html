@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#1f1728" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>GlowAI</title>
@@ -33,11 +33,29 @@
     <section class="home-hero">
       <div class="hero-chip-row">
         <span class="hero-chip">Beauty Super App</span>
-        <span class="hero-chip soft">Phase 1 Studio</span>
+        <span class="hero-chip soft">Signature Looks</span>
       </div>
       <p class="home-greeting">One studio for skin, brows, nails, toes, and outfits</p>
       <h1 class="home-title">Build your full look with <span>GlowAI</span>, not just a skin scan.</h1>
-      <p class="home-subtitle">Phase 1 turns GlowAI into a beauty studio foundation: skin analysis stays live now, while brows, nails, pedicure, and outfit try-on flows get dedicated entry points.</p>
+      <p class="home-subtitle">GlowAI brings skin analysis, brows, nails, toes, outfits, and look planning into one beauty studio designed for capture, compare, and refinement.</p>
+      <div class="hero-flow-note">Best flow: scan, style, compare, save.</div>
+      <div class="hero-metrics" aria-label="GlowAI workflow">
+        <div class="hero-metric-card">
+          <span class="hero-metric-kicker">Scan</span>
+          <strong>Skin Lab</strong>
+          <span>Detect, score, and plan care.</span>
+        </div>
+        <div class="hero-metric-card">
+          <span class="hero-metric-kicker">Style</span>
+          <strong>Try-On</strong>
+          <span>Brows, nails, toes, and outfits.</span>
+        </div>
+        <div class="hero-metric-card">
+          <span class="hero-metric-kicker">Decide</span>
+          <strong>Compare</strong>
+          <span>Build stacks and save signatures.</span>
+        </div>
+      </div>
     </section>
 
     <!-- AI Chatbot Widget -->
@@ -46,13 +64,13 @@
         <div class="chat-bot-avatar">✨</div>
         <div class="chat-bot-info">
           <span class="chat-bot-name">GlowAI Assistant</span>
-          <span class="chat-bot-status">● Online</span>
+          <span class="chat-bot-status">● Studio Ready</span>
         </div>
       </div>
       <div class="chat-messages" id="chatMessages" role="log" aria-live="polite"></div>
       <form class="chat-input-row" id="chatForm" onsubmit="glowApp.sendChat(event)">
         <input class="chat-input" id="chatInput" type="text"
-          placeholder="Ask about your skin…" autocomplete="off" maxlength="300" />
+          placeholder="Ask about your scan, stack, or next look…" autocomplete="off" maxlength="300" />
         <button class="chat-send-btn" type="submit" aria-label="Send">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -63,10 +81,11 @@
 
     <!-- Scan CTA -->
     <button class="scan-cta" onclick="glowApp.navigate('analysis')" aria-label="Open beauty studio">
+      <span class="scan-cta-badge">Best On Phone</span>
       <span class="scan-cta-icon">📸</span>
       <span class="scan-cta-text">
         <span class="scan-cta-label">Open Beauty Studio</span>
-        <span class="scan-cta-sub">Skin scan is live now. Try-on categories are staged for the next build.</span>
+        <span class="scan-cta-sub">Jump into scans, photo try-on, alignment, compare, and saved looks in one pass.</span>
       </span>
       <svg class="scan-cta-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="9 18 15 12 9 6"/>
@@ -77,58 +96,58 @@
       <button class="action-card accent" onclick="glowApp.navigate('analysis')" aria-label="Skin Analysis">
         <span class="action-icon">🔬</span>
         <span class="action-label">Skin Lab</span>
-        <span class="action-sublabel">Live today</span>
+        <span class="action-sublabel">Diagnostic capture</span>
       </button>
       <button class="action-card teal" onclick="glowApp.navigate('analysis')" aria-label="Eyebrow Try-On">
         <span class="action-icon">🪄</span>
         <span class="action-label">Brows</span>
-        <span class="action-sublabel">Shape try-on</span>
+        <span class="action-sublabel">Lift and sculpt</span>
       </button>
       <button class="action-card purple" onclick="glowApp.navigate('analysis')" aria-label="History">
         <span class="action-icon">💅</span>
         <span class="action-label">Nails</span>
-        <span class="action-sublabel">Color preview</span>
+        <span class="action-sublabel">Shade overlays</span>
       </button>
       <button class="action-card neutral" onclick="glowApp.navigate('analysis')" aria-label="Outfit Studio">
         <span class="action-icon">👗</span>
         <span class="action-label">Outfits</span>
-        <span class="action-sublabel">Fit try-on</span>
+        <span class="action-sublabel">Style layers</span>
       </button>
     </div>
 
     <div class="module-rail" aria-label="GlowAI module status">
       <div class="module-rail-card live">
-        <span class="module-rail-kicker">Live</span>
+        <span class="module-rail-kicker">Active</span>
         <strong>Skin Analysis</strong>
         <span>Camera scan and care guidance are active now.</span>
       </div>
       <div class="module-rail-card">
-        <span class="module-rail-kicker">Next</span>
+        <span class="module-rail-kicker">Studio</span>
         <strong>Brows + Nails</strong>
-        <span>Phase 2 will share one try-on capture system.</span>
+        <span>Photo-based try-on, saved presets, and alignment controls are ready to refine.</span>
       </div>
       <div class="module-rail-card">
-        <span class="module-rail-kicker">Later</span>
+        <span class="module-rail-kicker">Expanded</span>
         <strong>Toes + Outfits</strong>
-        <span>Phase 3 expands from beauty detail to full look planning.</span>
+        <span>Pedicure and outfit previews connect directly into full-look planning and compare.</span>
       </div>
     </div>
 
     <div class="section-header">
-      <span class="section-title">Studio Roadmap</span>
+      <span class="section-title">GlowAI Modes</span>
       <button class="section-link" onclick="glowApp.navigate('analysis')">Enter studio →</button>
     </div>
     <div class="studio-roadmap" aria-label="GlowAI beauty modules">
-      <div class="studio-pill live">Live now: Skin analysis</div>
-      <div class="studio-pill">Phase 2: Brow try-on</div>
-      <div class="studio-pill">Phase 2: Nail shades</div>
-      <div class="studio-pill">Phase 3: Toe color try-on</div>
-      <div class="studio-pill">Phase 3: Outfit preview</div>
+      <div class="studio-pill live">Skin analysis</div>
+      <div class="studio-pill">Brow try-on</div>
+      <div class="studio-pill">Nail shades</div>
+      <div class="studio-pill">Toe color</div>
+      <div class="studio-pill">Outfit preview</div>
     </div>
 
     <!-- Planner snapshot -->
     <div class="section-header">
-      <span class="section-title">Planner Snapshot</span>
+      <span class="section-title">Today In GlowAI</span>
       <button class="section-link" onclick="glowApp.navigate('appointments')">See all →</button>
     </div>
     <div id="homeApptPreview" class="planner-home-preview" aria-label="GlowAI planner preview"></div>
@@ -138,9 +157,9 @@
   <section class="screen hidden" id="screenAppointments" aria-label="Planner">
     <div class="planner-shell">
       <section class="planner-hero">
-        <div class="planner-kicker">Phase 1 Platform</div>
+        <div class="planner-kicker">Look Library</div>
         <h2 class="planner-title">Build looks, save ideas, and book services from one planner.</h2>
-        <p class="planner-copy">This is the shared backbone for brows, nails, toes, outfits, and skin results. Save drafts now so the try-on modules can plug into the same planner in phase 2.</p>
+        <p class="planner-copy">Planner keeps skin results, try-on captures, stack variants, and service timing in one system so every beauty choice stays connected.</p>
       </section>
 
       <div class="planner-summary-grid" id="plannerSummary" aria-label="Planner summary"></div>
@@ -182,9 +201,9 @@
   <section class="screen hidden" id="screenAnalysis" aria-label="Beauty Studio">
 
     <div class="studio-header-block">
-      <div class="studio-kicker">Phase 1 Foundation</div>
+      <div class="studio-kicker">Beauty Studio</div>
       <h2 class="studio-title">Beauty Studio</h2>
-      <p class="studio-copy">GlowAI is expanding into a full try-on and beauty-planning app. Skin analysis is active today; brows, nails, toes, and outfit modes are mapped here so the capture system can grow without another shell rewrite.</p>
+      <p class="studio-copy">Move from skin diagnostics into brows, nails, toes, and outfit previews without leaving the GlowAI workflow. Every module saves into one compare-ready beauty system.</p>
     </div>
 
     <div class="studio-module-grid">
@@ -195,25 +214,25 @@
         <span class="studio-module-copy">Claude Vision scan, issue detection, and care recommendations.</span>
       </button>
       <button class="studio-module-card" onclick="glowApp.openStudioWorkspace('brows')" aria-label="Open eyebrow try-on">
-        <span class="studio-module-badge muted">Phase 2</span>
+        <span class="studio-module-badge muted">Studio</span>
         <span class="studio-module-icon">🪄</span>
         <span class="studio-module-name">Eyebrow Try-On</span>
         <span class="studio-module-copy">Test fuller, lifted, and cleaner brow shapes before committing.</span>
       </button>
       <button class="studio-module-card" onclick="glowApp.openStudioWorkspace('nails')" aria-label="Open nail studio">
-        <span class="studio-module-badge muted">Phase 2</span>
+        <span class="studio-module-badge muted">Studio</span>
         <span class="studio-module-icon">💅</span>
         <span class="studio-module-name">Nail Studio</span>
         <span class="studio-module-copy">Preview polish families and save shortlists by mood or event.</span>
       </button>
       <button class="studio-module-card" onclick="glowApp.openStudioWorkspace('toes')" aria-label="Open toe color studio">
-        <span class="studio-module-badge muted">Phase 3</span>
+        <span class="studio-module-badge muted">Studio</span>
         <span class="studio-module-icon">🩴</span>
         <span class="studio-module-name">Toe Color</span>
         <span class="studio-module-copy">Map sandal-ready pedicure shades and seasonal combos.</span>
       </button>
       <button class="studio-module-card wide" onclick="glowApp.openStudioWorkspace('outfit')" aria-label="Open outfit studio">
-        <span class="studio-module-badge muted">Phase 3</span>
+        <span class="studio-module-badge muted">Studio</span>
         <span class="studio-module-icon">👗</span>
         <span class="studio-module-name">Outfit Try-On</span>
         <span class="studio-module-copy">Style clothing looks around your face, skin tone, and beauty choices.</span>
@@ -224,21 +243,22 @@
       <section class="studio-workspace" id="browWorkspace" aria-label="Eyebrow try-on workspace">
         <div class="workspace-header">
           <div>
-            <div class="workspace-kicker">Phase 2 Live Workspace</div>
+            <div class="workspace-kicker">Live Workspace</div>
             <h3 class="workspace-title">Eyebrow Try-On Builder</h3>
           </div>
           <button class="workspace-chip" onclick="glowApp.createStudioSession('brows')">Save Draft</button>
         </div>
-        <p class="workspace-copy">Start with a brow direction now. When camera overlays land, these saved choices will drive your first try-on presets instead of starting blank.</p>
+        <p class="workspace-copy">Shape brows on top of your own reference photo, tune the placement, and save the result back into Planner.</p>
         <div class="workspace-capture-card">
           <input class="workspace-file-input" id="browUploadInput" type="file" accept="image/*" capture="user" onchange="glowApp.handleStudioUpload('brows', event)" />
           <div class="workspace-capture-preview empty" id="browPreview">
             <span class="workspace-capture-icon">📷</span>
             <div class="workspace-capture-title">Add a face photo</div>
-            <p class="workspace-capture-copy">Use a front-facing selfie with good light so future brow overlays have a clean reference.</p>
+            <p class="workspace-capture-copy">Use a front-facing selfie with good light for a cleaner brow preview and easier alignment.</p>
           </div>
           <div class="workspace-capture-actions">
             <button class="btn-ghost" type="button" onclick="glowApp.triggerStudioUpload('brows')">Choose Photo</button>
+            <button class="btn-ghost" type="button" onclick="glowApp.autoFitAlignment('brows')">Smart Fit</button>
             <button class="btn-primary" type="button" onclick="glowApp.saveStudioCapture('brows')">Save Capture</button>
           </div>
           <div class="alignment-panel" id="browAlignmentPanel">
@@ -292,12 +312,12 @@
       <section class="studio-workspace" id="nailWorkspace" aria-label="Nail studio workspace">
         <div class="workspace-header">
           <div>
-            <div class="workspace-kicker">Phase 2 Live Workspace</div>
+            <div class="workspace-kicker">Live Workspace</div>
             <h3 class="workspace-title">Nail Palette Builder</h3>
           </div>
           <button class="workspace-chip" onclick="glowApp.createStudioSession('nails')">Save Draft</button>
         </div>
-        <p class="workspace-copy">Build your first palette stack now. These saved mood boards become the first nail try-on collections once hand capture is added.</p>
+        <p class="workspace-copy">Preview nail shades on a real hand photo, adjust the polish zone, and save each color direction into your look library.</p>
         <div class="workspace-capture-card">
           <input class="workspace-file-input" id="nailUploadInput" type="file" accept="image/*" capture="environment" onchange="glowApp.handleStudioUpload('nails', event)" />
           <div class="workspace-capture-preview empty" id="nailPreview">
@@ -307,6 +327,7 @@
           </div>
           <div class="workspace-capture-actions">
             <button class="btn-ghost" type="button" onclick="glowApp.triggerStudioUpload('nails')">Choose Photo</button>
+            <button class="btn-ghost" type="button" onclick="glowApp.autoFitAlignment('nails')">Smart Fit</button>
             <button class="btn-primary" type="button" onclick="glowApp.saveStudioCapture('nails')">Save Capture</button>
           </div>
           <div class="alignment-panel" id="nailAlignmentPanel">
@@ -349,7 +370,7 @@
       <section class="studio-workspace" id="toeWorkspace" aria-label="Toe color workspace">
         <div class="workspace-header">
           <div>
-            <div class="workspace-kicker">Phase 3 Starter Workspace</div>
+            <div class="workspace-kicker">Live Workspace</div>
             <h3 class="workspace-title">Toe Color Studio</h3>
           </div>
           <button class="workspace-chip" onclick="glowApp.createStudioSession('toes')">Save Draft</button>
@@ -364,6 +385,7 @@
           </div>
           <div class="workspace-capture-actions">
             <button class="btn-ghost" type="button" onclick="glowApp.triggerStudioUpload('toes')">Choose Photo</button>
+            <button class="btn-ghost" type="button" onclick="glowApp.autoFitAlignment('toes')">Smart Fit</button>
             <button class="btn-primary" type="button" onclick="glowApp.saveStudioCapture('toes')">Save Capture</button>
           </div>
           <div class="alignment-panel" id="toeAlignmentPanel">
@@ -406,7 +428,7 @@
       <section class="studio-workspace" id="outfitWorkspace" aria-label="Outfit try-on workspace">
         <div class="workspace-header">
           <div>
-            <div class="workspace-kicker">Phase 3 Live Workspace</div>
+            <div class="workspace-kicker">Live Workspace</div>
             <h3 class="workspace-title">Outfit Try-On Studio</h3>
           </div>
           <button class="workspace-chip" onclick="glowApp.createStudioSession('outfit')">Save Draft</button>
@@ -421,6 +443,7 @@
           </div>
           <div class="workspace-capture-actions">
             <button class="btn-ghost" type="button" onclick="glowApp.triggerStudioUpload('outfit')">Choose Photo</button>
+            <button class="btn-ghost" type="button" onclick="glowApp.autoFitAlignment('outfit')">Smart Fit</button>
             <button class="btn-primary" type="button" onclick="glowApp.saveStudioCapture('outfit')">Save Capture</button>
           </div>
           <div class="alignment-panel" id="outfitAlignmentPanel">
@@ -469,7 +492,7 @@
           <span class="scan-camera-icon">📸</span>
         </div>
         <h2 class="scan-hero-title">Scan Your Face</h2>
-        <p class="scan-hero-sub">Phase 1 keeps the skin pipeline active while the broader super-app studio grows around it.</p>
+        <p class="scan-hero-sub">Skin diagnostics anchor the broader GlowAI studio, so every recommendation can feed into saved looks and service planning.</p>
       </div>
       <div class="scan-tips">
         <div class="scan-tip">💡 Good lighting = better results</div>
@@ -630,7 +653,7 @@
     <div class="studio-notice-icon" id="studioNoticeIcon">✨</div>
     <div class="studio-notice-kicker" id="studioNoticeKicker">GlowAI Studio</div>
     <h2 class="modal-title" id="studioNoticeTitle">Module Update</h2>
-    <p class="studio-notice-copy" id="studioNoticeCopy">This module is staged in the planner and will unlock in a later phase.</p>
+    <p class="studio-notice-copy" id="studioNoticeCopy">GlowAI saved this update and synced it into your beauty system.</p>
     <div class="studio-notice-actions">
       <button type="button" class="btn-ghost" onclick="glowApp.closeStudioNotice()">Noted</button>
       <button type="button" class="btn-primary" onclick="glowApp.closeStudioNotice(); glowApp.navigate('appointments');">Open Planner</button>

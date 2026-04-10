@@ -24,6 +24,12 @@ allprojects {
     }
 }
 
+subprojects {
+    if (!ext.has('cdvPluginPostBuildExtras')) {
+        ext.cdvPluginPostBuildExtras = []
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

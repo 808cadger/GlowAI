@@ -1,4 +1,4 @@
-// GlowAI — scan.js
+// AutoIQ Pro — scan.js
 // Bundled by esbuild → scan.bundle.js
 // #ASSUMPTION: @capacitor/camera v6 installed; esbuild bundles this file.
 // #ASSUMPTION: Backend URL stored in localStorage key 'glowai_api_url'.
@@ -24,7 +24,7 @@ async function ensureCameraPermission() {
 
   if (perms.camera === 'denied') {
     window.glowApp.setScanState('error',
-      'Camera access is blocked. Open Settings → Apps → GlowAI → Permissions → Camera and enable it, then try again.'
+      'Camera access is blocked. Open Settings → Apps → AutoIQ Pro → Permissions → Camera and enable it, then try again.'
     );
     return false;
   }
@@ -33,7 +33,7 @@ async function ensureCameraPermission() {
   if (perms.camera === 'prompt-with-rationale') {
     const ok = await window.glowApp.showConsentDialog(
       'Camera Access',
-      'GlowAI uses your camera only to analyze your skin. Photos are sent to our AI and never stored without your consent.',
+      'AutoIQ Pro uses your camera to identify the likely vehicle part and assess visible damage. Photos are sent to our AI and never stored without your consent.',
       'Allow Camera', 'Not Now'
     );
     if (!ok) return false;
@@ -82,13 +82,45 @@ async function capturePhoto() {
   return photo.base64String;
 }
 
+async function captureStudioPhoto({ facing = 'rear' } = {}) {
+  const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
+  if (isNative) {
+    const permitted = await ensureCameraPermission();
+    if (!permitted) return null;
+
+    const photo = await Camera.getPhoto({
+      quality: 90,
+      allowEditing: false,
+      resultType: CameraResultType.Base64,
+      source: CameraSource.Camera,
+      saveToGallery: false,
+      correctOrientation: true,
+      presentationStyle: 'fullscreen',
+      direction: facing === 'front' ? 'front' : 'rear',
+    });
+
+    if (!photo?.base64String) return null;
+    return {
+      dataUrl: `data:image/jpeg;base64,${photo.base64String}`,
+      name: `${facing === 'front' ? 'selfie' : 'capture'}-${Date.now()}.jpg`,
+    };
+  }
+
+  const base64 = await capturePhotoWebForFacing(facing);
+  if (!base64) return null;
+  return {
+    dataUrl: `data:image/jpeg;base64,${base64}`,
+    name: `${facing === 'front' ? 'selfie' : 'capture'}-${Date.now()}.jpg`,
+  };
+}
+
 // ── Web / gallery fallback (browser dev or camera failure) ────────────────────
-function capturePhotoWeb() {
+function capturePhotoWebForFacing(facing = 'rear') {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.capture = 'environment';
+    input.capture = facing === 'front' ? 'user' : 'environment';
     // Must be in DOM for Samsung WebView
     input.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0';
     document.body.appendChild(input);
@@ -105,6 +137,10 @@ function capturePhotoWeb() {
     setTimeout(() => { cleanup(); resolve(null); }, 60_000);
     input.click();
   });
+}
+
+function capturePhotoWeb() {
+  return capturePhotoWebForFacing('rear');
 }
 
 // ── POST /api/scan ─────────────────────────────────────────────────────────────
@@ -142,37 +178,40 @@ async function callScanAPI(base64Image) {
 // ── Mock results (demo mode when no backend configured) ───────────────────────
 const MOCK_RESULTS = [
   {
-    skin_type: 'combination',
-    issues: ['mild_oiliness', 'uneven_tone', 'enlarged_pores'],
+    part_name: 'front bumper',
+    skin_type: 'front bumper',
+    issues: ['surface_scrape', 'paint_transfer', 'clip_risk'],
     recommendations: [
-      'Use a gentle foaming cleanser morning and night',
-      'Apply niacinamide serum to minimize pores',
-      'Wear SPF 30+ every day — even indoors',
-      'Hydrate with a lightweight, non-comedogenic moisturizer',
+      'Confirm whether the scrape is only in the paint or through the plastic cover.',
+      'Check panel gaps and mounting clips near the impact area.',
+      'Photograph the damage from straight-on and from the corner before requesting quotes.',
+      'Use the bumper workspace to save a corrected part reference and next steps.',
     ],
-    suggested_appointment: { type: 'Dermatologist', urgency: 'routine', reason: 'Routine skin checkup recommended for combination skin concerns' },
+    suggested_appointment: { type: 'Body Shop', urgency: 'routine', reason: 'Damage appears cosmetic to moderate, but the bumper cover and clips should be inspected.' },
   },
   {
-    skin_type: 'dry',
-    issues: ['dryness', 'flakiness', 'fine_lines'],
+    part_name: 'wheel and tire',
+    skin_type: 'wheel and tire',
+    issues: ['curb_rash', 'sidewall_mark', 'alignment_watch'],
     recommendations: [
-      'Switch to a cream cleanser — avoid foaming formulas',
-      'Layer a hyaluronic acid serum before moisturizer',
-      'Use a rich night cream with ceramides',
-      'Humidifier in your bedroom helps overnight hydration',
+      'Inspect the tire sidewall closely for cuts, bulges, or exposed cords.',
+      'Capture the full wheel face and tire shoulder in even light.',
+      'If steering feel changed after impact, schedule an alignment check.',
+      'Use the wheel workspace to document cosmetic versus safety-related damage.',
     ],
-    suggested_appointment: { type: 'Dermatologist', urgency: 'routine', reason: 'Persistent dryness may benefit from prescription moisturizers' },
+    suggested_appointment: { type: 'Tire Shop', urgency: 'soon', reason: 'Wheel damage may be cosmetic, but the tire should be checked soon for safety.' },
   },
   {
-    skin_type: 'oily',
-    issues: ['excess_sebum', 'acne', 'shine'],
+    part_name: 'windshield',
+    skin_type: 'windshield',
+    issues: ['chip', 'crack_spread_risk', 'visibility_concern'],
     recommendations: [
-      'Double-cleanse in the evening to remove sunscreen and oil',
-      'Use salicylic acid 2% for active breakouts',
-      'Avoid heavy occlusive moisturizers',
-      'Clay mask once a week to absorb excess oil',
+      'Photograph the chip or crack from inside and outside the vehicle.',
+      'Track whether the crack is spreading toward the driver view area.',
+      'Avoid high-pressure washing or strong temperature swings until inspected.',
+      'Use the glass workspace to save the case and compare repair versus replacement paths.',
     ],
-    suggested_appointment: { type: 'Dermatologist', urgency: 'soon', reason: 'Persistent acne may need prescription-strength treatment' },
+    suggested_appointment: { type: 'Glass Repair', urgency: 'soon', reason: 'Visible glass damage can spread quickly and affect visibility.' },
   },
 ];
 
@@ -204,7 +243,7 @@ async function startScan() {
         }
         if (msg.includes('permission') || msg.includes('denied')) {
           window.glowApp.setScanState('error',
-            'Camera access denied. Go to Settings → Apps → GlowAI → Permissions.'
+            'Camera access denied. Go to Settings → Apps → AutoIQ Pro → Permissions.'
           );
           return;
         }
@@ -225,6 +264,12 @@ async function startScan() {
   if (!b64) { window.glowApp.setScanState('idle'); return; }
 
   b64 = await resizeBase64(b64);
+  window.glowApp?.setLastStudioPhoto?.({
+    name: `vehicle-scan-${Date.now()}.jpg`,
+    dataUrl: `data:image/jpeg;base64,${b64}`,
+    source: 'vehicle-scan',
+    updatedAt: new Date().toISOString(),
+  });
   window.glowApp.setScanState('analyzing', b64);
 
   try {
@@ -260,4 +305,4 @@ function saveScanToHistory(result, b64) {
   } catch { /* non-critical */ }
 }
 
-window.scanModule = { startScan };
+window.scanModule = { startScan, captureStudioPhoto };

@@ -1,4 +1,4 @@
-// GlowAI — app.js
+// AutoIQ Pro — app.js
 // #ASSUMPTION: localStorage key 'glowai_appointments' stores planner service bookings.
 // #ASSUMPTION: Backend URL in 'glowai_api_url'; token in 'glowai_token'.
 // #ASSUMPTION: Offline-tolerant — all writes go to localStorage first, sync to backend in background.
@@ -9,70 +9,85 @@ const STORAGE_KEY = 'glowai_appointments';
 const SESSION_KEY = 'glowai_studio_sessions';
 const CAPTURE_KEY = 'glowai_studio_captures';
 const STACK_KEY = 'glowai_stack_variants';
+const LAST_STUDIO_PHOTO_KEY = 'glowai_last_studio_photo';
 
-const PERSONAL_TYPES = ['Doctor', 'Dentist', 'Dermatologist', 'Haircut', 'Spa', 'Gym', 'Therapy', 'Other'];
+const MODULE_KEY_MAP = {
+  skin: 'scan',
+  brows: 'bumper',
+  nails: 'wheel',
+  toes: 'glass',
+  outfit: 'panel',
+  scan: 'scan',
+  bumper: 'bumper',
+  wheel: 'wheel',
+  glass: 'glass',
+  panel: 'panel',
+};
+
+const PERSONAL_TYPES = ['Body Shop', 'Dealer Service', 'Glass Repair', 'Mobile Mechanic', 'Paint Shop', 'Tire Shop', 'Detailer', 'Other'];
 
 const TYPE_ICONS = {
-  Doctor: '🩺', Dentist: '🦷', Dermatologist: '🔬', Haircut: '✂️',
-  Spa: '🧖', Gym: '💪', Therapy: '🧠', Other: '📌',
+  'Body Shop': '🛠️', 'Dealer Service': '🏬', 'Glass Repair': '🪟', 'Mobile Mechanic': '🚐',
+  'Paint Shop': '🎨', 'Tire Shop': '🛞', Detailer: '🧽', Other: '📌',
 };
 
-const URGENCY_LABEL = { routine: 'Routine visit', soon: 'Schedule soon', urgent: 'See doctor ASAP' };
+const URGENCY_LABEL = { routine: 'Monitor and document', soon: 'Schedule repair soon', urgent: 'Drive carefully and inspect now' };
 const URGENCY_COLOR = { routine: '#16a34a', soon: '#d97706', urgent: '#dc2626' };
 const MODULE_META = {
-  skin:   { icon: '🔬', label: 'Skin Analysis', accent: 'rose' },
-  brows:  { icon: '🪄', label: 'Eyebrow Try-On', accent: 'gold' },
-  nails:  { icon: '💅', label: 'Nail Studio', accent: 'plum' },
-  toes:   { icon: '🩴', label: 'Toe Color', accent: 'teal' },
-  outfit: { icon: '👗', label: 'Outfit Try-On', accent: 'slate' },
+  scan:   { icon: '🔬', label: 'Live Part ID', accent: 'rose' },
+  bumper: { icon: '🛻', label: 'Bumper Mapper', accent: 'gold' },
+  wheel:  { icon: '🛞', label: 'Wheel & Tire', accent: 'plum' },
+  glass:  { icon: '💡', label: 'Glass & Lights', accent: 'teal' },
+  panel:  { icon: '🎨', label: 'Panel & Paint', accent: 'slate' },
 };
 const TRY_ON_PRESETS = {
-  brows: {
-    'soft-lift': { title: 'Soft Lift', note: 'Lifted arch with softer inner brow and brushed-up finish.' },
-    'full-frame': { title: 'Full Frame', note: 'Fuller shape that keeps your natural depth and width.' },
-    'clean-sculpt': { title: 'Clean Sculpt', note: 'Sharper grooming line with polished definition.' },
+  bumper: {
+    'lower-cover': { title: 'Lower Cover', note: 'Lower bumper cover impact with scrape and clip risk.' },
+    'corner-hit': { title: 'Corner Hit', note: 'Corner bumper damage with wraparound seam involvement.' },
+    'center-crack': { title: 'Center Crack', note: 'Front-center split or crack with likely bracket stress.' },
   },
-  nails: {
-    'rose-glass': { title: 'Rose Glass', note: 'Glossy rose nude for clean everyday shine.' },
-    'cherry-pop': { title: 'Cherry Pop', note: 'Bright red polish for sharper contrast and event looks.' },
-    'mocha-satin': { title: 'Mocha Satin', note: 'Neutral brown-pink tone for polished minimal sets.' },
-    'silver-chrome': { title: 'Silver Chrome', note: 'Reflective finish for bold statement styling.' },
+  wheel: {
+    'curb-rash': { title: 'Curb Rash', note: 'Wheel-face scrape with finish damage and cosmetic loss.' },
+    'sidewall-mark': { title: 'Sidewall Mark', note: 'Tire sidewall hit that needs closer safety review.' },
+    'tread-wear': { title: 'Tread Wear', note: 'Uneven tread wear pattern worth logging for alignment follow-up.' },
+    'bent-lip': { title: 'Bent Lip', note: 'Possible rim lip bend or impact distortion near the edge.' },
   },
-  toes: {
-    'coral-wave': { title: 'Coral Wave', note: 'Warm coral pedicure for bright open-toe looks.' },
-    'ocean-mint': { title: 'Ocean Mint', note: 'Cool mint shade for fresh resort styling.' },
-    'berry-gloss': { title: 'Berry Gloss', note: 'Deep berry finish for evening sandals and contrast.' },
-    'sand-nude': { title: 'Sand Nude', note: 'Soft neutral tone for clean everyday pedicures.' },
+  glass: {
+    'windshield-chip': { title: 'Windshield Chip', note: 'Small chip or star crack in the glass inspection zone.' },
+    'lens-crack': { title: 'Lens Crack', note: 'Cracked headlight or taillight lens with moisture risk.' },
+    'housing-break': { title: 'Housing Break', note: 'Broken lamp housing or mount near the light assembly.' },
+    'trim-damage': { title: 'Trim Damage', note: 'Surrounding trim or seal damage around the glass area.' },
   },
-  outfit: {
-    'city-noir': { title: 'City Noir', note: 'Clean black outfit layer for sharper evening styling.' },
-    'linen-muse': { title: 'Linen Muse', note: 'Soft cream neutral for quiet-luxury daytime looks.' },
-    'cobalt-edge': { title: 'Cobalt Edge', note: 'Bold blue statement layer for contrast and energy.' },
-    'blush-set': { title: 'Blush Set', note: 'Monochrome rose set to pair with softer glam beauty looks.' },
+  panel: {
+    'dent-zone': { title: 'Dent Zone', note: 'Panel dent area with broad metal displacement.' },
+    'paint-transfer': { title: 'Paint Transfer', note: 'Surface paint transfer that may polish out or need refinish work.' },
+    'crease-line': { title: 'Crease Line', note: 'Sharper body-line deformation that can raise repair complexity.' },
+    'clearcoat-break': { title: 'Clearcoat Break', note: 'Finish damage through the top coat with visible surface breakup.' },
   },
 };
-const DEFAULT_BROW_ALIGNMENT = {
+const DEFAULT_BUMPER_ALIGNMENT = {
   x: 15,
   y: 30,
   width: 34,
   height: 10,
   rotate: 6,
+  offsetX: 0,
 };
-const DEFAULT_NAIL_ALIGNMENT = {
+const DEFAULT_WHEEL_ALIGNMENT = {
   x: 12,
   y: 12,
   width: 76,
   height: 18,
   radius: 18,
 };
-const DEFAULT_TOE_ALIGNMENT = {
+const DEFAULT_GLASS_ALIGNMENT = {
   x: 10,
   y: 30,
   width: 82,
   height: 22,
   radius: 20,
 };
-const DEFAULT_OUTFIT_ALIGNMENT = {
+const DEFAULT_PANEL_ALIGNMENT = {
   x: 14,
   y: 28,
   width: 68,
@@ -80,21 +95,91 @@ const DEFAULT_OUTFIT_ALIGNMENT = {
   radius: 26,
 };
 const MODULE_CAPTURE_TARGET = {
-  brows: 'face photo',
-  nails: 'hand photo',
-  toes: 'toe photo',
-  outfit: 'mirror photo',
+  bumper: 'bumper photo',
+  wheel: 'wheel photo',
+  glass: 'glass or light photo',
+  panel: 'panel photo',
 };
 const STACK_SCORE_WEIGHTS = {
-  skin: 18,
-  brows: 22,
-  nails: 18,
-  toes: 12,
-  outfit: 30,
+  scan: 18,
+  bumper: 22,
+  wheel: 18,
+  glass: 12,
+  panel: 30,
 };
 
 function emptyStateHTML(icon, title, body) {
   return `<div class="empty-state"><span class="empty-icon">${icon}</span><div class="empty-title">${title}</div><p>${body}</p></div>`;
+}
+
+function normalizeModuleKey(module) {
+  return MODULE_KEY_MAP[module] || module || 'scan';
+}
+
+function normalizeCaptureRecord(record = {}) {
+  const next = { ...record };
+  const legacyVariantMap = {
+    bumper: { 'soft-lift': 'lower-cover', 'full-frame': 'corner-hit', 'clean-sculpt': 'center-crack' },
+    wheel: { 'rose-glass': 'curb-rash', 'cherry-pop': 'sidewall-mark', 'mocha-satin': 'tread-wear', 'silver-chrome': 'bent-lip' },
+    glass: { 'coral-wave': 'windshield-chip', 'ocean-mint': 'lens-crack', 'berry-gloss': 'housing-break', 'sand-nude': 'trim-damage' },
+    panel: { 'city-noir': 'dent-zone', 'linen-muse': 'paint-transfer', 'cobalt-edge': 'crease-line', 'blush-set': 'clearcoat-break' },
+  };
+  if (next.variant) next.variant = legacyVariantMap[normalizeModuleKey(next.module || '')]?.[next.variant] || next.variant;
+  return next;
+}
+
+function normalizeSession(session = {}) {
+  const module = normalizeModuleKey(session.module);
+  return {
+    ...session,
+    module,
+    snapshot: session.snapshot ? normalizeCaptureRecord({ ...session.snapshot, module }) : session.snapshot || null,
+  };
+}
+
+function normalizeSessionArray(list = []) {
+  return list.map(normalizeSession);
+}
+
+function normalizeCapturesMap(map = {}) {
+  const next = {};
+  Object.entries(map || {}).forEach(([module, record]) => {
+    const normalized = normalizeModuleKey(module);
+    next[normalized] = normalizeCaptureRecord({ ...(record || {}), module: normalized });
+  });
+  return next;
+}
+
+function normalizeStackVariants(list = []) {
+  return list.map(stack => ({
+    ...stack,
+    modules: (stack.modules || []).map(item => ({
+      ...item,
+      module: normalizeModuleKey(item.module),
+    })),
+  }));
+}
+
+function loadLastStudioPhoto() {
+  try { return JSON.parse(localStorage.getItem(LAST_STUDIO_PHOTO_KEY) || 'null'); }
+  catch { return null; }
+}
+
+function saveLastStudioPhoto(photo) {
+  if (!photo?.dataUrl) {
+    localStorage.removeItem(LAST_STUDIO_PHOTO_KEY);
+    return;
+  }
+  localStorage.setItem(LAST_STUDIO_PHOTO_KEY, JSON.stringify({
+    name: photo.name || `studio-photo-${Date.now()}.jpg`,
+    dataUrl: photo.dataUrl,
+    source: photo.source || 'studio',
+    updatedAt: photo.updatedAt || new Date().toISOString(),
+  }));
+}
+
+function _defaultImageTransform() {
+  return { x: 0, y: 0 };
 }
 
 // ── Seed mock data once on first load ─────────────────────────────────────────
@@ -105,9 +190,9 @@ function seedMockData() {
   const fmt = d => d.toISOString().split('T')[0];
   const addDays = n => { const d = new Date(today); d.setDate(d.getDate() + n); return d; };
   saveAppointments([
-    { id: uid(), mode: 'personal', title: 'Dermatologist follow-up', date: fmt(addDays(2)), time: '10:00', type: 'Dermatologist', status: 'confirmed', notes: 'Review redness around cheek area', client: '' },
-    { id: uid(), mode: 'personal', title: 'Brow shaping appointment', date: fmt(addDays(4)), time: '13:30', type: 'Spa', status: 'pending', notes: 'Bring fuller arch references', client: '' },
-    { id: uid(), mode: 'personal', title: 'Nail set refresh', date: fmt(addDays(6)), time: '16:00', type: 'Spa', status: 'confirmed', notes: 'Match spring palette shortlist', client: '' },
+    { id: uid(), mode: 'personal', title: 'Front bumper inspection', date: fmt(addDays(2)), time: '10:00', type: 'Body Shop', status: 'confirmed', notes: 'Review scrape depth and clip damage', client: '' },
+    { id: uid(), mode: 'personal', title: 'Wheel and tire check', date: fmt(addDays(4)), time: '13:30', type: 'Tire Shop', status: 'pending', notes: 'Confirm curb rash and sidewall condition', client: '' },
+    { id: uid(), mode: 'personal', title: 'Glass repair quote', date: fmt(addDays(6)), time: '16:00', type: 'Glass Repair', status: 'confirmed', notes: 'Compare chip fill versus replacement', client: '' },
   ]);
 }
 
@@ -117,26 +202,26 @@ function seedStudioSessions() {
   saveSessions([
     {
       id: uid(),
-      module: 'skin',
-      title: 'Calm + repair skin plan',
+      module: 'scan',
+      title: 'Primary damage triage',
       status: 'active',
-      note: 'Barrier repair, redness watchlist, and next-scan checkpoints.',
+      note: 'Start with part ID, confidence check, and repair-readiness notes.',
       updatedAt: new Date().toISOString(),
     },
     {
       id: uid(),
-      module: 'brows',
-      title: 'Soft lift brow draft',
+      module: 'bumper',
+      title: 'Front bumper case',
       status: 'draft',
-      note: 'Map a cleaner arch with slightly fuller outer tails.',
+      note: 'Corner scrape and lower cover damage mapped for follow-up.',
       updatedAt: new Date(Date.now() - 86400000).toISOString(),
     },
     {
       id: uid(),
-      module: 'outfit',
-      title: 'Date night capsule',
+      module: 'panel',
+      title: 'Passenger door panel case',
       status: 'draft',
-      note: 'Save darker lip, cleaner brow, and black satin outfit pairing.',
+      note: 'Dent, paint transfer, and finish notes saved for a body-shop quote.',
       updatedAt: new Date(Date.now() - 172800000).toISOString(),
     },
   ]);
@@ -149,17 +234,17 @@ function loadAppointments() {
 }
 function saveAppointments(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
 function loadSessions() {
-  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || '[]'); }
+  try { return normalizeSessionArray(JSON.parse(localStorage.getItem(SESSION_KEY) || '[]')); }
   catch { return []; }
 }
 function saveSessions(arr) { localStorage.setItem(SESSION_KEY, JSON.stringify(arr)); }
 function loadCaptures() {
-  try { return JSON.parse(localStorage.getItem(CAPTURE_KEY) || '{}'); }
+  try { return normalizeCapturesMap(JSON.parse(localStorage.getItem(CAPTURE_KEY) || '{}')); }
   catch { return {}; }
 }
 function saveCaptures(obj) { localStorage.setItem(CAPTURE_KEY, JSON.stringify(obj)); }
 function loadStackVariants() {
-  try { return JSON.parse(localStorage.getItem(STACK_KEY) || '[]'); }
+  try { return normalizeStackVariants(JSON.parse(localStorage.getItem(STACK_KEY) || '[]')); }
   catch { return []; }
 }
 function saveStackVariants(arr) { localStorage.setItem(STACK_KEY, JSON.stringify(arr)); }
@@ -238,10 +323,10 @@ const glowApp = (() => {
   let _stackEditorState = null;
 
   const SCREENS = {
-    home:       { title: 'GlowAI',        showBack: false, navId: 'navHome' },
-    appointments:{ title: 'Planner',      showBack: true,  navId: 'navAppointments' },
-    analysis:   { title: 'Beauty Studio', showBack: true,  navId: 'navAnalysis' },
-    scanResult: { title: 'Your Results',  showBack: true,  navId: 'navAnalysis' },
+    home:       { title: 'AutoIQ Pro',      showBack: false, navId: 'navHome' },
+    appointments:{ title: 'Caseboard',      showBack: true,  navId: 'navAppointments' },
+    analysis:   { title: 'Camera Triage',   showBack: true,  navId: 'navAnalysis' },
+    scanResult: { title: 'Repair Guidance', showBack: true,  navId: 'navAnalysis' },
     profile:    { title: 'Profile',       showBack: true,  navId: 'navProfile' },
     settings:   { title: 'Settings',      showBack: true,  navId: null },
   };
@@ -299,7 +384,13 @@ const glowApp = (() => {
 
     if (current === 'home')         { _renderHomePreview(); _initChat(); }
     if (current === 'appointments') _renderPlanner();
-    if (current === 'analysis')     { _syncStudioWorkspace(); _syncAllStudioCaptureUI(); }
+    if (current === 'analysis') {
+      const analysisScreen = document.getElementById('screenAnalysis');
+      if (analysisScreen) analysisScreen.scrollTop = 0;
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      _syncStudioWorkspace();
+      _syncAllStudioCaptureUI();
+    }
     if (current === 'profile')      _renderProfile();
     if (current === 'settings')     _loadSettings();
   }
@@ -319,20 +410,20 @@ const glowApp = (() => {
       ${signature ? _homeSignatureHTML(signature) : ''}
       <div class="planner-home-grid">
         <div class="planner-home-stat">
-          <span class="planner-home-stat-kicker">Saved Looks</span>
+          <span class="planner-home-stat-kicker">Saved Cases</span>
           <strong>${loadSessions().length}</strong>
-          <span class="planner-home-stat-copy">Saved captures, presets, and stack-ready modules.</span>
+          <span class="planner-home-stat-copy">Saved captures, notes, and repair-ready case areas.</span>
         </div>
         <div class="planner-home-stat">
-          <span class="planner-home-stat-kicker">Upcoming Services</span>
+          <span class="planner-home-stat-kicker">Scheduled Follow-Up</span>
           <strong>${bookings.length}</strong>
-          <span class="planner-home-stat-copy">Your next appointments and touch-ups.</span>
+          <span class="planner-home-stat-copy">Your next inspections, quotes, and repair visits.</span>
         </div>
       </div>
       <div class="planner-home-stack">
         ${sessions.length
           ? sessions.map(s => _sessionCardHTML(s)).join('')
-          : emptyStateHTML('✨', 'No saved looks yet', 'Open Planner to save a brow, nail, toe, or outfit look and start building your compare library.')}
+          : emptyStateHTML('🚗', 'No saved cases yet', 'Open Cases to save a bumper, wheel, glass, or panel case and start building your repair library.')}
         ${bookings.length
           ? bookings.map(a => _apptCardHTML(a, false)).join('')
           : ''}
@@ -348,7 +439,7 @@ const glowApp = (() => {
           <div>
             <span class="home-signature-kicker">${_esc(signatureLabel)}</span>
             <h3 class="home-signature-title">${_esc(stack.name)}</h3>
-            <p class="home-signature-copy">${_esc(stack.tone)} direction with ${coverage}% coverage across your beauty stack.</p>
+            <p class="home-signature-copy">${_esc(stack.tone)} direction with ${coverage}% coverage across your repair stack.</p>
           </div>
           <div class="home-signature-score">
             <strong>${coverage}%</strong>
@@ -358,7 +449,7 @@ const glowApp = (() => {
         ${_stackVariantPreviewHTML(stack)}
         <div class="home-signature-tags">
           ${(stack.modules || []).slice(0, 4).map(module => {
-            const meta = MODULE_META[module.module] || MODULE_META.skin;
+            const meta = MODULE_META[module.module] || MODULE_META.scan;
             return `<span class="compare-chip compare-${meta.accent}">${meta.icon} ${_esc(module.variantTitle || meta.label)}</span>`;
           }).join('')}
         </div>
@@ -389,7 +480,7 @@ const glowApp = (() => {
     if (!container) return;
     const list = loadSessions().sort(_sortSessionsByRecent);
     if (list.length === 0) {
-      container.innerHTML = emptyStateHTML('✨', 'No looks saved yet', 'Create a brow draft, nail palette, toe palette, or outfit capsule to start building the shared GlowAI planner.');
+      container.innerHTML = emptyStateHTML('🚗', 'No cases saved yet', 'Create a bumper, wheel, glass, or panel case to start building the shared AutoIQ Pro caseboard.');
       return;
     }
     container.innerHTML = list.map(s => _sessionCardHTML(s)).join('');
@@ -402,7 +493,7 @@ const glowApp = (() => {
       .filter(a => a.status !== 'cancelled' && a.status !== 'completed')
       .sort(_sortByDateTime);
     if (list.length === 0) {
-      container.innerHTML = emptyStateHTML('📅', 'No services on deck', 'Add a dermatologist visit, brow appointment, or nail refresh so your beauty plan has real dates attached.');
+      container.innerHTML = emptyStateHTML('📅', 'No services on deck', 'Add a body shop, glass repair, or tire visit so your repair plan has real dates attached.');
       return;
     }
     container.innerHTML = list.map(a => _apptCardHTML(a, true)).join('');
@@ -415,25 +506,25 @@ const glowApp = (() => {
       .filter(session => session.snapshot?.dataUrl)
       .sort(_sortSessionsByRecent);
     if (saved.length === 0) {
-      container.innerHTML = emptyStateHTML('🪞', 'No looks ready to compare', 'Save a brow, nail, toe, or outfit preview from Studio and GlowAI will build a side-by-side compare board here.');
+      container.innerHTML = emptyStateHTML('🗂️', 'No cases ready to compare', 'Save two cases from Camera Triage and AutoIQ Pro will build a side-by-side compare board here.');
       return;
     }
     const featured = _buildCompareFeatured(saved);
     const compareList = featured.length ? featured : saved.slice(0, 6);
     _ensureCompareSlots(compareList);
     const badges = compareList.map(session => {
-      const meta = MODULE_META[session.module] || MODULE_META.skin;
+      const meta = MODULE_META[session.module] || MODULE_META.scan;
       return `<span class="compare-chip compare-${meta.accent}">${meta.icon} ${meta.label}</span>`;
     }).join('');
     const left = compareList.find(session => session.id === _compareSlots.left) || null;
     const right = compareList.find(session => session.id === _compareSlots.right) || null;
     container.innerHTML = `
-      <section class="compare-shell" aria-label="Compare saved looks">
+      <section class="compare-shell" aria-label="Compare saved cases">
         <div class="compare-hero">
           <div>
-            <span class="compare-kicker">Planner Compare</span>
-            <h3 class="compare-title">Review your beauty decisions together.</h3>
-            <p class="compare-copy">Compare saved studio snapshots across modules so brows, nails, toes, and outfits feel like one coordinated look instead of separate experiments.</p>
+            <span class="compare-kicker">Caseboard Compare</span>
+            <h3 class="compare-title">Review repair decisions together.</h3>
+            <p class="compare-copy">Compare saved cases across repair areas so bumper, wheel, glass, and panel findings stay consistent instead of becoming isolated notes.</p>
           </div>
           <div class="compare-chip-row">${badges}</div>
         </div>
@@ -487,10 +578,10 @@ const glowApp = (() => {
   }
 
   function _sessionCardHTML(session) {
-    const meta = MODULE_META[session.module] || MODULE_META.skin;
+    const meta = MODULE_META[session.module] || MODULE_META.scan;
     const status = session.status === 'active' ? 'Active' : session.status === 'ready' ? 'Ready' : 'Draft';
     const updated = new Date(session.updatedAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const action = session.module === 'brows' || session.module === 'nails' || session.module === 'toes' || session.module === 'outfit'
+    const action = session.module === 'bumper' || session.module === 'wheel' || session.module === 'glass' || session.module === 'panel'
       ? `onclick="glowApp.openPlannerSession('${session.id}')"`
       : `onclick="glowApp.showStudioNotice('${_esc(meta.label)} is staged in the planner and will become interactive in a later pass.')"`
     return `
@@ -500,16 +591,16 @@ const glowApp = (() => {
           <div class="session-status-pill">${status}</div>
         </div>
         <div class="session-title">${_esc(session.title)}</div>
-        <p class="session-copy">${_esc(session.note || 'Draft look saved to your planner.')}</p>
+        <p class="session-copy">${_esc(session.note || 'Draft case saved to your caseboard.')}</p>
         <div class="session-footer">
           <span>Updated ${updated}</span>
-          <button class="session-open-btn" ${action}>Open module</button>
+          <button class="session-open-btn" ${action}>Open case</button>
         </div>
       </article>`;
   }
 
   function _compareCardHTML(session) {
-    const meta = MODULE_META[session.module] || MODULE_META.skin;
+    const meta = MODULE_META[session.module] || MODULE_META.scan;
     const snapshot = session.snapshot || {};
     const updated = new Date(session.updatedAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const isLeft = _compareSlots.left === session.id;
@@ -530,7 +621,7 @@ const glowApp = (() => {
             <strong>${_esc(snapshot.variantTitle || 'Reference Saved')}</strong>
             <span>${_esc(snapshot.variant || 'capture')}</span>
           </div>
-          <p class="compare-note">${_esc(session.note || snapshot.variantNote || 'Saved look snapshot.')}</p>
+          <p class="compare-note">${_esc(session.note || snapshot.variantNote || 'Saved case snapshot.')}</p>
           <div class="compare-card-badges">
             ${coordinated ? '<span class="compare-status-badge ready">Coordinated</span>' : '<span class="compare-status-badge">Solo Study</span>'}
             ${isLeft ? '<span class="compare-slot-badge">Pinned A</span>' : ''}
@@ -540,7 +631,7 @@ const glowApp = (() => {
         <div class="compare-actions">
           <button class="compare-pin-btn" onclick="glowApp.pinCompareSlot('left','${session.id}')">${isLeft ? 'Pinned A' : 'Pin A'}</button>
           <button class="compare-pin-btn alt" onclick="glowApp.pinCompareSlot('right','${session.id}')">${isRight ? 'Pinned B' : 'Pin B'}</button>
-          <button class="session-open-btn" onclick="glowApp.openPlannerSession('${session.id}')">Open module</button>
+          <button class="session-open-btn" onclick="glowApp.openPlannerSession('${session.id}')">Open case</button>
         </div>
       </article>`;
   }
@@ -555,7 +646,7 @@ const glowApp = (() => {
             <button class="compare-toggle ${activeSlot === 'left' ? 'active' : ''}" onclick="glowApp.focusCompareSlot('left')" aria-selected="${String(activeSlot === 'left')}">A Spotlight</button>
             <button class="compare-toggle ${activeSlot === 'right' ? 'active' : ''}" onclick="glowApp.focusCompareSlot('right')" aria-selected="${String(activeSlot === 'right')}">B Spotlight</button>
           </div>
-          <button class="compare-swap-btn" onclick="glowApp.swapCompareSlots()">Swap Looks</button>
+          <button class="compare-swap-btn" onclick="glowApp.swapCompareSlots()">Swap Cases</button>
         </div>
         <div class="compare-duel-grid">
           ${_comparePinnedPanelHTML('left', left)}
@@ -566,12 +657,12 @@ const glowApp = (() => {
             <div class="compare-spotlight-copy">
               <span class="compare-kicker">Live Spotlight</span>
               <h4 class="compare-spotlight-title">${_esc(active.title)}</h4>
-              <p class="compare-copy">${_esc(active.note || active.snapshot?.variantNote || 'Saved look snapshot.')}</p>
+              <p class="compare-copy">${_esc(active.note || active.snapshot?.variantNote || 'Saved case snapshot.')}</p>
             </div>
             <div class="compare-spotlight-frame">
               ${_snapshotStageHTML(active)}
             </div>`
-            : `<div class="compare-spotlight-empty">Pin a saved look into slot A or B to create a fast compare spotlight.</div>`}
+            : `<div class="compare-spotlight-empty">Pin a saved case into slot A or B to create a fast compare spotlight.</div>`}
         </div>
       </section>`;
   }
@@ -587,7 +678,7 @@ const glowApp = (() => {
           <span>Use the Pin buttons below to build a head-to-head compare.</span>
         </div>`;
     }
-    const meta = MODULE_META[session.module] || MODULE_META.skin;
+      const meta = MODULE_META[session.module] || MODULE_META.scan;
     return `
       <button class="compare-pinned-panel ${active ? 'active' : ''}" onclick="glowApp.focusCompareSlot('${slot}')">
         <span class="compare-slot-label">Slot ${label}</span>
@@ -601,7 +692,7 @@ const glowApp = (() => {
     return `
       <section class="compare-recommendation">
         <div class="compare-recommendation-copy">
-          <span class="compare-kicker">GlowAI Direction</span>
+          <span class="compare-kicker">AutoIQ Direction</span>
           <h4 class="compare-recommendation-title">${_esc(recommendation.title)}</h4>
           <p class="compare-copy">${_esc(recommendation.body)}</p>
         </div>
@@ -624,7 +715,7 @@ const glowApp = (() => {
           <div class="full-stack-score-shell">
             <span class="full-stack-score-kicker">Coverage</span>
             <strong>${bundle.coverage}%</strong>
-            <span>${bundle.coveredCount}/${bundle.totalCount} modules</span>
+            <span>${bundle.coveredCount}/${bundle.totalCount} case areas</span>
           </div>
         </div>
         <div class="full-stack-progress">
@@ -637,8 +728,8 @@ const glowApp = (() => {
         </div>
         <div class="full-stack-actions">
           <div class="full-stack-actions-copy">
-            <strong>Turn this bundle into a reusable look.</strong>
-            <span>Save the current coverage, tone, and module mix so you can reload it later without rebuilding from scratch.</span>
+            <strong>Turn this bundle into a reusable case stack.</strong>
+            <span>Save the current coverage, tone, and case mix so you can reload it later without rebuilding the repair picture from scratch.</span>
           </div>
           <button class="compare-pin-btn" onclick="glowApp.saveCurrentStackVariant()">${bundle.coveredCount === bundle.totalCount ? 'Save Complete Stack' : 'Save Stack Variant'}</button>
         </div>
@@ -657,7 +748,7 @@ const glowApp = (() => {
       <section class="concierge-board">
         <div class="concierge-top">
           <div>
-            <span class="compare-kicker">GlowAI Concierge</span>
+            <span class="compare-kicker">AutoIQ Concierge</span>
             <h4 class="concierge-title">${_esc(brief.title)}</h4>
             <p class="compare-copy">${_esc(brief.body)}</p>
           </div>
@@ -686,24 +777,24 @@ const glowApp = (() => {
       .sort(_sortByDateTime)[0] || null;
 
     const title = bundle.coveredCount >= 4
-      ? 'A coordinated look is starting to emerge'
-      : 'This stack can still gain leverage fast';
+      ? 'A coordinated repair picture is starting to emerge'
+      : 'This case stack can still gain leverage fast';
     const body = bundle.coveredCount >= 4
-      ? 'GlowAI is now doing what most try-on apps never reach: connecting multiple beauty decisions into one reusable planning system.'
-      : 'Most try-on tools stop at one module. GlowAI gets stronger as soon as you connect skin, detail work, and wardrobe into the same stack.';
-    const badge = bundle.coveredCount === bundle.totalCount ? 'Full Look Ready' : `${bundle.coveredCount}/${bundle.totalCount} Active`;
+      ? 'AutoIQ Pro is now doing what most estimate apps never reach: connecting multiple repair decisions into one reusable case system.'
+      : 'Most estimate tools stop at one photo. AutoIQ Pro gets stronger as soon as you connect scan, part-specific evidence, and follow-up timing into the same stack.';
+    const badge = bundle.coveredCount === bundle.totalCount ? 'Full Case Ready' : `${bundle.coveredCount}/${bundle.totalCount} Active`;
 
     const keepCard = leader
       ? {
           kicker: 'Keep',
           title: `${leader.meta.label} is your anchor`,
-          body: `${leader.session.snapshot?.variantTitle || leader.session.title} is carrying the strongest signal in this stack. Keep it stable while the rest of the look tightens around it.`,
+          body: `${leader.session.snapshot?.variantTitle || leader.session.title} is carrying the strongest signal in this stack. Keep it stable while the rest of the case fills in around it.`,
           tone: 'keep',
         }
       : {
           kicker: 'Keep',
           title: 'No anchor yet',
-          body: 'Save one strong module first so GlowAI has something reliable to build around.',
+          body: 'Save one strong case first so AutoIQ Pro has something reliable to build around.',
           tone: 'keep',
         };
 
@@ -711,13 +802,13 @@ const glowApp = (() => {
       ? {
           kicker: 'Elevate',
           title: `Add ${missing[0].meta.label} next`,
-          body: `That is the fastest way to move beyond one-off try-on and make this feel like a complete look system.`,
+          body: `That is the fastest way to move beyond one-off scans and make this feel like a complete repair system.`,
           tone: 'elevate',
         }
       : {
           kicker: 'Elevate',
           title: 'Create an alternate stack',
-          body: 'You already have full coverage. Save a softer or bolder variation so Compare can make sharper recommendations.',
+          body: 'You already have full coverage. Save an alternate variation so Compare can make sharper recommendations.',
           tone: 'elevate',
         };
 
@@ -730,10 +821,10 @@ const glowApp = (() => {
         }
       : {
           kicker: 'Deploy',
-          title: bundle.coveredCount >= 3 ? 'Book the look' : 'Save before you book',
+          title: bundle.coveredCount >= 3 ? 'Book the repair' : 'Save before you book',
           body: bundle.coveredCount >= 3
-            ? 'You have enough signal to walk into a brow, nail, or skin appointment with a clear stack and compare history.'
-            : 'Add one more strong module before turning this into an appointment-ready beauty brief.',
+            ? 'You have enough signal to walk into a body shop, tire shop, or glass repair appointment with a clear case and compare history.'
+            : 'Add one more strong case area before turning this into an appointment-ready repair brief.',
           tone: 'deploy',
         };
 
@@ -746,14 +837,14 @@ const glowApp = (() => {
   }
 
   function _buildFullStackBundle(sessions) {
-    const order = ['skin', 'brows', 'nails', 'toes', 'outfit'];
+    const order = ['scan', 'bumper', 'wheel', 'glass', 'panel'];
     const latestByModule = {};
     sessions.forEach(session => {
       if (!latestByModule[session.module]) latestByModule[session.module] = session;
     });
     const cards = order.map(module => ({
       module,
-      meta: MODULE_META[module] || MODULE_META.skin,
+      meta: MODULE_META[module] || MODULE_META.scan,
       session: latestByModule[module] || null,
     }));
     const covered = cards.filter(card => card.session);
@@ -761,16 +852,16 @@ const glowApp = (() => {
     const coverage = Math.round((covered.length / order.length) * 100);
     const tone = _compareTone(covered.map(card => card.session));
     const title = covered.length === order.length
-      ? `Complete ${tone} stack ready`
-      : `${tone.charAt(0).toUpperCase() + tone.slice(1)} stack in progress`;
+      ? `Complete ${tone} case ready`
+      : `${tone.charAt(0).toUpperCase() + tone.slice(1)} case in progress`;
     const body = covered.length === order.length
-      ? 'GlowAI now has a saved direction for every major module. This is your strongest coordinated look bundle so far.'
-      : `GlowAI can already read ${covered.length} modules together. Fill the remaining gaps so skin, details, and wardrobe all move in the same direction.`;
+      ? 'AutoIQ Pro now has a saved direction for every major repair area. This is your strongest coordinated repair bundle so far.'
+      : `AutoIQ Pro can already read ${covered.length} case areas together. Fill the remaining gaps so damage evidence, part correction, and follow-up all move in the same direction.`;
     const nextSteps = missing.length
-      ? missing.map(card => `Add ${card.meta.label} to push this stack toward a complete look.`)
+      ? missing.map(card => `Add ${card.meta.label} to push this stack toward a complete repair case.`)
       : [
-          'This stack is complete. Save alternate variants if you want a softer and a bolder bundle.',
-          'Use Compare to pin one full-stack anchor and test a second module swap against it.',
+          'This stack is complete. Save alternate variants if you want a conservative and a more severe bundle.',
+          'Use Compare to pin one full-stack anchor and test a second case-area swap against it.',
         ];
     return {
       title,
@@ -797,9 +888,9 @@ const glowApp = (() => {
         </div>
         <div class="full-stack-body">
           <strong>${_esc(snapshot.variantTitle || session.title)}</strong>
-          <span>${_esc(session.note || snapshot.variantNote || 'Saved look snapshot.')}</span>
+          <span>${_esc(session.note || snapshot.variantNote || 'Saved case snapshot.')}</span>
         </div>
-        <button class="session-open-btn" onclick="glowApp.openPlannerSession('${session.id}')">Open module</button>
+        <button class="session-open-btn" onclick="glowApp.openPlannerSession('${session.id}')">Open case</button>
       </article>`;
   }
 
@@ -812,9 +903,9 @@ const glowApp = (() => {
         </div>
         <div class="full-stack-empty">
           <strong>${card.meta.label} not saved yet</strong>
-          <span>Build this module in Studio so the full-stack board can grade your complete look.</span>
+          <span>Build this case area in Camera Triage so the full-stack board can grade your complete repair case.</span>
         </div>
-        <button class="session-open-btn" onclick="glowApp.openStudioWorkspace('${card.module === 'skin' ? 'brows' : card.module}')">${card.module === 'skin' ? 'Open Studio' : 'Start module'}</button>
+        <button class="session-open-btn" onclick="glowApp.openStudioWorkspace('${card.module === 'scan' ? 'bumper' : card.module}')">${card.module === 'scan' ? 'Open Workspace' : 'Start case'}</button>
       </article>`;
   }
 
@@ -825,16 +916,16 @@ const glowApp = (() => {
       return `
         <section class="stack-library empty">
           <div class="stack-library-top">
-            <span class="compare-kicker">Look Library</span>
+            <span class="compare-kicker">Case Library</span>
             <h4 class="stack-library-title">No named stacks yet</h4>
           </div>
-          <p class="compare-copy">Save the current full-stack board to start building reusable looks like Soft Day, Bold Night, or Vacation.</p>
+          <p class="compare-copy">Save the current full-stack board to start building reusable case stacks for light damage, moderate repair, or quote-ready inspections.</p>
         </section>`;
     }
     return `
       <section class="stack-library">
         <div class="stack-library-top">
-          <span class="compare-kicker">Look Library</span>
+          <span class="compare-kicker">Case Library</span>
           <h4 class="stack-library-title">Named stack variants</h4>
         </div>
         <div class="stack-library-grid">
@@ -860,21 +951,21 @@ const glowApp = (() => {
           ${stack.favorite ? '<span class="compare-status-badge ready">Favorite</span>' : ''}
         </div>
         <div class="stack-variant-meta">
-          <span>${(stack.modules || []).length} modules saved</span>
+          <span>${(stack.modules || []).length} case areas saved</span>
           <span>Updated ${updated}</span>
         </div>
         ${_stackHybridReviewHTML(stack)}
         ${_stackVariantPreviewHTML(stack)}
         <div class="stack-variant-tags">
           ${(stack.modules || []).map(module => {
-            const meta = MODULE_META[module.module] || MODULE_META.skin;
+            const meta = MODULE_META[module.module] || MODULE_META.scan;
             return `<span class="compare-chip compare-${meta.accent}">${meta.icon} ${_esc(module.variantTitle || meta.label)}</span>`;
           }).join('')}
         </div>
         <div class="stack-variant-actions">
           <button class="compare-pin-btn alt" onclick="glowApp.pinStackCompare('left','${stack.id}')">${_stackCompare.left === stack.id ? 'Stack A' : 'Pin A'}</button>
           <button class="compare-pin-btn alt" onclick="glowApp.pinStackCompare('right','${stack.id}')">${_stackCompare.right === stack.id ? 'Stack B' : 'Pin B'}</button>
-          <button class="compare-pin-btn alt" onclick="glowApp.openStackModuleSwapEditor('${stack.id}')">Swap Module</button>
+          <button class="compare-pin-btn alt" onclick="glowApp.openStackModuleSwapEditor('${stack.id}')">Swap Case Area</button>
           <button class="compare-pin-btn alt" onclick="glowApp.openStackRenameEditor('${stack.id}')">Rename</button>
           <button class="compare-pin-btn alt" onclick="glowApp.toggleFavoriteStackVariant('${stack.id}')">${stack.favorite ? 'Unfavorite' : 'Favorite'}</button>
           <button class="compare-pin-btn alt" onclick="glowApp.setDefaultStackVariant('${stack.id}')">${stack.isDefault ? 'Signature' : 'Set Signature'}</button>
@@ -895,7 +986,7 @@ const glowApp = (() => {
         </div>
         <div class="stack-hybrid-list">
           ${rows.map(([module, source]) => {
-            const meta = MODULE_META[module] || MODULE_META.skin;
+            const meta = MODULE_META[module] || MODULE_META.scan;
             const alt = _hybridAlternateSourceLabel(stack, module, source);
             return `<div class="stack-hybrid-row"><span>${meta.icon} ${meta.label}</span><div class="stack-hybrid-row-actions"><strong>${_esc(source)}</strong>${alt ? `<button class="stack-hybrid-swap-btn" onclick="glowApp.toggleHybridModuleSource('${stack.id}','${module}')">Use ${_esc(alt)}</button>` : ''}</div></div>`;
           }).join('')}
@@ -926,8 +1017,8 @@ const glowApp = (() => {
         <div class="stack-compare-top">
           <div>
             <span class="compare-kicker">Stack Compare</span>
-            <h4 class="stack-compare-title">Compare named looks as full bundles.</h4>
-            <p class="compare-copy">Pin two saved stacks and GlowAI will judge them as complete systems, not just isolated modules.</p>
+            <h4 class="stack-compare-title">Compare named case stacks as full bundles.</h4>
+            <p class="compare-copy">Pin two saved stacks and AutoIQ Pro will judge them as complete systems, not just isolated case areas.</p>
           </div>
           <button class="compare-swap-btn" onclick="glowApp.swapStackCompare()">Swap Stacks</button>
         </div>
@@ -981,13 +1072,13 @@ const glowApp = (() => {
     if (!left && !right) {
       return {
         title: 'Start by pinning two named stacks',
-        body: 'The library will compare coverage, tone, and module completeness once both slots are filled.',
+        body: 'The library will compare coverage, tone, and case completeness once both slots are filled.',
       };
     }
     if (left && right && left.id === right.id) {
       return {
         title: 'You are comparing the same stack twice',
-        body: 'Pin a different saved look to the second slot so GlowAI can surface a real full-bundle recommendation.',
+        body: 'Pin a different saved case to the second slot so AutoIQ Pro can surface a real full-bundle recommendation.',
       };
     }
     const diff = _stackCompareDiff(left, right);
@@ -998,7 +1089,7 @@ const glowApp = (() => {
     const focus = diff.changed.length ? `The biggest change is in ${diff.changed.map(item => MODULE_META[item].label).join(', ')}.` : 'The two stacks are currently very close.';
     return {
       title: `${best?.name || 'Current stack'} leads right now`,
-      body: `${best?.name || 'This stack'} has the stronger ${tone} bundle signal at ${Math.max(scoring.left.total, scoring.right.total)} points. ${focus} Keep it as the anchor if you want the most complete look system, and use the other stack as the contrast option.`,
+      body: `${best?.name || 'This stack'} has the stronger ${tone} bundle signal at ${Math.max(scoring.left.total, scoring.right.total)} points. ${focus} Keep it as the anchor if you want the most complete repair system, and use the other stack as the contrast option.`,
     };
   }
 
@@ -1035,7 +1126,7 @@ const glowApp = (() => {
         </div>
         <div class="stack-score-list">
           ${scoring.left.rows.map((row, index) => {
-            const meta = MODULE_META[row.module] || MODULE_META.skin;
+            const meta = MODULE_META[row.module] || MODULE_META.scan;
             const rightRow = scoring.right.rows[index];
             return `
               <div class="stack-score-row">
@@ -1057,7 +1148,7 @@ const glowApp = (() => {
   }
 
   function _stackCompareDiff(left, right) {
-    const order = ['skin', 'brows', 'nails', 'toes', 'outfit'];
+    const order = ['scan', 'bumper', 'wheel', 'glass', 'panel'];
     const leftMap = Object.fromEntries(((left?.modules) || []).map(item => [item.module, item]));
     const rightMap = Object.fromEntries(((right?.modules) || []).map(item => [item.module, item]));
     const rows = order.map(module => {
@@ -1079,11 +1170,11 @@ const glowApp = (() => {
       <section class="stack-diff-board">
         <div class="stack-diff-top">
           <span class="compare-kicker">Stack Diff</span>
-          <strong>${diff.changed.length ? `${diff.changed.length} module changes` : 'No module changes'}</strong>
+          <strong>${diff.changed.length ? `${diff.changed.length} case-area changes` : 'No case-area changes'}</strong>
         </div>
         <div class="stack-diff-list">
           ${diff.rows.map(row => {
-            const meta = MODULE_META[row.module] || MODULE_META.skin;
+            const meta = MODULE_META[row.module] || MODULE_META.scan;
             return `
               <div class="stack-diff-row ${row.same ? 'same' : 'changed'}">
                 <div class="stack-diff-module">${meta.icon} ${meta.label}</div>
@@ -1101,14 +1192,14 @@ const glowApp = (() => {
     if (!left || !right) {
       return {
         title: 'Action plan unlocks with two stacks',
-        items: ['Pin two named stacks to get module-level keep, swap, and fill guidance.'],
+        items: ['Pin two named stacks to get keep, swap, and fill guidance for each case area.'],
       };
     }
     const leader = scoring.left.total >= scoring.right.total ? left : right;
     const trailer = leader.id === left.id ? right : left;
     const items = [];
     diff.rows.forEach(row => {
-      const meta = MODULE_META[row.module] || MODULE_META.skin;
+      const meta = MODULE_META[row.module] || MODULE_META.scan;
       if (row.same) {
         items.push(`Keep ${meta.label}: both stacks already agree on ${row.leftLabel}.`);
         return;
@@ -1135,7 +1226,7 @@ const glowApp = (() => {
     return `
       <section class="stack-action-board">
         <div class="stack-diff-top">
-          <span class="compare-kicker">GlowAI Actions</span>
+          <span class="compare-kicker">AutoIQ Actions</span>
           <strong>${_esc(plan.title)}</strong>
         </div>
         <div class="stack-action-list">
@@ -1144,7 +1235,7 @@ const glowApp = (() => {
         ${canMerge ? `<div class="stack-action-merge">
           <div class="full-stack-actions-copy">
             <strong>Build the recommended hybrid automatically.</strong>
-            <span>GlowAI will create a new named stack using the strongest module mix from both pinned looks.</span>
+            <span>AutoIQ Pro will create a new named stack using the strongest case mix from both pinned cases.</span>
           </div>
           <button class="compare-pin-btn" onclick="glowApp.createHybridStackFromCompare('${_esc(suggestedName)}')">Create ${_esc(suggestedName)}</button>
         </div>` : ''}
@@ -1214,7 +1305,7 @@ const glowApp = (() => {
     _stackCompare.left = stacksAll[0].id;
     _stackCompare.right = trailer.id;
     if (_currentScreen() === 'appointments' && _plannerTab === 'compare') _renderPlanner();
-    showStudioNotice(`${name} was created from the recommended hybrid mix. ${diff.changed.length ? 'Review the merged modules in Look Library.' : ''}`);
+    showStudioNotice(`${name} was created from the recommended hybrid mix. ${diff.changed.length ? 'Review the merged case areas in Case Library.' : ''}`);
   }
 
   function toggleHybridModuleSource(stackId, module) {
@@ -1240,19 +1331,19 @@ const glowApp = (() => {
     stack.updatedAt = new Date().toISOString();
     saveStackVariants(stacks);
     if (_currentScreen() === 'appointments' && _plannerTab === 'compare') _renderPlanner();
-    showStudioNotice(`${MODULE_META[module]?.label || 'Module'} now uses ${nextLabel} in ${stack.name}.`);
+    showStudioNotice(`${MODULE_META[module]?.label || 'Case area'} now uses ${nextLabel} in ${stack.name}.`);
   }
 
   function _stackVariantPreviewHTML(stack) {
     const sessions = loadSessions();
     const modules = (stack.modules || []).slice(0, 4);
     if (!modules.length) {
-      return '<div class="stack-variant-preview empty"><span>No visual modules saved yet.</span></div>';
+      return '<div class="stack-variant-preview empty"><span>No visual case areas saved yet.</span></div>';
     }
     return `
       <div class="stack-variant-preview">
         ${modules.map(item => {
-          const meta = MODULE_META[item.module] || MODULE_META.skin;
+          const meta = MODULE_META[item.module] || MODULE_META.scan;
           const session = sessions.find(entry => entry.id === item.sessionId);
           const image = session?.snapshot?.dataUrl;
           return `
@@ -1276,8 +1367,8 @@ const glowApp = (() => {
 
   function _nextStackName(stacks, tone, coveredCount) {
     const base = coveredCount === 5
-      ? (tone === 'bold' ? 'Bold Night' : tone === 'soft' ? 'Soft Day' : 'Signature Look')
-      : (tone === 'bold' ? 'Going Out' : tone === 'soft' ? 'Weekend Glow' : 'Stack Draft');
+      ? (tone === 'bold' ? 'Severe Repair' : tone === 'soft' ? 'Light Damage' : 'Signature Case')
+      : (tone === 'bold' ? 'Quote Ready' : tone === 'soft' ? 'Monitor Only' : 'Case Draft');
     const existing = new Set(stacks.map(stack => stack.name));
     if (!existing.has(base)) return base;
     let index = 2;
@@ -1299,16 +1390,16 @@ const glowApp = (() => {
   function _buildCompareRecommendation(left, right) {
     if (!left && !right) {
       return {
-        title: 'Start with two saved looks',
-        body: 'Pin any two Studio snapshots and GlowAI will start reading them as a coordinated system instead of isolated experiments.',
-        points: ['Save a brow, nail, toe, or outfit look first', 'Use Pin A and Pin B to create a compare stack'],
+        title: 'Start with two saved cases',
+        body: 'Pin any two Studio snapshots and AutoIQ Pro will start reading them as a coordinated system instead of isolated experiments.',
+        points: ['Save two repair cases first', 'Use Pin A and Pin B to create a compare stack'],
       };
     }
     if (left && right && left.id === right.id) {
       return {
         title: 'Duplicate compare detected',
-        body: 'Slot A and slot B are showing the same saved look. Swap one side to a different module or variant so the compare board can give you a real decision.',
-        points: ['Pin a second look to B', 'Keep one anchor look and change only one module at a time'],
+        body: 'Slot A and slot B are showing the same saved case. Swap one side to a different repair area or variant so the compare board can give you a real decision.',
+        points: ['Pin a second case to B', 'Keep one anchor case and change only one repair area at a time'],
       };
     }
     const selected = [left, right].filter(Boolean);
@@ -1317,8 +1408,8 @@ const glowApp = (() => {
       ? `Best together: ${_labelForSession(selected[0])} + ${_labelForSession(selected[1])}`
       : `Lead with ${_labelForSession(selected[0])}`;
     const body = selected.length === 2
-      ? `${_labelForSession(selected[0])} and ${_labelForSession(selected[1])} read as a ${tone} direction. Keep those two as the anchors, then fill the remaining modules around that energy.`
-      : `${_labelForSession(selected[0])} is currently your strongest saved direction. Add a second pinned look to test whether you want to stay ${tone} or balance it with contrast.`;
+      ? `${_labelForSession(selected[0])} and ${_labelForSession(selected[1])} read as a ${tone} direction. Keep those two as the anchors, then fill the remaining case areas around that energy.`
+      : `${_labelForSession(selected[0])} is currently your strongest saved direction. Add a second pinned case to test whether you want to stay ${tone} or balance it with contrast.`;
     const points = selected.length === 2
       ? [
           `${_labelForSession(selected[0])} sets the first anchor.`,
@@ -1327,28 +1418,28 @@ const glowApp = (() => {
         ]
       : [
           `${_labelForSession(selected[0])} is ready for side-by-side review.`,
-          'Add one more saved module to unlock a stronger recommendation.',
+          'Add one more saved case area to unlock a stronger recommendation.',
         ];
     return { title, body, points };
   }
 
   function _compareTone(sessions) {
     const text = sessions.map(session => `${session.title} ${session.snapshot?.variantTitle || ''} ${session.snapshot?.variant || ''}`.toLowerCase()).join(' ');
-    if (/(noir|chrome|cobalt|berry|cherry|full|edge)/.test(text)) return 'bold';
-    if (/(rose|linen|soft|nude|mint|sand|blush)/.test(text)) return 'soft';
+    if (/(crack|bent|severe|crease|break|center|corner|sidewall)/.test(text)) return 'bold';
+    if (/(light|chip|trim|paint|monitor|lower|curb)/.test(text)) return 'soft';
     return 'balanced';
   }
 
   function _compareNextStep(sessions) {
     const modules = new Set(sessions.map(session => session.module));
-    if (!modules.has('outfit')) return 'Add an outfit capsule next so your beauty choices connect to a full-look recommendation.';
-    if (!modules.has('brows')) return 'Add a brow look next so the face framing matches the rest of the look.';
-    if (!modules.has('nails')) return 'Add a nail shade next to carry the same mood through detail styling.';
+    if (!modules.has('panel')) return 'Add a panel case next so dents and finish damage connect to the full repair recommendation.';
+    if (!modules.has('bumper')) return 'Add a bumper case next so impact mapping matches the rest of the repair picture.';
+    if (!modules.has('wheel')) return 'Add a wheel case next to carry the same damage narrative through the lower-body details.';
     return 'This stack is already coordinated. Save a new variant only if you want a stronger contrast option.';
   }
 
   function _labelForSession(session) {
-    return session?.snapshot?.variantTitle || session?.title || 'Saved look';
+    return session?.snapshot?.variantTitle || session?.title || 'Saved case';
   }
 
   function _sessionIsCoordinated(session) {
@@ -1358,27 +1449,27 @@ const glowApp = (() => {
   function _snapshotStageHTML(session) {
     const snapshot = session.snapshot || {};
     if (!snapshot.dataUrl) {
-      return `<div class="compare-stage empty"><span class="compare-stage-empty">Add a Studio capture to render this module here.</span></div>`;
+      return `<div class="compare-stage empty"><span class="compare-stage-empty">Add a repair capture to render this case area here.</span></div>`;
     }
-    return `<div class="compare-stage">${_snapshotOverlayHTML(session.module, snapshot)}<img class="compare-stage-image" src="${snapshot.dataUrl}" alt="${_esc(snapshot.name || session.title || 'Saved look')}" /></div>`;
+    return `<div class="compare-stage">${_snapshotOverlayHTML(session.module, snapshot)}<img class="compare-stage-image" src="${snapshot.dataUrl}" alt="${_esc(snapshot.name || session.title || 'Saved case')}" /></div>`;
   }
 
   function _snapshotOverlayHTML(module, snapshot) {
-    if (module === 'brows') {
-      const alignment = { ...DEFAULT_BROW_ALIGNMENT, ...(snapshot.alignment || {}) };
-      return `<div class="brow-overlay ${_esc(snapshot.variant || 'none')}" style="--brow-top:${alignment.y}%;--brow-inset:${alignment.x}%;--brow-width:${alignment.width}%;--brow-height:${alignment.height}%;--brow-rotate:${alignment.rotate}deg;"><span class="brow-shape left"></span><span class="brow-shape right"></span></div>`;
+    if (module === 'bumper') {
+      const alignment = { ...DEFAULT_BUMPER_ALIGNMENT, ...(snapshot.alignment || {}) };
+      return `<div class="bumper-overlay ${_esc(snapshot.variant || 'none')}" style="--bumper-top:${alignment.y}%;--bumper-inset:${alignment.x}%;--bumper-width:${alignment.width}%;--bumper-height:${alignment.height}%;--bumper-rotate:${alignment.rotate}deg;"><span class="bumper-zone left"></span><span class="bumper-zone right"></span></div>`;
     }
-    if (module === 'nails') {
-      const alignment = { ...DEFAULT_NAIL_ALIGNMENT, ...(snapshot.alignment || {}) };
-      return `<div class="nail-overlay ${_esc(snapshot.variant || 'none')}" style="--nail-top:${alignment.y}%;--nail-inset:${alignment.x}%;--nail-width:${alignment.width}%;--nail-height:${alignment.height}%;--nail-radius:${alignment.radius}px;"></div>`;
+    if (module === 'wheel') {
+      const alignment = { ...DEFAULT_WHEEL_ALIGNMENT, ...(snapshot.alignment || {}) };
+      return `<div class="wheel-overlay ${_esc(snapshot.variant || 'none')}" style="--wheel-top:${alignment.y}%;--wheel-inset:${alignment.x}%;--wheel-width:${alignment.width}%;--wheel-height:${alignment.height}%;--wheel-radius:${alignment.radius}px;"></div>`;
     }
-    if (module === 'toes') {
-      const alignment = { ...DEFAULT_TOE_ALIGNMENT, ...(snapshot.alignment || {}) };
-      return `<div class="toe-overlay ${_esc(snapshot.variant || 'none')}" style="--toe-top:${alignment.y}%;--toe-inset:${alignment.x}%;--toe-width:${alignment.width}%;--toe-height:${alignment.height}%;--toe-radius:${alignment.radius}px;"></div>`;
+    if (module === 'glass') {
+      const alignment = { ...DEFAULT_GLASS_ALIGNMENT, ...(snapshot.alignment || {}) };
+      return `<div class="glass-overlay ${_esc(snapshot.variant || 'none')}" style="--glass-top:${alignment.y}%;--glass-inset:${alignment.x}%;--glass-width:${alignment.width}%;--glass-height:${alignment.height}%;--glass-radius:${alignment.radius}px;"></div>`;
     }
-    if (module === 'outfit') {
-      const alignment = { ...DEFAULT_OUTFIT_ALIGNMENT, ...(snapshot.alignment || {}) };
-      return `<div class="outfit-overlay ${_esc(snapshot.variant || 'none')}" style="--outfit-top:${alignment.y}%;--outfit-inset:${alignment.x}%;--outfit-width:${alignment.width}%;--outfit-height:${alignment.height}%;--outfit-radius:${alignment.radius}px;"></div>`;
+    if (module === 'panel') {
+      const alignment = { ...DEFAULT_PANEL_ALIGNMENT, ...(snapshot.alignment || {}) };
+      return `<div class="panel-overlay ${_esc(snapshot.variant || 'none')}" style="--panel-top:${alignment.y}%;--panel-inset:${alignment.x}%;--panel-width:${alignment.width}%;--panel-height:${alignment.height}%;--panel-radius:${alignment.radius}px;"></div>`;
     }
     return '';
   }
@@ -1388,14 +1479,14 @@ const glowApp = (() => {
     const bookings = loadAppointments().filter(a => a.status !== 'cancelled' && a.status !== 'completed');
     return `
       <div class="planner-summary-card">
-        <span class="planner-summary-kicker">Looks Saved</span>
+        <span class="planner-summary-kicker">Cases Saved</span>
         <strong>${sessions.length}</strong>
-        <span class="planner-summary-copy">Brow, nail, toe, outfit, and skin drafts in one stack.</span>
+        <span class="planner-summary-copy">Bumper, wheel, glass, panel, and live-scan drafts in one stack.</span>
       </div>
       <div class="planner-summary-card">
         <span class="planner-summary-kicker">Upcoming Services</span>
         <strong>${bookings.length}</strong>
-        <span class="planner-summary-copy">Appointments tied to the same beauty plan.</span>
+        <span class="planner-summary-copy">Appointments tied to the same repair plan.</span>
       </div>`;
   }
 
@@ -1407,14 +1498,14 @@ const glowApp = (() => {
     const nextService = bookings.sort(_sortByDateTime)[0];
     shell.innerHTML = `
       <section class="profile-hero">
-        <div class="profile-avatar">✨</div>
-        <div class="profile-eyebrow">GlowAI Member</div>
-        <h2 class="profile-title">Your beauty system is taking shape.</h2>
-        <p class="profile-copy">GlowAI is now tracking skin plans, saved looks, and service timing in one place so each new try-on module has context from day one.</p>
+        <div class="profile-avatar">🚗</div>
+        <div class="profile-eyebrow">AutoIQ Pro Driver</div>
+        <h2 class="profile-title">Your repair system is taking shape.</h2>
+        <p class="profile-copy">AutoIQ Pro is now tracking scan plans, saved cases, and service timing in one place so each new repair area has context from day one.</p>
       </section>
       <div class="profile-stat-grid">
         <div class="profile-stat-card">
-          <span class="profile-stat-kicker">Saved Looks</span>
+          <span class="profile-stat-kicker">Saved Cases</span>
           <strong>${sessions.length}</strong>
         </div>
         <div class="profile-stat-card">
@@ -1425,16 +1516,16 @@ const glowApp = (() => {
       <div class="profile-panel">
         <div class="profile-panel-title">Current Focus</div>
         <div class="profile-focus-list">
-          <div class="profile-focus-item"><span>🔬</span><div><strong>Skin module live</strong><p>Use scans now and save recovery plans into Planner.</p></div></div>
-          <div class="profile-focus-item"><span>🪄</span><div><strong>Brows tuned</strong><p>Use alignment controls to shape and save brow looks on your own photo.</p></div></div>
-          <div class="profile-focus-item"><span>💅</span><div><strong>Nails stacked</strong><p>Color previews, saved captures, and compare-ready palettes all live in the same system.</p></div></div>
+          <div class="profile-focus-item"><span>🔬</span><div><strong>Live scan active</strong><p>Use camera triage now and save repair plans into Cases.</p></div></div>
+          <div class="profile-focus-item"><span>🛻</span><div><strong>Bumper mapping ready</strong><p>Use alignment controls to map impact areas on your own photo.</p></div></div>
+          <div class="profile-focus-item"><span>🛞</span><div><strong>Wheel evidence saved</strong><p>Reference captures and compare-ready cases all live in the same system.</p></div></div>
         </div>
       </div>
       <div class="profile-panel">
         <div class="profile-panel-title">Next Service</div>
         ${nextService
           ? `<div class="profile-next-service"><strong>${_esc(nextService.title)}</strong><span>${fmtDate(nextService.date)} at ${fmtTime(nextService.time)}</span></div>`
-          : `<div class="profile-next-service empty"><strong>No service booked yet</strong><span>Use Planner to add your first dermatologist, brow, or nail visit.</span></div>`}
+          : `<div class="profile-next-service empty"><strong>No service booked yet</strong><span>Use Cases to add your first body shop, glass repair, or tire visit.</span></div>`}
       </div>`;
   }
 
@@ -1478,7 +1569,7 @@ const glowApp = (() => {
   function saveCurrentStackVariant() {
     const bundle = _buildFullStackBundle(loadSessions().filter(session => session.snapshot?.dataUrl).sort(_sortSessionsByRecent));
     if (!bundle.coveredCount) {
-      showStudioNotice('Save at least one module snapshot before creating a named stack variant.');
+      showStudioNotice('Save at least one case snapshot before creating a named stack variant.');
       return;
     }
     const stacks = loadStackVariants();
@@ -1498,7 +1589,7 @@ const glowApp = (() => {
       updatedAt: new Date().toISOString(),
     });
     saveStackVariants(stacks);
-    showStudioNotice(`${name} was saved to your Look Library.`);
+    showStudioNotice(`${name} was saved to your Case Library.`);
     if (_currentScreen() === 'appointments' && _plannerTab === 'compare') _renderPlanner();
   }
 
@@ -1522,7 +1613,7 @@ const glowApp = (() => {
     _plannerTab = 'compare';
     if (_currentScreen() !== 'appointments') navigate('appointments');
     else _renderPlanner();
-    showStudioNotice(`${stack.name} is now loaded into Compare. Pin or open any module to refine it.`);
+    showStudioNotice(`${stack.name} is now loaded into Compare. Pin or open any case area to refine it.`);
   }
 
   function openStackRenameEditor(stackId) {
@@ -1538,14 +1629,14 @@ const glowApp = (() => {
     const copy = document.getElementById('stackEditorCopy');
     const body = document.getElementById('stackEditorBody');
     const saveBtn = document.getElementById('stackEditorSaveBtn');
-    if (kicker) kicker.textContent = 'Look Library';
+    if (kicker) kicker.textContent = 'Case Library';
     if (title) title.textContent = 'Rename Stack';
-    if (copy) copy.textContent = 'Give this saved look a clearer name so it is easier to scan beside your other bundles.';
+    if (copy) copy.textContent = 'Give this saved case stack a clearer name so it is easier to scan beside your other bundles.';
     if (saveBtn) saveBtn.textContent = 'Save Name';
     if (body) {
       body.innerHTML = `
         <label class="form-label" for="stackRenameInput">Stack Name</label>
-        <input class="form-input" id="stackRenameInput" type="text" maxlength="40" value="${_esc(stack.name)}" placeholder="Soft Day" />
+        <input class="form-input" id="stackRenameInput" type="text" maxlength="40" value="${_esc(stack.name)}" placeholder="Light Damage" />
       `;
     }
     document.getElementById('stackEditorBackdrop')?.classList.remove('hidden');
@@ -1603,16 +1694,16 @@ const glowApp = (() => {
     const body = document.getElementById('stackEditorBody');
     const saveBtn = document.getElementById('stackEditorSaveBtn');
     if (kicker) kicker.textContent = 'Stack Editor';
-    if (title) title.textContent = 'Swap One Module';
-    if (copy) copy.textContent = 'Pick the part of the look you want to replace, then choose another saved session from that category.';
+    if (title) title.textContent = 'Swap One Case Area';
+    if (copy) copy.textContent = 'Pick the part of the case you want to replace, then choose another saved session from that category.';
     if (saveBtn) saveBtn.textContent = 'Apply Swap';
     if (body) {
       body.innerHTML = `
         <div class="stack-editor-section">
-          <div class="stack-editor-label">Module</div>
+          <div class="stack-editor-label">Case Area</div>
           <div class="stack-editor-chip-row">
             ${moduleOptions.map(item => {
-              const meta = MODULE_META[item.module] || MODULE_META.skin;
+              const meta = MODULE_META[item.module] || MODULE_META.scan;
               const active = _stackEditorState?.selectedModule === item.module ? 'active' : '';
               return `<button type="button" class="stack-editor-chip ${active}" onclick="glowApp.selectStackEditorModule('${item.module}')">${meta.icon} ${meta.label}</button>`;
             }).join('')}
@@ -1631,7 +1722,7 @@ const glowApp = (() => {
   function _stackEditorOptionListHTML() {
     const module = _stackEditorState?.selectedModule;
     if (!module) {
-      return '<div class="stack-editor-empty">Choose a module first to see saved options.</div>';
+      return '<div class="stack-editor-empty">Choose a case area first to see saved options.</div>';
     }
     const candidates = loadSessions().filter(session => session.module === module).sort(_sortSessionsByRecent);
     if (!candidates.length) {
@@ -1639,7 +1730,7 @@ const glowApp = (() => {
     }
     return candidates.map(session => {
       const chosen = _stackEditorState?.selectedSessionId === session.id ? 'active' : '';
-      return `<button type="button" class="stack-editor-option ${chosen}" onclick="glowApp.selectStackEditorSession('${session.id}')"><strong>${_esc(session.snapshot?.variantTitle || session.title)}</strong><span>${_esc(session.note || 'Saved module option')}</span></button>`;
+      return `<button type="button" class="stack-editor-option ${chosen}" onclick="glowApp.selectStackEditorSession('${session.id}')"><strong>${_esc(session.snapshot?.variantTitle || session.title)}</strong><span>${_esc(session.note || 'Saved case option')}</span></button>`;
     }).join('');
   }
 
@@ -1686,7 +1777,7 @@ const glowApp = (() => {
       const module = _stackEditorState.selectedModule;
       const sessionId = _stackEditorState.selectedSessionId;
       if (!module || !sessionId) {
-        showStudioNotice('Choose a module and a saved option before applying the swap.');
+        showStudioNotice('Choose a case area and a saved option before applying the swap.');
         return;
       }
       const stacks = loadStackVariants();
@@ -1753,13 +1844,13 @@ const glowApp = (() => {
   }
 
   function _buildSession(module, overrides = {}) {
-    const meta = MODULE_META[module] || MODULE_META.skin;
+    const meta = MODULE_META[module] || MODULE_META.scan;
     return {
       id: uid(),
       module,
       title: overrides.title || `${meta.label} Draft`,
       status: overrides.status || 'draft',
-      note: overrides.note || `Saved as a ${meta.label.toLowerCase()} look inside your GlowAI planning system.`,
+      note: overrides.note || `Saved as a ${meta.label.toLowerCase()} case inside your AutoIQ Pro planning system.`,
       snapshot: overrides.snapshot || null,
       updatedAt: new Date().toISOString(),
     };
@@ -1775,6 +1866,7 @@ const glowApp = (() => {
       variantTitle: capture.variantTitle || '',
       variantNote: capture.variantNote || '',
       alignment: capture.alignment || null,
+      imageTransform: capture.imageTransform || null,
       updatedAt: capture.updatedAt || new Date().toISOString(),
     };
   }
@@ -1798,7 +1890,7 @@ const glowApp = (() => {
       snapshot: _currentCaptureSnapshot(module),
     }));
     saveSessions(sessions);
-    showStudioNotice(`${title} was saved to Planner. You can reopen it anytime to refine the look and compare it with the rest of your stack.`);
+    showStudioNotice(`${title} was saved to Cases. You can reopen it anytime to refine the case and compare it with the rest of your stack.`);
     if (_currentScreen() === 'home') _renderHomePreview();
     if (_currentScreen() === 'appointments') _renderPlanner();
     if (_currentScreen() === 'profile') _renderProfile();
@@ -1813,37 +1905,45 @@ const glowApp = (() => {
       variantNote: note,
       updatedAt: new Date().toISOString(),
     };
-    if (module === 'brows' && !captures[module].alignment) {
-      captures[module].alignment = { ...DEFAULT_BROW_ALIGNMENT };
+    if (module === 'bumper' && !captures[module].alignment) {
+      captures[module].alignment = { ...DEFAULT_BUMPER_ALIGNMENT };
     }
-    if (module === 'nails' && !captures[module].alignment) {
-      captures[module].alignment = { ...DEFAULT_NAIL_ALIGNMENT };
+    if (module === 'wheel' && !captures[module].alignment) {
+      captures[module].alignment = { ...DEFAULT_WHEEL_ALIGNMENT };
     }
-    if (module === 'toes' && !captures[module].alignment) {
-      captures[module].alignment = { ...DEFAULT_TOE_ALIGNMENT };
+    if (module === 'glass' && !captures[module].alignment) {
+      captures[module].alignment = { ...DEFAULT_GLASS_ALIGNMENT };
     }
-    if (module === 'outfit' && !captures[module].alignment) {
-      captures[module].alignment = { ...DEFAULT_OUTFIT_ALIGNMENT };
+    if (module === 'panel' && !captures[module].alignment) {
+      captures[module].alignment = { ...DEFAULT_PANEL_ALIGNMENT };
     }
     saveCaptures(captures);
     _syncStudioSelectionUI(module);
     _syncStudioCaptureUI(module);
     const hasImage = Boolean(captures[module]?.dataUrl);
     if (!hasImage) {
-      showStudioNotice(`${title} is selected. Add a ${module === 'nails' ? 'hand' : 'face'} photo to see the live try-on overlay.`);
+      const target = module === 'wheel'
+        ? 'wheel'
+        : module === 'glass'
+          ? 'glass or light'
+        : module === 'panel'
+            ? 'panel'
+            : 'bumper';
+      showStudioNotice(`${title} is selected. Add a ${target} photo to see the live repair overlay.`);
     }
   }
 
   function openStudioWorkspace(module) {
+    _seedWorkspaceFromLastPhoto(module);
     _studioWorkspace = module;
     navigate('analysis');
     setTimeout(() => {
       _syncStudioWorkspace();
       const target = document.getElementById(
-        module === 'nails' ? 'nailWorkspace' :
-        module === 'toes' ? 'toeWorkspace' :
-        module === 'outfit' ? 'outfitWorkspace' :
-        'browWorkspace'
+        module === 'wheel' ? 'wheelWorkspace' :
+        module === 'glass' ? 'glassWorkspace' :
+        module === 'panel' ? 'panelWorkspace' :
+        'bumperWorkspace'
       );
       target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 30);
@@ -1852,10 +1952,10 @@ const glowApp = (() => {
   function openPlannerSession(sessionId) {
     const session = loadSessions().find(item => item.id === sessionId);
     if (!session) {
-      showStudioNotice('That saved session could not be found. Create a fresh look in Studio and save it again.');
+      showStudioNotice('That saved session could not be found. Create a fresh case in Camera Triage and save it again.');
       return;
     }
-    if (session.module === 'brows' || session.module === 'nails' || session.module === 'toes' || session.module === 'outfit') {
+    if (session.module === 'bumper' || session.module === 'wheel' || session.module === 'glass' || session.module === 'panel') {
       if (session.snapshot) {
         const captures = loadCaptures();
         captures[session.module] = {
@@ -1867,33 +1967,53 @@ const glowApp = (() => {
       openStudioWorkspace(session.module);
       return;
     }
-    showStudioNotice('This saved look is already stored in Planner. Open the matching studio workspace to keep refining it.');
+    showStudioNotice('This saved case is already stored in Cases. Open the matching workspace to keep refining it.');
   }
 
   function _syncStudioWorkspace() {
-    const brow = document.getElementById('browWorkspace');
-    const nails = document.getElementById('nailWorkspace');
-    const toes = document.getElementById('toeWorkspace');
-    const outfit = document.getElementById('outfitWorkspace');
-    if (!brow || !nails || !toes || !outfit) return;
-    brow.classList.toggle('workspace-active', _studioWorkspace === 'brows');
-    nails.classList.toggle('workspace-active', _studioWorkspace === 'nails');
-    toes.classList.toggle('workspace-active', _studioWorkspace === 'toes');
-    outfit.classList.toggle('workspace-active', _studioWorkspace === 'outfit');
-    _syncStudioSelectionUI('brows');
-    _syncStudioSelectionUI('nails');
-    _syncStudioSelectionUI('toes');
-    _syncStudioSelectionUI('outfit');
+    const bumper = document.getElementById('bumperWorkspace');
+    const wheel = document.getElementById('wheelWorkspace');
+    const glass = document.getElementById('glassWorkspace');
+    const panel = document.getElementById('panelWorkspace');
+    if (!bumper || !wheel || !glass || !panel) return;
+    bumper.classList.toggle('workspace-active', _studioWorkspace === 'bumper');
+    wheel.classList.toggle('workspace-active', _studioWorkspace === 'wheel');
+    glass.classList.toggle('workspace-active', _studioWorkspace === 'glass');
+    panel.classList.toggle('workspace-active', _studioWorkspace === 'panel');
+    _syncStudioSelectionUI('bumper');
+    _syncStudioSelectionUI('wheel');
+    _syncStudioSelectionUI('glass');
+    _syncStudioSelectionUI('panel');
   }
 
-  function triggerStudioUpload(module) {
+  async function triggerStudioUpload(module) {
+    const usesFrontCamera = false;
+    const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
+
+    if (isNative && window.scanModule?.captureStudioPhoto) {
+      try {
+        const capture = await window.scanModule.captureStudioPhoto({
+          facing: usesFrontCamera ? 'front' : 'rear',
+        });
+        if (!capture?.dataUrl) return;
+        _applyStudioCapture(module, capture.name, capture.dataUrl);
+        return;
+      } catch (err) {
+        const msg = String(err || '');
+        if (msg.includes('cancel') || msg.includes('No image') || msg.includes('User cancelled')) return;
+        console.warn('studio capture fallback to file input', err);
+      }
+    }
+
     const input = document.getElementById(
-      module === 'nails' ? 'nailUploadInput' :
-      module === 'toes' ? 'toeUploadInput' :
-      module === 'outfit' ? 'outfitUploadInput' :
-      'browUploadInput'
+      module === 'wheel' ? 'wheelUploadInput' :
+      module === 'glass' ? 'glassUploadInput' :
+      module === 'panel' ? 'panelUploadInput' :
+      'bumperUploadInput'
     );
-    input?.click();
+    if (!input) return;
+    input.value = '';
+    input.click();
   }
 
   function handleStudioUpload(module, event) {
@@ -1901,74 +2021,98 @@ const glowApp = (() => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = String(reader.result || '');
-      const img = new Image();
-      img.onload = () => {
-        const captures = loadCaptures();
-        const next = {
-          ...(captures[module] || {}),
-          name: file.name,
-          dataUrl,
-          imageWidth: img.naturalWidth || img.width || 0,
-          imageHeight: img.naturalHeight || img.height || 0,
-          updatedAt: new Date().toISOString(),
-        };
-        next.alignment = _estimateAlignment(module, next);
-        next.fitMode = 'smart';
-        captures[module] = next;
-        saveCaptures(captures);
-        _syncStudioCaptureUI(module);
-        _syncBrowAlignmentUI();
-        _syncNailAlignmentUI();
-        _syncToeAlignmentUI();
-        _syncOutfitAlignmentUI();
-        showStudioNotice(`${MODULE_META[module]?.label || 'Studio capture'} added with a Smart Fit baseline. Fine-tune it if needed, then save it to Planner.`);
-      };
-      img.onerror = () => {
-        const captures = loadCaptures();
-        const next = {
-          ...(captures[module] || {}),
-          name: file.name,
-          dataUrl,
-          updatedAt: new Date().toISOString(),
-        };
-        next.alignment = _estimateAlignment(module, next);
-        next.fitMode = 'smart';
-        captures[module] = next;
-        saveCaptures(captures);
-        _syncStudioCaptureUI(module);
-        _syncBrowAlignmentUI();
-        _syncNailAlignmentUI();
-        _syncToeAlignmentUI();
-        _syncOutfitAlignmentUI();
-        showStudioNotice(`${MODULE_META[module]?.label || 'Studio capture'} added. GlowAI set a Smart Fit baseline using the default guide.`);
-      };
-      img.src = dataUrl;
+      _applyStudioCapture(module, file.name, String(reader.result || ''));
     };
     reader.readAsDataURL(file);
+  }
+
+  function _applyStudioCapture(module, name, dataUrl) {
+    const img = new Image();
+    img.onload = () => {
+      const captures = loadCaptures();
+      const next = {
+        ...(captures[module] || {}),
+        name,
+        dataUrl,
+        imageWidth: img.naturalWidth || img.width || 0,
+        imageHeight: img.naturalHeight || img.height || 0,
+        updatedAt: new Date().toISOString(),
+      };
+      next.alignment = _estimateAlignment(module, next);
+      next.fitMode = 'smart';
+      captures[module] = next;
+      saveCaptures(captures);
+      _syncStudioCaptureAfterSave(module);
+      showStudioNotice(`${MODULE_META[module]?.label || 'Studio capture'} added with a Smart Fit baseline. Fine-tune it if needed, then save it to Cases.`);
+    };
+    img.onerror = () => {
+      const captures = loadCaptures();
+      const next = {
+        ...(captures[module] || {}),
+        name,
+        dataUrl,
+        updatedAt: new Date().toISOString(),
+      };
+      next.alignment = _estimateAlignment(module, next);
+      next.fitMode = 'smart';
+      captures[module] = next;
+      saveCaptures(captures);
+      _syncStudioCaptureAfterSave(module);
+      showStudioNotice(`${MODULE_META[module]?.label || 'Studio capture'} added. AutoIQ Pro set a Smart Fit baseline using the default guide.`);
+    };
+    img.src = dataUrl;
+  }
+
+  function _syncStudioCaptureAfterSave(module) {
+    _syncStudioCaptureUI(module);
+    _syncBumperAlignmentUI();
+    _syncWheelAlignmentUI();
+    _syncGlassAlignmentUI();
+    _syncPanelAlignmentUI();
+  }
+
+  function _seedWorkspaceFromLastPhoto(module) {
+    if (module !== 'bumper' && module !== 'wheel') return;
+    const captures = loadCaptures();
+    if (captures[module]?.dataUrl) return;
+    const photo = loadLastStudioPhoto();
+    if (!photo?.dataUrl) return;
+
+    captures[module] = {
+      ...(captures[module] || {}),
+      name: photo.name || `${module}-reference-${Date.now()}.jpg`,
+      dataUrl: photo.dataUrl,
+      updatedAt: new Date().toISOString(),
+      variant: captures[module]?.variant || '',
+      variantTitle: captures[module]?.variantTitle || '',
+      variantNote: captures[module]?.variantNote || '',
+      alignment: captures[module]?.alignment || _defaultAlignment(module),
+      fitMode: captures[module]?.fitMode || 'smart',
+    };
+    saveCaptures(captures);
   }
 
   function saveStudioCapture(module) {
     const capture = loadCaptures()[module];
     if (!capture?.dataUrl) {
-      showStudioNotice(`Add a ${module === 'nails' ? 'hand' : module === 'toes' ? 'toe' : module === 'outfit' ? 'mirror' : 'face'} photo first so GlowAI has a real reference image to save.`);
+      showStudioNotice(`Add a ${module === 'wheel' ? 'wheel' : module === 'glass' ? 'glass or light' : module === 'panel' ? 'panel' : 'bumper'} photo first so AutoIQ Pro has a real reference image to save.`);
       return;
     }
     const selected = capture.variant && TRY_ON_PRESETS[module]?.[capture.variant];
-    const title = selected?.title || (module === 'nails'
-      ? 'Nail Capture Reference'
-      : module === 'toes'
-        ? 'Toe Capture Reference'
-        : module === 'outfit'
-          ? 'Outfit Capture Reference'
-        : 'Brow Capture Reference');
-    const note = selected?.note || (module === 'nails'
-      ? 'Hand reference saved for nail shade preview and compare-ready overlays.'
-      : module === 'toes'
-        ? 'Toe reference saved for pedicure color preview and compare-ready overlays.'
-        : module === 'outfit'
-          ? 'Mirror reference saved for outfit layer preview and style comparison.'
-        : 'Face reference saved for eyebrow shape preview and compare-ready overlays.');
+    const title = selected?.title || (module === 'wheel'
+      ? 'Wheel Capture Reference'
+      : module === 'glass'
+        ? 'Glass Capture Reference'
+        : module === 'panel'
+          ? 'Panel Capture Reference'
+        : 'Bumper Capture Reference');
+    const note = selected?.note || (module === 'wheel'
+      ? 'Wheel reference saved for curb rash, tire wear, and compare-ready overlays.'
+      : module === 'glass'
+        ? 'Glass reference saved for chip, crack, and compare-ready overlays.'
+        : module === 'panel'
+          ? 'Panel reference saved for dent, finish, and compare-ready review.'
+        : 'Bumper reference saved for impact mapping and compare-ready overlays.');
     const sessions = loadSessions();
     sessions.unshift(_buildSession(module, {
       title,
@@ -1977,88 +2121,90 @@ const glowApp = (() => {
       snapshot: _currentCaptureSnapshot(module),
     }));
     saveSessions(sessions);
-    showStudioNotice(`${title} was saved to Planner. The image reference is now attached to your ${MODULE_META[module]?.label?.toLowerCase() || 'module'} workflow.`);
+    showStudioNotice(`${title} was saved to Cases. The image reference is now attached to your ${MODULE_META[module]?.label?.toLowerCase() || 'case'} workflow.`);
     if (_currentScreen() === 'home') _renderHomePreview();
     if (_currentScreen() === 'appointments') _renderPlanner();
     if (_currentScreen() === 'profile') _renderProfile();
   }
 
   function _syncAllStudioCaptureUI() {
-    _syncStudioCaptureUI('brows');
-    _syncStudioCaptureUI('nails');
-    _syncStudioCaptureUI('toes');
-    _syncStudioCaptureUI('outfit');
-    _syncStudioSelectionUI('brows');
-    _syncStudioSelectionUI('nails');
-    _syncStudioSelectionUI('toes');
-    _syncStudioSelectionUI('outfit');
-    _syncBrowAlignmentUI();
-    _syncNailAlignmentUI();
-    _syncToeAlignmentUI();
-    _syncOutfitAlignmentUI();
+    _syncStudioCaptureUI('bumper');
+    _syncStudioCaptureUI('wheel');
+    _syncStudioCaptureUI('glass');
+    _syncStudioCaptureUI('panel');
+    _syncStudioSelectionUI('bumper');
+    _syncStudioSelectionUI('wheel');
+    _syncStudioSelectionUI('glass');
+    _syncStudioSelectionUI('panel');
+    _syncBumperAlignmentUI();
+    _syncWheelAlignmentUI();
+    _syncGlassAlignmentUI();
+    _syncPanelAlignmentUI();
   }
 
   function _syncStudioCaptureUI(module) {
     const preview = document.getElementById(
-      module === 'nails' ? 'nailPreview' :
-      module === 'toes' ? 'toePreview' :
-      module === 'outfit' ? 'outfitPreview' :
-      'browPreview'
+      module === 'wheel' ? 'wheelPreview' :
+      module === 'glass' ? 'glassPreview' :
+      module === 'panel' ? 'panelPreview' :
+      'bumperPreview'
     );
     if (!preview) return;
     const capture = loadCaptures()[module];
     if (!capture?.dataUrl) {
       preview.classList.add('empty');
-      preview.innerHTML = module === 'nails'
-        ? `<span class="workspace-capture-icon">🖐️</span><div class="workspace-capture-title">Add a hand photo</div><p class="workspace-capture-copy">Capture your hand flat in even lighting so saved colors are tied to a real reference image.</p>`
-        : module === 'toes'
-          ? `<span class="workspace-capture-icon">🩴</span><div class="workspace-capture-title">Add a toe photo</div><p class="workspace-capture-copy">Capture your toes flat in even light so GlowAI can map polish placement for pedicure previews.</p>`
-        : module === 'outfit'
-          ? `<span class="workspace-capture-icon">🪞</span><div class="workspace-capture-title">Add a mirror photo</div><p class="workspace-capture-copy">Use a standing or mirror photo so GlowAI can preview outfit tone and silhouette placement over your look.</p>`
-        : `<span class="workspace-capture-icon">📷</span><div class="workspace-capture-title">Add a face photo</div><p class="workspace-capture-copy">Use a front-facing selfie with good light for a cleaner brow preview and easier alignment.</p>`;
+      preview.innerHTML = module === 'wheel'
+        ? `<span class="workspace-capture-icon">🛞</span><div class="workspace-capture-title">Add a wheel photo</div><p class="workspace-capture-copy">Capture the full wheel and tire in even lighting so saved damage notes are tied to a real reference image.</p>`
+        : module === 'glass'
+          ? `<span class="workspace-capture-icon">💡</span><div class="workspace-capture-title">Add a glass or light photo</div><p class="workspace-capture-copy">Capture the crack, chip, or damaged lens in even light so AutoIQ Pro can map the affected zone.</p>`
+        : module === 'panel'
+          ? `<span class="workspace-capture-icon">🎨</span><div class="workspace-capture-title">Add a panel photo</div><p class="workspace-capture-copy">Use a straight-on panel photo so AutoIQ Pro can preview dents, paint transfer, and finish damage cleanly.</p>`
+        : `<span class="workspace-capture-icon">🛻</span><div class="workspace-capture-title">Add a bumper photo</div><p class="workspace-capture-copy">Use a straight-on bumper shot with good light for cleaner impact mapping and easier alignment.</p>`;
       return;
     }
     preview.classList.remove('empty');
-    const browAlignment = { ...DEFAULT_BROW_ALIGNMENT, ...(capture.alignment || {}) };
-    const nailAlignment = { ...DEFAULT_NAIL_ALIGNMENT, ...(capture.alignment || {}) };
-    const toeAlignment = { ...DEFAULT_TOE_ALIGNMENT, ...(capture.alignment || {}) };
-    const outfitAlignment = { ...DEFAULT_OUTFIT_ALIGNMENT, ...(capture.alignment || {}) };
-    const browOverlay = module === 'brows'
-      ? `<div class="brow-overlay ${_esc(capture.variant || 'none')}" style="--brow-top:${browAlignment.y}%;--brow-inset:${browAlignment.x}%;--brow-width:${browAlignment.width}%;--brow-height:${browAlignment.height}%;--brow-rotate:${browAlignment.rotate}deg;"><span class="brow-shape left"></span><span class="brow-shape right"></span></div>`
+    const bumperAlignment = { ...DEFAULT_BUMPER_ALIGNMENT, ...(capture.alignment || {}) };
+    const wheelAlignment = { ...DEFAULT_WHEEL_ALIGNMENT, ...(capture.alignment || {}) };
+    const glassAlignment = { ...DEFAULT_GLASS_ALIGNMENT, ...(capture.alignment || {}) };
+    const panelAlignment = { ...DEFAULT_PANEL_ALIGNMENT, ...(capture.alignment || {}) };
+    const imageTransform = { ..._defaultImageTransform(), ...(capture.imageTransform || {}) };
+    const bumperOverlay = module === 'bumper'
+      ? `<div class="bumper-overlay ${_esc(capture.variant || 'none')}" data-drag-target="overlay" data-module="bumper" style="--bumper-top:${bumperAlignment.y}%;--bumper-inset:${bumperAlignment.x}%;--bumper-width:${bumperAlignment.width}%;--bumper-height:${bumperAlignment.height}%;--bumper-rotate:${bumperAlignment.rotate}deg;--bumper-offset-x:${bumperAlignment.offsetX || 0}%;" aria-label="Drag bumper overlay to reposition"><span class="bumper-zone left"></span><span class="bumper-zone right"></span></div>`
       : '';
-    const nailOverlay = module === 'nails'
-      ? `<div class="nail-overlay ${_esc(capture.variant || 'none')}" style="--nail-top:${nailAlignment.y}%;--nail-inset:${nailAlignment.x}%;--nail-width:${nailAlignment.width}%;--nail-height:${nailAlignment.height}%;--nail-radius:${nailAlignment.radius}px;"></div>`
+    const wheelOverlay = module === 'wheel'
+      ? `<div class="wheel-overlay ${_esc(capture.variant || 'none')}" data-drag-target="overlay" data-module="wheel" style="--wheel-top:${wheelAlignment.y}%;--wheel-inset:${wheelAlignment.x}%;--wheel-width:${wheelAlignment.width}%;--wheel-height:${wheelAlignment.height}%;--wheel-radius:${wheelAlignment.radius}px;" aria-label="Drag wheel overlay to reposition"></div>`
       : '';
-    const toeOverlay = module === 'toes'
-      ? `<div class="toe-overlay ${_esc(capture.variant || 'none')}" style="--toe-top:${toeAlignment.y}%;--toe-inset:${toeAlignment.x}%;--toe-width:${toeAlignment.width}%;--toe-height:${toeAlignment.height}%;--toe-radius:${toeAlignment.radius}px;"></div>`
+    const glassOverlay = module === 'glass'
+      ? `<div class="glass-overlay ${_esc(capture.variant || 'none')}" style="--glass-top:${glassAlignment.y}%;--glass-inset:${glassAlignment.x}%;--glass-width:${glassAlignment.width}%;--glass-height:${glassAlignment.height}%;--glass-radius:${glassAlignment.radius}px;"></div>`
       : '';
-    const outfitOverlay = module === 'outfit'
-      ? `<div class="outfit-overlay ${_esc(capture.variant || 'none')}" style="--outfit-top:${outfitAlignment.y}%;--outfit-inset:${outfitAlignment.x}%;--outfit-width:${outfitAlignment.width}%;--outfit-height:${outfitAlignment.height}%;--outfit-radius:${outfitAlignment.radius}px;"></div>`
+    const panelOverlay = module === 'panel'
+      ? `<div class="panel-overlay ${_esc(capture.variant || 'none')}" style="--panel-top:${panelAlignment.y}%;--panel-inset:${panelAlignment.x}%;--panel-width:${panelAlignment.width}%;--panel-height:${panelAlignment.height}%;--panel-radius:${panelAlignment.radius}px;"></div>`
       : '';
-    preview.innerHTML = `<div class="workspace-preview-stage">${_previewGuideHTML(module, capture)}${nailOverlay}${toeOverlay}${outfitOverlay}<img class="workspace-preview-image" src="${capture.dataUrl}" alt="${_esc(capture.name || 'Studio capture')}" />${browOverlay}</div><div class="workspace-preview-meta"><strong>${_esc(capture.variantTitle || capture.name || 'Reference image')}</strong><span>${_esc(_captureMetaLine(module, capture))}</span></div>`;
+    preview.innerHTML = `<div class="workspace-preview-stage" data-module="${_esc(module)}">${_previewGuideHTML(module, capture)}${wheelOverlay}${glassOverlay}${panelOverlay}<img class="workspace-preview-image" data-drag-target="image" data-module="${_esc(module)}" src="${capture.dataUrl}" alt="${_esc(capture.name || 'Studio capture')}" style="--image-offset-x:${imageTransform.x}%;--image-offset-y:${imageTransform.y}%;" />${bumperOverlay}</div><div class="workspace-preview-meta"><strong>${_esc(capture.variantTitle || capture.name || 'Reference image')}</strong><span>${_esc(_captureMetaLine(module, capture))}</span></div>`;
+    _bindWorkspaceDrag(module, preview);
   }
 
   function _defaultAlignment(module) {
-    if (module === 'nails') return { ...DEFAULT_NAIL_ALIGNMENT };
-    if (module === 'toes') return { ...DEFAULT_TOE_ALIGNMENT };
-    if (module === 'outfit') return { ...DEFAULT_OUTFIT_ALIGNMENT };
-    return { ...DEFAULT_BROW_ALIGNMENT };
+    if (module === 'wheel') return { ...DEFAULT_WHEEL_ALIGNMENT };
+    if (module === 'glass') return { ...DEFAULT_GLASS_ALIGNMENT };
+    if (module === 'panel') return { ...DEFAULT_PANEL_ALIGNMENT };
+    return { ...DEFAULT_BUMPER_ALIGNMENT };
   }
 
   function _estimateAlignment(module, capture) {
     const ratio = capture.imageWidth && capture.imageHeight ? capture.imageWidth / capture.imageHeight : 0.75;
     const next = _defaultAlignment(module);
-    if (module === 'brows') {
+    if (module === 'bumper') {
       if (ratio < 0.72) Object.assign(next, { x: 16, y: 28, width: 31, height: 9, rotate: 6 });
       else if (ratio > 0.95) Object.assign(next, { x: 12, y: 31, width: 38, height: 10, rotate: 4 });
       return next;
     }
-    if (module === 'nails') {
+    if (module === 'wheel') {
       if (ratio > 1.05) Object.assign(next, { x: 10, y: 14, width: 80, height: 16, radius: 16 });
       else Object.assign(next, { x: 12, y: 18, width: 74, height: 18, radius: 18 });
       return next;
     }
-    if (module === 'toes') {
+    if (module === 'glass') {
       if (ratio > 1.05) Object.assign(next, { x: 8, y: 34, width: 84, height: 18, radius: 18 });
       else Object.assign(next, { x: 10, y: 30, width: 80, height: 22, radius: 20 });
       return next;
@@ -2072,7 +2218,7 @@ const glowApp = (() => {
     const captures = loadCaptures();
     const next = { ...(captures[module] || {}) };
     if (!next.dataUrl) {
-      showStudioNotice(`Add a ${MODULE_CAPTURE_TARGET[module] || 'reference photo'} first so GlowAI can set a Smart Fit baseline.`);
+      showStudioNotice(`Add a ${MODULE_CAPTURE_TARGET[module] || 'reference photo'} first so AutoIQ Pro can set a Smart Fit baseline.`);
       return;
     }
     next.alignment = _estimateAlignment(module, next);
@@ -2081,53 +2227,149 @@ const glowApp = (() => {
     captures[module] = next;
     saveCaptures(captures);
     _syncStudioCaptureUI(module);
-    _syncBrowAlignmentUI();
-    _syncNailAlignmentUI();
-    _syncToeAlignmentUI();
-    _syncOutfitAlignmentUI();
+    _syncBumperAlignmentUI();
+    _syncWheelAlignmentUI();
+    _syncGlassAlignmentUI();
+    _syncPanelAlignmentUI();
     showStudioNotice(`${MODULE_META[module]?.label || 'Studio module'} was auto-aligned. Nudge the sliders if you want a custom fit.`);
   }
 
   function _captureMetaLine(module, capture) {
     const mode = capture.fitMode === 'manual' ? 'Custom fit' : 'Smart Fit';
-    const active = capture.variantTitle ? `Try-on active · ${capture.variantTitle}` : 'Reference ready';
-    return `${mode} · ${active}`;
+    const active = capture.variantTitle ? `Inspection active · ${capture.variantTitle}` : 'Reference ready';
+    return `${mode} · ${active} · Drag photo or overlay to adjust`;
   }
 
   function _previewGuideHTML(module, capture) {
     const mode = capture.fitMode === 'manual' ? 'custom' : 'smart';
-    if (module === 'brows') {
-      return `<div class="workspace-guide workspace-guide-brows ${mode}"><span class="guide-line brow-line left"></span><span class="guide-line brow-line right"></span><span class="guide-center-line"></span></div>`;
+    if (module === 'bumper') {
+      return `<div class="workspace-guide workspace-guide-bumper ${mode}"><span class="guide-line bumper-line left"></span><span class="guide-line bumper-line right"></span><span class="guide-center-line"></span></div>`;
     }
-    if (module === 'nails') {
-      return `<div class="workspace-guide workspace-guide-nails ${mode}"><span class="guide-zone-box"></span><span class="guide-center-line horizontal"></span></div>`;
+    if (module === 'wheel') {
+      return `<div class="workspace-guide workspace-guide-wheel ${mode}"><span class="guide-zone-box"></span><span class="guide-center-line horizontal"></span></div>`;
     }
-    if (module === 'toes') {
-      return `<div class="workspace-guide workspace-guide-toes ${mode}"><span class="guide-zone-box"></span><span class="guide-center-line horizontal low"></span></div>`;
+    if (module === 'glass') {
+      return `<div class="workspace-guide workspace-guide-glass ${mode}"><span class="guide-zone-box"></span><span class="guide-center-line horizontal low"></span></div>`;
     }
-    return `<div class="workspace-guide workspace-guide-outfit ${mode}"><span class="guide-center-line"></span><span class="guide-center-line horizontal"></span><span class="guide-zone-box tall"></span></div>`;
+    return `<div class="workspace-guide workspace-guide-panel ${mode}"><span class="guide-center-line"></span><span class="guide-center-line horizontal"></span><span class="guide-zone-box tall"></span></div>`;
   }
 
-  function setBrowAlignment(key, value) {
+  function setBumperAlignment(key, value) {
     const captures = loadCaptures();
-    const next = { ...(captures.brows || {}) };
-    next.alignment = { ...DEFAULT_BROW_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
+    const next = { ...(captures.bumper || {}) };
+    next.alignment = { ...DEFAULT_BUMPER_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
     next.fitMode = 'manual';
     next.updatedAt = new Date().toISOString();
-    captures.brows = next;
+    captures.bumper = next;
     saveCaptures(captures);
-    _syncStudioCaptureUI('brows');
-    _syncBrowAlignmentUI();
+    _syncStudioCaptureUI('bumper');
+    _syncBumperAlignmentUI();
   }
 
-  function _syncBrowAlignmentUI() {
-    const alignment = { ...DEFAULT_BROW_ALIGNMENT, ...(loadCaptures().brows?.alignment || {}) };
+  function _updateCapture(module, updater) {
+    const captures = loadCaptures();
+    const current = { ...(captures[module] || {}) };
+    if (!current.dataUrl) return;
+    const next = updater(current);
+    next.updatedAt = new Date().toISOString();
+    captures[module] = next;
+    saveCaptures(captures);
+    _syncStudioCaptureUI(module);
+    _syncBumperAlignmentUI();
+    _syncWheelAlignmentUI();
+    _syncGlassAlignmentUI();
+    _syncPanelAlignmentUI();
+  }
+
+  function _clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function _bindWorkspaceDrag(module, preview) {
+    if (module !== 'bumper' && module !== 'wheel') return;
+    const stage = preview.querySelector('.workspace-preview-stage');
+    const image = preview.querySelector('.workspace-preview-image');
+    const overlay = preview.querySelector('[data-drag-target="overlay"]');
+    if (!stage || !image) return;
+
+    const bindTarget = (node, type) => {
+      if (!node) return;
+      node.onpointerdown = event => {
+        const rect = stage.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const capture = loadCaptures()[module] || {};
+        const startImage = { ..._defaultImageTransform(), ...(capture.imageTransform || {}) };
+        const startAlignment = { ..._defaultAlignment(module), ...(capture.alignment || {}) };
+        node.setPointerCapture?.(event.pointerId);
+
+        const move = moveEvent => {
+          const dxPct = ((moveEvent.clientX - startX) / rect.width) * 100;
+          const dyPct = ((moveEvent.clientY - startY) / rect.height) * 100;
+          if (type === 'image') {
+            _updateCapture(module, current => ({
+              ...current,
+              imageTransform: {
+                x: _clamp(startImage.x + dxPct, -35, 35),
+                y: _clamp(startImage.y + dyPct, -35, 35),
+              },
+              fitMode: 'manual',
+            }));
+            return;
+          }
+          if (module === 'bumper') {
+            _updateCapture(module, current => ({
+              ...current,
+              alignment: {
+                ...DEFAULT_BUMPER_ALIGNMENT,
+                ...(current.alignment || {}),
+                ...startAlignment,
+                offsetX: _clamp((startAlignment.offsetX || 0) + dxPct, -18, 18),
+                y: _clamp(startAlignment.y + dyPct, 18, 42),
+              },
+              fitMode: 'manual',
+            }));
+            return;
+          }
+          _updateCapture(module, current => ({
+            ...current,
+            alignment: {
+              ...DEFAULT_WHEEL_ALIGNMENT,
+              ...(current.alignment || {}),
+              ...startAlignment,
+              x: _clamp(startAlignment.x + dxPct, 2, 24),
+              y: _clamp(startAlignment.y + dyPct, 6, 50),
+            },
+            fitMode: 'manual',
+          }));
+        };
+
+        const stop = stopEvent => {
+          node.releasePointerCapture?.(stopEvent.pointerId);
+          node.removeEventListener('pointermove', move);
+          node.removeEventListener('pointerup', stop);
+          node.removeEventListener('pointercancel', stop);
+        };
+
+        node.addEventListener('pointermove', move);
+        node.addEventListener('pointerup', stop);
+        node.addEventListener('pointercancel', stop);
+      };
+    };
+
+    bindTarget(image, 'image');
+    bindTarget(overlay, 'overlay');
+  }
+
+  function _syncBumperAlignmentUI() {
+    const alignment = { ...DEFAULT_BUMPER_ALIGNMENT, ...(loadCaptures().bumper?.alignment || {}) };
     const map = {
-      browAlignY: alignment.y,
-      browAlignX: alignment.x,
-      browAlignWidth: alignment.width,
-      browAlignHeight: alignment.height,
-      browAlignRotate: alignment.rotate,
+      bumperAlignY: alignment.y,
+      bumperAlignX: alignment.x,
+      bumperAlignWidth: alignment.width,
+      bumperAlignHeight: alignment.height,
+      bumperAlignRotate: alignment.rotate,
     };
     Object.entries(map).forEach(([id, value]) => {
       const input = document.getElementById(id);
@@ -2135,26 +2377,26 @@ const glowApp = (() => {
     });
   }
 
-  function setNailAlignment(key, value) {
+  function setWheelAlignment(key, value) {
     const captures = loadCaptures();
-    const next = { ...(captures.nails || {}) };
-    next.alignment = { ...DEFAULT_NAIL_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
+    const next = { ...(captures.wheel || {}) };
+    next.alignment = { ...DEFAULT_WHEEL_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
     next.fitMode = 'manual';
     next.updatedAt = new Date().toISOString();
-    captures.nails = next;
+    captures.wheel = next;
     saveCaptures(captures);
-    _syncStudioCaptureUI('nails');
-    _syncNailAlignmentUI();
+    _syncStudioCaptureUI('wheel');
+    _syncWheelAlignmentUI();
   }
 
-  function _syncNailAlignmentUI() {
-    const alignment = { ...DEFAULT_NAIL_ALIGNMENT, ...(loadCaptures().nails?.alignment || {}) };
+  function _syncWheelAlignmentUI() {
+    const alignment = { ...DEFAULT_WHEEL_ALIGNMENT, ...(loadCaptures().wheel?.alignment || {}) };
     const map = {
-      nailAlignY: alignment.y,
-      nailAlignX: alignment.x,
-      nailAlignWidth: alignment.width,
-      nailAlignHeight: alignment.height,
-      nailAlignRadius: alignment.radius,
+      wheelAlignY: alignment.y,
+      wheelAlignX: alignment.x,
+      wheelAlignWidth: alignment.width,
+      wheelAlignHeight: alignment.height,
+      wheelAlignRadius: alignment.radius,
     };
     Object.entries(map).forEach(([id, value]) => {
       const input = document.getElementById(id);
@@ -2162,26 +2404,26 @@ const glowApp = (() => {
     });
   }
 
-  function setToeAlignment(key, value) {
+  function setGlassAlignment(key, value) {
     const captures = loadCaptures();
-    const next = { ...(captures.toes || {}) };
-    next.alignment = { ...DEFAULT_TOE_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
+    const next = { ...(captures.glass || {}) };
+    next.alignment = { ...DEFAULT_GLASS_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
     next.fitMode = 'manual';
     next.updatedAt = new Date().toISOString();
-    captures.toes = next;
+    captures.glass = next;
     saveCaptures(captures);
-    _syncStudioCaptureUI('toes');
-    _syncToeAlignmentUI();
+    _syncStudioCaptureUI('glass');
+    _syncGlassAlignmentUI();
   }
 
-  function _syncToeAlignmentUI() {
-    const alignment = { ...DEFAULT_TOE_ALIGNMENT, ...(loadCaptures().toes?.alignment || {}) };
+  function _syncGlassAlignmentUI() {
+    const alignment = { ...DEFAULT_GLASS_ALIGNMENT, ...(loadCaptures().glass?.alignment || {}) };
     const map = {
-      toeAlignY: alignment.y,
-      toeAlignX: alignment.x,
-      toeAlignWidth: alignment.width,
-      toeAlignHeight: alignment.height,
-      toeAlignRadius: alignment.radius,
+      glassAlignY: alignment.y,
+      glassAlignX: alignment.x,
+      glassAlignWidth: alignment.width,
+      glassAlignHeight: alignment.height,
+      glassAlignRadius: alignment.radius,
     };
     Object.entries(map).forEach(([id, value]) => {
       const input = document.getElementById(id);
@@ -2189,26 +2431,26 @@ const glowApp = (() => {
     });
   }
 
-  function setOutfitAlignment(key, value) {
+  function setPanelAlignment(key, value) {
     const captures = loadCaptures();
-    const next = { ...(captures.outfit || {}) };
-    next.alignment = { ...DEFAULT_OUTFIT_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
+    const next = { ...(captures.panel || {}) };
+    next.alignment = { ...DEFAULT_PANEL_ALIGNMENT, ...(next.alignment || {}), [key]: Number(value) };
     next.fitMode = 'manual';
     next.updatedAt = new Date().toISOString();
-    captures.outfit = next;
+    captures.panel = next;
     saveCaptures(captures);
-    _syncStudioCaptureUI('outfit');
-    _syncOutfitAlignmentUI();
+    _syncStudioCaptureUI('panel');
+    _syncPanelAlignmentUI();
   }
 
-  function _syncOutfitAlignmentUI() {
-    const alignment = { ...DEFAULT_OUTFIT_ALIGNMENT, ...(loadCaptures().outfit?.alignment || {}) };
+  function _syncPanelAlignmentUI() {
+    const alignment = { ...DEFAULT_PANEL_ALIGNMENT, ...(loadCaptures().panel?.alignment || {}) };
     const map = {
-      outfitAlignY: alignment.y,
-      outfitAlignX: alignment.x,
-      outfitAlignWidth: alignment.width,
-      outfitAlignHeight: alignment.height,
-      outfitAlignRadius: alignment.radius,
+      panelAlignY: alignment.y,
+      panelAlignX: alignment.x,
+      panelAlignWidth: alignment.width,
+      panelAlignHeight: alignment.height,
+      panelAlignRadius: alignment.radius,
     };
     Object.entries(map).forEach(([id, value]) => {
       const input = document.getElementById(id);
@@ -2218,30 +2460,30 @@ const glowApp = (() => {
 
   function _syncStudioSelectionUI(module) {
     const capture = loadCaptures()[module] || {};
-    if (module === 'brows') {
-      document.getElementById('browOptionSoftLift')?.classList.toggle('selected', capture.variant === 'soft-lift');
-      document.getElementById('browOptionFullFrame')?.classList.toggle('selected', capture.variant === 'full-frame');
-      document.getElementById('browOptionCleanSculpt')?.classList.toggle('selected', capture.variant === 'clean-sculpt');
+    if (module === 'bumper') {
+      document.getElementById('bumperOptionLowerCover')?.classList.toggle('selected', capture.variant === 'lower-cover');
+      document.getElementById('bumperOptionCornerHit')?.classList.toggle('selected', capture.variant === 'corner-hit');
+      document.getElementById('bumperOptionCenterCrack')?.classList.toggle('selected', capture.variant === 'center-crack');
       return;
     }
-    if (module === 'nails') {
-      document.getElementById('nailSwatchRoseGlass')?.classList.toggle('selected', capture.variant === 'rose-glass');
-      document.getElementById('nailSwatchCherryPop')?.classList.toggle('selected', capture.variant === 'cherry-pop');
-      document.getElementById('nailSwatchMochaSatin')?.classList.toggle('selected', capture.variant === 'mocha-satin');
-      document.getElementById('nailSwatchSilverChrome')?.classList.toggle('selected', capture.variant === 'silver-chrome');
+    if (module === 'wheel') {
+      document.getElementById('wheelSwatchCurbRash')?.classList.toggle('selected', capture.variant === 'curb-rash');
+      document.getElementById('wheelSwatchSidewallMark')?.classList.toggle('selected', capture.variant === 'sidewall-mark');
+      document.getElementById('wheelSwatchTreadWear')?.classList.toggle('selected', capture.variant === 'tread-wear');
+      document.getElementById('wheelSwatchBentLip')?.classList.toggle('selected', capture.variant === 'bent-lip');
       return;
     }
-    if (module === 'toes') {
-      document.getElementById('toeSwatchCoralWave')?.classList.toggle('selected', capture.variant === 'coral-wave');
-      document.getElementById('toeSwatchOceanMint')?.classList.toggle('selected', capture.variant === 'ocean-mint');
-      document.getElementById('toeSwatchBerryGloss')?.classList.toggle('selected', capture.variant === 'berry-gloss');
-      document.getElementById('toeSwatchSandNude')?.classList.toggle('selected', capture.variant === 'sand-nude');
+    if (module === 'glass') {
+      document.getElementById('glassSwatchWindshieldChip')?.classList.toggle('selected', capture.variant === 'windshield-chip');
+      document.getElementById('glassSwatchLensCrack')?.classList.toggle('selected', capture.variant === 'lens-crack');
+      document.getElementById('glassSwatchHousingBreak')?.classList.toggle('selected', capture.variant === 'housing-break');
+      document.getElementById('glassSwatchTrimDamage')?.classList.toggle('selected', capture.variant === 'trim-damage');
       return;
     }
-    document.getElementById('outfitSwatchCityNoir')?.classList.toggle('selected', capture.variant === 'city-noir');
-    document.getElementById('outfitSwatchLinenMuse')?.classList.toggle('selected', capture.variant === 'linen-muse');
-    document.getElementById('outfitSwatchCobaltEdge')?.classList.toggle('selected', capture.variant === 'cobalt-edge');
-    document.getElementById('outfitSwatchBlushSet')?.classList.toggle('selected', capture.variant === 'blush-set');
+    document.getElementById('panelSwatchDentZone')?.classList.toggle('selected', capture.variant === 'dent-zone');
+    document.getElementById('panelSwatchPaintTransfer')?.classList.toggle('selected', capture.variant === 'paint-transfer');
+    document.getElementById('panelSwatchCreaseLine')?.classList.toggle('selected', capture.variant === 'crease-line');
+    document.getElementById('panelSwatchClearcoatBreak')?.classList.toggle('selected', capture.variant === 'clearcoat-break');
   }
 
   function plannerPrimaryAction() {
@@ -2250,10 +2492,10 @@ const glowApp = (() => {
       return;
     }
     if (_plannerTab === 'compare') {
-      openStudioWorkspace('brows');
+      openStudioWorkspace('bumper');
       return;
     }
-    createStudioSession('brows');
+    createStudioSession('bumper');
   }
 
   // ── Scan state machine ────────────────────────────────────────────────────────
@@ -2295,26 +2537,26 @@ const glowApp = (() => {
       `<li class="result-rec-item">✅ ${_esc(r)}</li>`).join('');
 
     const demoBanner = result._demo
-      ? `<div class="result-demo-banner">${result._apiError ? '⚠️ API unreachable — showing demo results. Set your backend URL in ⚙️ Settings.' : '🔬 Demo mode — connect a backend in ⚙️ Settings for real AI analysis.'}</div>`
+      ? `<div class="result-demo-banner">${result._apiError ? '⚠️ API unreachable — showing demo results. Set your backend URL in ⚙️ Settings.' : '🔬 Demo mode — connect a backend in ⚙️ Settings for real vehicle analysis.'}</div>`
       : '';
 
-    const skinType = result.skin_type || 'unknown';
+    const partName = result.part_name || result.skin_type || 'unknown area';
 
     document.getElementById('scanResultWrap').innerHTML = `
       ${demoBanner}
       <div class="result-card">
-        <div class="result-overline">GlowAI Studio: Skin Module</div>
+        <div class="result-overline">AutoIQ Pro: Live Triage</div>
         <div class="result-skin-type">
-          <span class="result-skin-icon">🧬</span>
+          <span class="result-skin-icon">🚗</span>
           <div>
-            <div class="result-skin-label">Skin Type</div>
-            <div class="result-skin-value">${_esc(skinType.charAt(0).toUpperCase() + skinType.slice(1))}</div>
+            <div class="result-skin-label">Likely Part</div>
+            <div class="result-skin-value">${_esc(partName.charAt(0).toUpperCase() + partName.slice(1))}</div>
           </div>
         </div>
 
         <div class="result-meta-strip">
           <div class="result-meta-pill">
-            <span class="result-meta-kicker">Issues</span>
+            <span class="result-meta-kicker">Findings</span>
             <strong>${result.issues?.length || 0}</strong>
           </div>
           <div class="result-meta-pill">
@@ -2325,13 +2567,13 @@ const glowApp = (() => {
 
         ${result.issues?.length ? `
         <div class="result-section">
-          <div class="result-section-title">Detected Issues</div>
+          <div class="result-section-title">Observed Damage</div>
           <div class="result-chips">${issueChips}</div>
         </div>` : ''}
 
         ${result.recommendations?.length ? `
         <div class="result-section">
-          <div class="result-section-title">Recommendations</div>
+          <div class="result-section-title">Repair Guidance</div>
           <ul class="result-rec-list">${recItems}</ul>
         </div>` : ''}
 
@@ -2339,7 +2581,7 @@ const glowApp = (() => {
           <div class="result-appt-header">
             <span class="result-appt-icon">📅</span>
             <div>
-              <div class="result-appt-type">${_esc(result.suggested_appointment?.type || 'Dermatologist')}</div>
+              <div class="result-appt-type">${_esc(result.suggested_appointment?.type || 'Body Shop')}</div>
               <div class="result-appt-urgency" style="color:${urgencyColor}">${urgencyLabel}</div>
             </div>
           </div>
@@ -2348,7 +2590,15 @@ const glowApp = (() => {
 
         <button class="btn-primary result-book-btn"
           onclick="glowApp.bookFromScan()">
-          ✨ Add Skin Plan To Planner
+          ✨ Add Repair Plan To Cases
+        </button>
+        <button class="btn-ghost" style="width:100%;margin-top:0.5rem"
+          onclick="glowApp.openStudioWorkspace('bumper')">
+          Open Bumper Mapper
+        </button>
+        <button class="btn-ghost" style="width:100%;margin-top:0.5rem"
+          onclick="glowApp.openStudioWorkspace('wheel')">
+          Open Wheel & Tire
         </button>
         <button class="btn-ghost" style="width:100%;margin-top:0.5rem"
           onclick="glowApp.navigate('analysis')">
@@ -2362,13 +2612,13 @@ const glowApp = (() => {
   // ── Book from scan: create planner draft + prefill service modal ─────────────
   function bookFromScan() {
     if (!_lastScanResult) return;
-    const apptType = _lastScanResult.suggested_appointment?.type || 'Dermatologist';
+    const apptType = _lastScanResult.suggested_appointment?.type || 'Body Shop';
     const reason   = _lastScanResult.suggested_appointment?.reason || '';
     const sessions = loadSessions();
-    sessions.unshift(_buildSession('skin', {
-      title: 'Skin Recovery Plan',
+    sessions.unshift(_buildSession('scan', {
+      title: 'Repair Triage Plan',
       status: 'active',
-      note: reason || 'Skin scan imported into your planner for follow-up and routine tracking.',
+      note: reason || 'Vehicle scan imported into your caseboard for follow-up and repair tracking.',
     }));
     saveSessions(sessions);
     _plannerTab = 'calendar';
@@ -2377,7 +2627,7 @@ const glowApp = (() => {
     setTimeout(() => {
       openModal(null, {
         title: apptType + ' visit',
-        type:  PERSONAL_TYPES.includes(apptType) ? apptType : 'Dermatologist',
+        type:  PERSONAL_TYPES.includes(apptType) ? apptType : 'Body Shop',
         notes: reason,
       });
     }, 100);
@@ -2479,24 +2729,20 @@ const glowApp = (() => {
   let _chatBusy = false;
 
   const OPENING_QUESTIONS = [
-    "Hey! 🌺 How's your skin feeling today?",
-    "Good to see you! ✨ Any skin concerns on your mind?",
-    "Hi there! 💫 What's your skin doing lately — oily, dry, or somewhere in between?",
-    "Aloha! 🌺 Ready to glow? Tell me what's going on with your skin.",
+    'Start with the camera. What part of the car are you looking at?',
+    'Tell me what happened and I will point you to the fastest triage flow.',
+    'Need help with part ID, repair steps, or price context?',
+    'Point at the damage and I will help turn that into a repair plan.',
   ];
 
   // Smart mock replies when no backend configured
   const MOCK_REPLIES = [
-    { keys: ['dry','flaky','tight','peel'],   reply: "Dry skin needs deep hydration! 💧 Try layering a hyaluronic acid serum under your moisturizer. Do you drink at least 8 glasses of water daily?" },
-    { keys: ['oily','shiny','greasy','pores'], reply: "Oily skin is often dehydrated underneath — paradoxical, I know! 🫧 A lightweight gel moisturizer can actually help regulate oil. How often are you cleansing?" },
-    { keys: ['acne','breakout','pimple','spot'],reply: "Breakouts can have so many triggers — stress, diet, products. 🔬 Have you tried a salicylic acid cleanser? And do you change your pillowcase weekly?" },
-    { keys: ['dark','spot','scar','uneven'],   reply: "Dark spots usually fade with consistent vitamin C serum in the morning + SPF. ☀️ Are you using sunscreen every day, even indoors?" },
-    { keys: ['wrinkle','aging','fine line','dull'], reply: "Retinol at night + SPF in the morning is the classic power combo for aging. 🧬 Have you tried a retinol yet?" },
-    { keys: ['spf','sunscreen','sun'],         reply: "SPF is the #1 anti-aging ingredient — period! 🌞 I recommend at least SPF 30, reapplied every 2 hours outdoors. What SPF are you using?" },
-    { keys: ['routine','cleanser','moisturizer','serum'], reply: "A solid routine is: gentle cleanser → toner (optional) → serum → moisturizer → SPF (AM). 🧴 What does your current routine look like?" },
-    { keys: ['scan','camera','photo','picture','analyze'], reply: "Great idea! 📸 Tap the <strong>Open Beauty Studio</strong> button and I’ll run the live skin module while the rest of the planner gets ready for try-on." },
-    { keys: ['appointment','book','doctor','derm'], reply: "Booking a dermatologist is always smart for persistent concerns! 📅 Use the Planner tab to save the skin result and schedule a follow-up." },
-    { keys: ['hawaii','aloha','pearl','maui'],  reply: "Hawaii sun is intense year-round! 🌺 Make sure you're using a water-resistant SPF 50 and reapplying often. Mahalo for trusting GlowAI!" },
+    { keys: ['bumper','fender','panel','door'], reply: 'Start with a straight-on photo of the damaged area, then use the repair workspace that matches the panel so the case stays organized.' },
+    { keys: ['wheel','tire','rim','curb'], reply: 'Wheel and tire damage can mix cosmetic and safety issues. Capture the full wheel face plus the tire sidewall so the next step is clearer.' },
+    { keys: ['glass','windshield','headlight','taillight'], reply: 'Glass and light damage should be photographed in even light with the crack or break fully visible from edge to edge.' },
+    { keys: ['estimate','price','cost','repair'], reply: 'AutoIQ Pro is strongest when it starts with the camera first, then turns the corrected part into guidance and price context.' },
+    { keys: ['scan','camera','photo','picture','analyze'], reply: 'Tap <strong>Start Camera Triage</strong> and begin with the damaged area. The core promise is part ID first, repair guidance second.' },
+    { keys: ['appointment','book','shop','body'], reply: 'Use the Cases tab to save the scan and line up a body shop, glass shop, or tire follow-up.' },
   ];
 
   function _mockChatReply(msg) {
@@ -2504,7 +2750,7 @@ const glowApp = (() => {
     for (const { keys, reply } of MOCK_REPLIES) {
       if (keys.some(k => lower.includes(k))) return reply;
     }
-    return "That's a great question! 🌟 For the most personalized answer, connect your backend in ⚙️ Settings so I can use Claude AI. In the meantime — have you tried scanning your face to see your skin type?";
+    return 'For the most personalized answer, connect your backend in ⚙️ Settings so I can use Claude AI. In the meantime, start with a scan so we can identify the likely part first.';
   }
 
   async function _callChatAPI(message) {
@@ -2627,18 +2873,18 @@ const glowApp = (() => {
   }
 
   function showStudioNotice(message) {
-    const text = message || 'This module is ready inside GlowAI Studio.';
+    const text = message || 'This repair update is ready inside AutoIQ Pro.';
     const title = document.getElementById('studioNoticeTitle');
     const copy = document.getElementById('studioNoticeCopy');
     const icon = document.getElementById('studioNoticeIcon');
     const kicker = document.getElementById('studioNoticeKicker');
-    if (title) title.textContent = 'Module Preview';
+    if (title) title.textContent = 'Repair Update';
     if (copy) copy.textContent = text;
-    if (icon) icon.textContent = text.toLowerCase().includes('brow') ? '🪄' :
-      text.toLowerCase().includes('nail') ? '💅' :
-      text.toLowerCase().includes('toe') ? '🩴' :
-      text.toLowerCase().includes('outfit') ? '👗' : '✨';
-    if (kicker) kicker.textContent = 'GlowAI Roadmap';
+    if (icon) icon.textContent = text.toLowerCase().includes('bumper') ? '🛻' :
+      text.toLowerCase().includes('wheel') || text.toLowerCase().includes('tire') ? '🛞' :
+      text.toLowerCase().includes('glass') || text.toLowerCase().includes('light') ? '💡' :
+      text.toLowerCase().includes('panel') || text.toLowerCase().includes('paint') ? '🎨' : '🚗';
+    if (kicker) kicker.textContent = 'AutoIQ Pro';
     document.getElementById('studioNoticeBackdrop')?.classList.remove('hidden');
   }
 
@@ -2651,10 +2897,19 @@ const glowApp = (() => {
   }
 
   function scrollToSkinScan() {
+    if (_currentScreen() !== 'analysis') {
+      navigate('analysis');
+      setTimeout(() => scrollToSkinScan(), 40);
+      return;
+    }
     _studioWorkspace = null;
     _syncStudioWorkspace();
     const anchor = document.querySelector('[data-scan-anchor="true"]');
     if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function setLastStudioPhoto(photo) {
+    saveLastStudioPhoto(photo);
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────────
@@ -2673,9 +2928,10 @@ const glowApp = (() => {
     openStackRenameEditor, openStackModuleSwapEditor, selectStackEditorModule, selectStackEditorSession, confirmStackEditor, closeStackEditor, closeStackEditorIfBackdrop,
     toggleFavoriteStackVariant, setDefaultStackVariant,
     openStudioWorkspace, openPlannerSession, saveStudioPreset, triggerStudioUpload, handleStudioUpload, saveStudioCapture,
-    applyStudioTryOn, autoFitAlignment, setBrowAlignment, setNailAlignment, setToeAlignment, setOutfitAlignment,
+    applyStudioTryOn, autoFitAlignment, setBumperAlignment, setWheelAlignment, setGlassAlignment, setPanelAlignment,
     openModal, closeModal, closeModalIfBackdrop, saveAppointment, deleteAppointment,
     setScanState, showScanResult, bookFromScan,
+    setLastStudioPhoto,
     sendChat, showStudioNotice, closeStudioNotice, closeStudioNoticeIfBackdrop, scrollToSkinScan,
     saveSettings,
     init,

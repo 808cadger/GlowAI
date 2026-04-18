@@ -3,693 +3,421 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#16202b" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>AutoIQ Pro</title>
+  <meta name="theme-color" content="#f4c7b8" />
+  <title>GlowAI</title>
   <link rel="manifest" href="./manifest.json" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Pacifico&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-<div id="app">
-
-  <!-- ── Persistent Header ── -->
-  <header class="app-header" id="appHeader">
-    <button class="header-back hidden" id="headerBack" aria-label="Go back">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="15 18 9 12 15 6"/>
-      </svg>
-      Back
-    </button>
-    <div class="header-title" id="headerTitle">AutoIQ Pro</div>
-    <div class="header-action" id="headerAction"></div>
-  </header>
-
-  <!-- ══ SCREEN: Home ══ -->
-  <main class="screen" id="screenHome" role="main">
-    <section class="home-hero">
-      <div class="hero-chip-row">
-        <span class="hero-chip">Camera-First Triage</span>
-        <span class="hero-chip soft">Repair Guidance</span>
+  <main class="app-shell">
+    <header class="app-header">
+      <div class="header-brand">
+        <p class="eyebrow">GlowAI</p>
+        <h1 class="app-title">Pocket salon planner.</h1>
       </div>
-      <p class="home-greeting">Point your phone at the car and start with the camera</p>
-      <h1 class="home-title">Identify the damaged part in real time with <span>AutoIQ Pro</span>.</h1>
-      <p class="home-subtitle">AutoIQ Pro identifies the likely vehicle part, lets you correct it instantly, then turns that into repair guidance, next steps, and price context.</p>
-      <div class="hero-flow-note">Best flow: scan, correct, guide.</div>
-      <div class="hero-metrics" aria-label="AutoIQ Pro workflow">
-        <div class="hero-metric-card">
-          <span class="hero-metric-kicker">Capture</span>
-          <strong>Live Camera</strong>
-          <span>Open the camera and frame the damaged area fast.</span>
+
+      <div class="header-actions">
+        <button class="menu-trigger" id="menuTrigger" type="button" aria-expanded="false" aria-controls="pageMenu">
+          <span class="menu-trigger-label" id="menuTriggerLabel">Home</span>
+          <span class="menu-trigger-icon">▾</span>
+        </button>
+      </div>
+
+      <div class="menu-backdrop hidden" id="menuBackdrop"></div>
+      <div class="pull-menu hidden" id="pageMenu" role="menu" aria-label="Section menu">
+        <div class="menu-handle" aria-hidden="true"></div>
+        <p class="menu-caption">Sections</p>
+        <button class="menu-item" type="button" data-page="scan" role="menuitem">Face Scan</button>
+        <button class="menu-item is-active" type="button" data-page="home" role="menuitem">Home</button>
+        <button class="menu-item" type="button" data-page="services" role="menuitem">Services</button>
+        <button class="menu-item" type="button" data-page="journey" role="menuitem">Journey</button>
+        <button class="menu-item" type="button" data-page="concierge" role="menuitem">Concierge</button>
+        <button class="menu-item" type="button" data-page="notes" role="menuitem">Favorites</button>
+      </div>
+    </header>
+
+    <section class="page is-active" id="page-home" data-page-panel="home">
+      <section class="hero-panel tone-home">
+        <div class="hero-copy">
+          <p class="section-kicker">Face scan first</p>
+          <h2>Start with your skin, then branch into the full salon.</h2>
+          <p class="hero-text">GlowAI now opens with face scan as the first move. Capture a quick selfie analysis, then step into full salon planning only if you want brows, glam, hair, nails, and styling layered on top.</p>
+
+          <div class="hero-actions">
+            <button class="primary-btn" id="homeStartScan" type="button">Start face scan</button>
+            <button class="secondary-btn" type="button" data-nav-target="services">Open full salon</button>
+          </div>
+
+          <div class="page-pills">
+            <button class="page-pill is-active" type="button" data-nav-target="home">Home</button>
+            <button class="page-pill" type="button" data-nav-target="scan">Face Scan</button>
+            <button class="page-pill" type="button" data-nav-target="services">Services</button>
+          </div>
         </div>
-        <div class="hero-metric-card">
-          <span class="hero-metric-kicker">Correct</span>
-          <strong>Part Check</strong>
-          <span>Confirm or correct the part before guidance is generated.</span>
+
+        <aside class="hero-spotlight">
+          <p class="card-label">Scan preview</p>
+          <h3 id="heroFocusTitle">No scan yet. Start with a fresh face read.</h3>
+          <p id="heroFocusCopy">GlowAI will capture a selfie, build a quick skin summary, and suggest what to do next before you enter the broader salon flow.</p>
+
+          <div class="spotlight-meta">
+            <div class="spotlight-chip warm">Camera-first</div>
+            <div class="spotlight-chip coral">Skin summary</div>
+            <div class="spotlight-chip plum">Salon optional</div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="dashboard-card tone-peach">
+          <p class="card-label">Step 1</p>
+          <h3>Scan your face</h3>
+          <p>Use the front camera for a fast skin read and a clear starting point before you make any beauty decisions.</p>
+        </article>
+
+        <article class="dashboard-card tone-rose">
+          <p class="card-label">Step 2</p>
+          <h3>Review the result</h3>
+          <p>See a quick skin snapshot, recommended focus areas, and the salon lane that makes the most sense next.</p>
+        </article>
+
+        <article class="dashboard-card tone-gold">
+          <p class="card-label">Step 3</p>
+          <h3>Go full salon if you want</h3>
+          <p>Once the face scan is done, move into brows, glam, hair, nails, and bookings with a more grounded beauty plan.</p>
+        </article>
+      </section>
+    </section>
+
+    <section class="page" id="page-scan" data-page-panel="scan">
+      <section class="page-lead">
+        <p class="section-kicker">Face Scan</p>
+        <h2>Your skin read comes first.</h2>
+        <p class="section-copy">Open the front camera, capture a fresh selfie, and let GlowAI turn it into a quick skin summary and next-step salon suggestion.</p>
+      </section>
+
+      <section class="detail-hero booking-layout">
+        <article class="detail-main scan-main">
+          <button class="scan-launch" id="scanLaunch" type="button">
+            <span class="scan-launch-ring"></span>
+            <span class="scan-launch-ring scan-launch-ring-two"></span>
+            <span class="scan-launch-icon">◉</span>
+            <span class="scan-launch-title">Start face scan</span>
+            <span class="scan-launch-sub">Front camera, quick skin read, instant next step.</span>
+          </button>
+
+          <article class="scan-status-card" id="scanStatusCard">
+            <div class="scan-status-topline">
+              <p class="card-label">Scan status</p>
+              <span class="scan-status-pill" id="scanStatusPill">Idle</span>
+            </div>
+            <h3 id="scanStatusTitle">Ready for a fresh face read.</h3>
+            <p id="scanStatusCopy">Take a scan and GlowAI will surface a skin snapshot, recommended focus, and the salon lane that should come next.</p>
+          </article>
+
+          <div class="scan-preview hidden" id="scanPreview">
+            <img class="scan-preview-image" id="scanPreviewImage" alt="Face scan preview" />
+          </div>
+        </article>
+
+        <article class="detail-side scan-result-card">
+          <div class="scan-result-topline">
+            <p class="card-label">Latest result</p>
+            <span class="scan-result-badge" id="scanResultBadge">Waiting</span>
+          </div>
+          <h3 id="scanResultTitle">No scan yet</h3>
+          <p id="scanResultSummary">Start a face scan to see your current skin snapshot, focus areas, and a suggested beauty lane.</p>
+          <div class="detail-tags" id="scanResultTags">
+            <span class="detail-tag">Hydration</span>
+            <span class="detail-tag">Texture</span>
+            <span class="detail-tag">Tone</span>
+          </div>
+          <div class="scan-metrics" id="scanMetrics">
+            <article class="scan-metric">
+              <p class="card-label">Balance</p>
+              <strong id="scanMetricBalance">-</strong>
+            </article>
+            <article class="scan-metric">
+              <p class="card-label">Hydration</p>
+              <strong id="scanMetricHydration">-</strong>
+            </article>
+            <article class="scan-metric">
+              <p class="card-label">Clarity</p>
+              <strong id="scanMetricClarity">-</strong>
+            </article>
+          </div>
+          <ul class="detail-list" id="scanResultList">
+            <li>Use the front camera in even light</li>
+            <li>Keep your full face in frame</li>
+            <li>GlowAI will suggest what to do next</li>
+          </ul>
+          <button class="secondary-btn secondary-btn-full" id="scanSalonCTA" type="button" data-nav-target="services">Continue into full salon</button>
+        </article>
+      </section>
+
+      <section class="scan-history-block">
+        <div class="scan-result-topline">
+          <div>
+            <p class="card-label">Recent scans</p>
+            <h3 class="scan-history-title">Your latest reads stay here.</h3>
+          </div>
         </div>
-        <div class="hero-metric-card">
-          <span class="hero-metric-kicker">Guide</span>
-          <strong>Repair Plan</strong>
-          <span>Get triage notes, price range context, and next steps.</span>
+        <div class="saved-list" id="scanHistoryList">
+          <article class="note-card empty-card">
+            <p class="card-label">No history yet</p>
+            <h3>Your completed scans will appear here.</h3>
+            <p>Take one face scan to start building a visible result trail.</p>
+          </article>
         </div>
+      </section>
+    </section>
+
+    <section class="page" id="page-services" data-page-panel="services">
+      <section class="page-lead">
+        <p class="section-kicker">Services</p>
+        <h2>Choose the beauty lane you want, then go deeper.</h2>
+        <p class="section-copy">This page replaces the overloaded home feed with a dedicated service browser and a cleaner focus card.</p>
+      </section>
+
+      <div class="focus-switcher" role="tablist" aria-label="Beauty focus switcher">
+        <button class="focus-tab is-active" id="focus-brows" type="button" data-focus="brows">Eyebrows</button>
+        <button class="focus-tab" id="focus-nails" type="button" data-focus="nails">Nails</button>
+        <button class="focus-tab" id="focus-tryon" type="button" data-focus="tryon">Clothes Try-On</button>
+        <button class="focus-tab" type="button" data-focus="makeup">Makeup</button>
+        <button class="focus-tab" type="button" data-focus="skin">Skin</button>
+        <button class="focus-tab" type="button" data-focus="hair">Hair</button>
+      </div>
+
+      <article class="focus-card">
+        <p class="card-label" id="focus-label">Eyebrow Studio</p>
+        <h3 id="focus-title">Shape, tint, and map brows before booking.</h3>
+        <p id="focus-description">Preview soft arch, bold sculpt, and cleanup options with camera guidance and a service recommendation path.</p>
+        <div class="focus-points" id="focus-points">
+          <span class="focus-pill">Shape analysis</span>
+          <span class="focus-pill">Tint planning</span>
+          <span class="focus-pill">Artist match</span>
+        </div>
+      </article>
+
+      <article class="service-preview" id="servicePreview">
+        <div class="service-preview-copy">
+          <p class="card-label" id="servicePreviewLabel">Selected service</p>
+          <h3 id="servicePreviewTitle">Eyebrow design studio</h3>
+          <p id="servicePreviewBody">Shape mapping, tint guidance, and cleanup timing built around face framing.</p>
+        </div>
+        <div class="service-preview-meta">
+          <span class="preview-badge" id="servicePreviewTone">Warm sculpt</span>
+          <button class="preview-badge muted preview-link" id="servicePreviewCTA" type="button" data-open-detail="brows">Open details</button>
+        </div>
+      </article>
+
+      <div class="services-grid">
+        <article class="service-card accent-coral is-selected" data-service="brows" tabindex="0">
+          <p class="service-tag">Brows</p>
+          <h3>Eyebrow design studio</h3>
+          <p>Shape mapping, tint guidance, and cleanup timing built around face framing.</p>
+          <span class="service-price">Open studio</span>
+        </article>
+        <article class="service-card accent-pink" data-service="nails" tabindex="0">
+          <p class="service-tag">Nails</p>
+          <h3>Manicure mood board</h3>
+          <p>Move from neutrals to statement sets with clearer finish and rebooking direction.</p>
+          <span class="service-price">Open studio</span>
+        </article>
+        <article class="service-card accent-gold" data-service="tryon" tabindex="0">
+          <p class="service-tag">Try-On</p>
+          <h3>Clothes and look try-on</h3>
+          <p>Pair outfit direction with makeup and nails so the whole look feels intentional.</p>
+          <span class="service-price">Open studio</span>
+        </article>
+        <article class="service-card accent-lilac" data-service="skin" tabindex="0">
+          <p class="service-tag">Skin</p>
+          <h3>Skin scan and prep</h3>
+          <p>Keep scan-led prep as one strong module inside the broader beauty flow.</p>
+          <span class="service-price">Open studio</span>
+        </article>
+        <article class="service-card accent-rose" data-service="makeup" tabindex="0">
+          <p class="service-tag">Makeup</p>
+          <h3>Soft glam planner</h3>
+          <p>Compare finish directions and move users toward the right artist and timing.</p>
+          <span class="service-price">Open studio</span>
+        </article>
+        <article class="service-card accent-mint" data-service="hair" tabindex="0">
+          <p class="service-tag">Hair</p>
+          <h3>Style and finish lounge</h3>
+          <p>Bring blowouts, curls, and finish work into the same planning stack as glam.</p>
+          <span class="service-price">Open studio</span>
+        </article>
       </div>
     </section>
 
-    <!-- AI Chatbot Widget -->
-    <div class="chat-widget" id="chatWidget">
-      <div class="chat-widget-header">
-        <div class="chat-bot-avatar">🚗</div>
-        <div class="chat-bot-info">
-          <span class="chat-bot-name">AutoIQ Guide</span>
-          <span class="chat-bot-status">● Camera Ready</span>
+    <section class="page" id="page-detail" data-page-panel="detail">
+      <section class="page-lead">
+        <p class="section-kicker">Service Detail</p>
+        <h2 id="detailTitle">Eyebrow design studio</h2>
+        <p class="section-copy" id="detailSubtitle">Shape mapping, tint guidance, and cleanup timing built around face framing.</p>
+      </section>
+
+      <section class="detail-hero">
+        <article class="detail-main">
+          <p class="card-label" id="detailMoodLabel">GlowAI edit</p>
+          <h3 id="detailMoodTitle">Soft sculpt with polished framing.</h3>
+          <p id="detailMoodBody">Start with a beauty anchor, then let the rest of the look build around it. This page turns each service into its own story instead of a one-line card.</p>
+          <div class="detail-tags" id="detailTags">
+            <span class="detail-tag">Shape mapping</span>
+            <span class="detail-tag">Artist fit</span>
+            <span class="detail-tag">Bookable outcome</span>
+          </div>
+        </article>
+
+        <article class="detail-side">
+          <p class="card-label">Best for</p>
+          <ul class="detail-list" id="detailList">
+            <li>Event prep with cleaner sequencing</li>
+            <li>Comparing style direction before booking</li>
+            <li>Saving one polished beauty plan</li>
+          </ul>
+          <button class="secondary-btn secondary-btn-full" id="saveFavoriteCTA" type="button">Save to favorites</button>
+          <button class="primary-btn primary-btn-full" id="detailCTA" type="button">Book this look</button>
+        </article>
+      </section>
+    </section>
+
+    <section class="page" id="page-booking" data-page-panel="booking">
+      <section class="page-lead">
+        <p class="section-kicker">Booking</p>
+        <h2>Hold your spot without leaving the flow.</h2>
+        <p class="section-copy">Pick a date, timing, and notes for your selected service. GlowAI keeps the booking context tied to the beauty lane you chose.</p>
+      </section>
+
+      <section class="detail-hero booking-layout">
+        <article class="detail-main">
+          <p class="card-label">Booking for</p>
+          <h3 id="bookingServiceTitle">Eyebrow design studio</h3>
+          <p id="bookingServiceSubtitle">Shape mapping, tint guidance, and cleanup timing built around face framing.</p>
+
+          <form class="booking-form" id="bookingForm">
+            <label class="field-group">
+              <span class="field-label">Name</span>
+              <input class="field-input" id="bookingName" name="name" type="text" placeholder="Your name" required />
+            </label>
+            <label class="field-group">
+              <span class="field-label">Date</span>
+              <input class="field-input" id="bookingDate" name="date" type="date" required />
+            </label>
+            <label class="field-group">
+              <span class="field-label">Time</span>
+              <input class="field-input" id="bookingTime" name="time" type="time" required />
+            </label>
+            <label class="field-group">
+              <span class="field-label">Notes</span>
+              <textarea class="field-input field-textarea" id="bookingNotes" name="notes" placeholder="Soft glam dinner look, want brows before makeup, keep it polished."></textarea>
+            </label>
+            <button class="primary-btn primary-btn-full" type="submit">Confirm booking</button>
+          </form>
+        </article>
+
+        <article class="detail-side">
+          <p class="card-label">Recent bookings</p>
+          <div class="saved-list" id="bookingList"></div>
+        </article>
+      </section>
+    </section>
+
+    <section class="page" id="page-journey" data-page-panel="journey">
+      <section class="page-lead">
+        <p class="section-kicker">Journey</p>
+        <h2>One route from analysis to booking.</h2>
+        <p class="section-copy">Instead of mixing the journey into every card, it now lives on its own page with a clearer story.</p>
+      </section>
+
+      <div class="journey-grid">
+        <article class="journey-card tone-coral">
+          <p class="card-label">Step 1</p>
+          <h3>Analyze</h3>
+          <p>Use camera features for skin, brows, and look previews to build confidence before booking.</p>
+        </article>
+        <article class="journey-card tone-gold">
+          <p class="card-label">Step 2</p>
+          <h3>Try On</h3>
+          <p>Compare nails, makeup, hair, and outfit direction so the beauty plan feels cohesive.</p>
+        </article>
+        <article class="journey-card tone-plum">
+          <p class="card-label">Step 3</p>
+          <h3>Book</h3>
+          <p>Move into appointments with saved preferences, clearer context, and fewer repeated decisions.</p>
+        </article>
+      </div>
+
+      <article class="wide-card">
+        <p class="card-label">Signature outcome</p>
+        <h3>A complete look, not a pile of disconnected tools.</h3>
+        <p>GlowAI should connect prep, styling, and booking into one itinerary. This page exists to keep that logic visible without overwhelming the home screen.</p>
+      </article>
+    </section>
+
+    <section class="page" id="page-concierge" data-page-panel="concierge">
+      <section class="page-lead">
+        <p class="section-kicker">Beauty Coach</p>
+        <h2>Your personal GlowAI coach.</h2>
+        <p class="section-copy">Ask about skin concerns, product picks, routines, and event prep. GlowAI asks smart follow-up questions and gives you a real plan — not generic advice.</p>
+      </section>
+
+      <div class="coach-key-bar" id="coachKeyBar" style="display:none">
+        <p class="card-label" style="margin-bottom:0.4rem">Claude API key required</p>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <input id="coachApiKeyInput" type="password" class="field-input" style="flex:1;font-size:0.82rem;padding:0.55rem 0.75rem" placeholder="sk-ant-..." />
+          <button class="primary-btn" id="coachApiKeySave" type="button" style="white-space:nowrap;padding:0.55rem 1rem;font-size:0.82rem">Save key</button>
         </div>
       </div>
-      <div class="chat-messages" id="chatMessages" role="log" aria-live="polite"></div>
-      <form class="chat-input-row" id="chatForm" onsubmit="glowApp.sendChat(event)">
-        <input class="chat-input" id="chatInput" type="text"
-          placeholder="Ask about part ID, repair steps, or damage severity…" autocomplete="off" maxlength="300" />
-        <button class="chat-send-btn" type="submit" aria-label="Send">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-          </svg>
-        </button>
-      </form>
-    </div>
 
-    <!-- Scan CTA -->
-    <button class="scan-cta" onclick="glowApp.navigate('analysis')" aria-label="Start camera triage">
-      <span class="scan-cta-badge">V1 Promise</span>
-      <span class="scan-cta-icon">📸</span>
-      <span class="scan-cta-text">
-        <span class="scan-cta-label">Start Camera Triage</span>
-        <span class="scan-cta-sub">Point at the vehicle, identify the part, correct it if needed, then move straight into repair guidance.</span>
-      </span>
-      <svg class="scan-cta-arrow" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="9 18 15 12 9 6"/>
-      </svg>
-    </button>
+      <section class="chat-shell">
+        <div class="chat-thread" id="chatThread"></div>
+        <div class="chat-typing hidden" id="chatTyping">
+          <div class="chat-row assistant"><div class="chat-bubble typing-bubble"><span></span><span></span><span></span></div></div>
+        </div>
+        <form class="chat-form" id="chatForm">
+          <input class="chat-input" id="chatInput" type="text" maxlength="400" placeholder="What's your skin type? What are you dealing with? Ask anything..." required />
+          <button class="primary-btn chat-send" type="submit" id="chatSendBtn">Send</button>
+        </form>
+      </section>
+    </section>
 
-    <div class="quick-actions">
-      <button class="action-card accent" onclick="glowApp.navigate('analysis')" aria-label="Start scan">
-        <span class="action-icon">🔬</span>
-        <span class="action-label">Live Scan</span>
-        <span class="action-sublabel">Camera-first part detection</span>
+    <section class="page" id="page-notes" data-page-panel="notes">
+      <section class="page-lead">
+        <p class="section-kicker">Favorites</p>
+        <h2>Save the looks and flows you keep coming back to.</h2>
+        <p class="section-copy">Favorites persist on this device, so GlowAI can keep your preferred services, beauty moods, and starting points close by.</p>
+      </section>
+
+      <div class="saved-list" id="favoritesList"></div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Bottom navigation">
+      <button class="bottom-nav-item is-active" type="button" data-page="home">
+        <span class="bottom-nav-icon">✦</span>
+        <span class="bottom-nav-label">Home</span>
       </button>
-      <button class="action-card teal" onclick="glowApp.navigate('analysis')" aria-label="Correct detected part">
-        <span class="action-icon">🧭</span>
-        <span class="action-label">Correct Part</span>
-        <span class="action-sublabel">Instant manual correction</span>
+      <button class="bottom-nav-item" type="button" data-page="scan">
+        <span class="bottom-nav-icon">◎</span>
+        <span class="bottom-nav-label">Scan</span>
       </button>
-      <button class="action-card purple" onclick="glowApp.navigate('analysis')" aria-label="Repair range">
-        <span class="action-icon">💵</span>
-        <span class="action-label">Repair Range</span>
-        <span class="action-sublabel">Trusted price context</span>
+      <button class="bottom-nav-item" type="button" data-page="services">
+        <span class="bottom-nav-icon">◌</span>
+        <span class="bottom-nav-label">Salon</span>
       </button>
-      <button class="action-card neutral" onclick="glowApp.navigate('appointments')" aria-label="Caseboard">
-        <span class="action-icon">🗂️</span>
-        <span class="action-label">Caseboard</span>
-        <span class="action-sublabel">Save jobs and next steps</span>
+      <button class="bottom-nav-item" type="button" data-page="concierge">
+        <span class="bottom-nav-icon">☼</span>
+        <span class="bottom-nav-label">Concierge</span>
       </button>
-    </div>
-
-    <div class="module-rail" aria-label="AutoIQ Pro workflow status">
-      <div class="module-rail-card live">
-        <span class="module-rail-kicker">Active</span>
-        <strong>Live Damage Scan</strong>
-        <span>Camera scan, part ID, and first-pass triage are active now.</span>
-      </div>
-      <div class="module-rail-card">
-        <span class="module-rail-kicker">Flow</span>
-        <strong>Guided Correction</strong>
-        <span>Confirm the exact part so downstream guidance starts from the right repair area.</span>
-      </div>
-      <div class="module-rail-card">
-        <span class="module-rail-kicker">Trust</span>
-        <strong>Repair Range</strong>
-        <span>Price expectations and shop-ready notes turn the scan into a usable next step.</span>
-      </div>
-    </div>
-
-    <div class="section-header">
-      <span class="section-title">Feature Order</span>
-      <button class="section-link" onclick="glowApp.navigate('analysis')">Open camera →</button>
-    </div>
-    <div class="studio-roadmap" aria-label="AutoIQ Pro feature order">
-      <div class="studio-pill live">Open camera</div>
-      <div class="studio-pill">Confirm part</div>
-      <div class="studio-pill">Review severity</div>
-      <div class="studio-pill">See repair range</div>
-      <div class="studio-pill">Save case</div>
-    </div>
-
-    <!-- Caseboard snapshot -->
-    <div class="section-header">
-      <span class="section-title">Today In AutoIQ Pro</span>
-      <button class="section-link" onclick="glowApp.navigate('appointments')">Open caseboard →</button>
-    </div>
-    <div id="homeApptPreview" class="planner-home-preview" aria-label="AutoIQ Pro caseboard preview"></div>
+      <button class="bottom-nav-item" type="button" data-page="notes">
+        <span class="bottom-nav-icon">♡</span>
+        <span class="bottom-nav-label">Saved</span>
+      </button>
+    </nav>
   </main>
-
-  <!-- ══ SCREEN: Caseboard ══ -->
-  <section class="screen hidden" id="screenAppointments" aria-label="Caseboard">
-    <div class="planner-shell">
-      <section class="planner-hero">
-        <div class="planner-kicker">Caseboard</div>
-        <h2 class="planner-title">Save scans, compare cases, and line up repair follow-up in one place.</h2>
-        <p class="planner-copy">Caseboard keeps part IDs, scan captures, guidance snapshots, and service timing connected so each repair decision has context.</p>
-      </section>
-
-      <div class="planner-summary-grid" id="plannerSummary" aria-label="Caseboard summary"></div>
-
-      <div class="planner-tab-row" role="tablist" aria-label="Caseboard sections">
-        <button class="planner-tab active" id="plannerTabLooks" role="tab" aria-selected="true" onclick="glowApp.setPlannerTab('looks')">Cases</button>
-        <button class="planner-tab" id="plannerTabCompare" role="tab" aria-selected="false" onclick="glowApp.setPlannerTab('compare')">Compare</button>
-        <button class="planner-tab" id="plannerTabCalendar" role="tab" aria-selected="false" onclick="glowApp.setPlannerTab('calendar')">Schedule</button>
-      </div>
-
-      <div class="planner-quick-create">
-        <button class="planner-create-card" onclick="glowApp.createStudioSession('bumper')" aria-label="Create bumper case">
-          <span class="planner-create-icon">🛻</span>
-          <span class="planner-create-label">Bumper Case</span>
-          <span class="planner-create-copy">Track cracks, scrapes, and clips</span>
-        </button>
-        <button class="planner-create-card" onclick="glowApp.createStudioSession('wheel')" aria-label="Create wheel case">
-          <span class="planner-create-icon">🛞</span>
-          <span class="planner-create-label">Wheel Case</span>
-          <span class="planner-create-copy">Log curb rash, tire wear, and alignment notes</span>
-        </button>
-        <button class="planner-create-card" onclick="glowApp.createStudioSession('glass')" aria-label="Create glass case">
-          <span class="planner-create-icon">💡</span>
-          <span class="planner-create-label">Glass Case</span>
-          <span class="planner-create-copy">Capture chips, cracks, and light damage</span>
-        </button>
-        <button class="planner-create-card" onclick="glowApp.createStudioSession('panel')" aria-label="Create panel case">
-          <span class="planner-create-icon">🎨</span>
-          <span class="planner-create-label">Panel Case</span>
-          <span class="planner-create-copy">Save dents, paint transfer, and finish notes</span>
-        </button>
-      </div>
-
-      <div id="apptList" class="planner-list" aria-live="polite"></div>
-    </div>
-  </section>
-
-  <!-- ══ SCREEN: Analysis ══ -->
-  <section class="screen hidden" id="screenAnalysis" aria-label="Camera Triage">
-
-    <div class="studio-header-block">
-      <div class="studio-kicker">Camera Triage</div>
-      <h2 class="studio-title">Camera Triage</h2>
-      <p class="studio-copy">Start with real-time part identification, then move into guided correction, capture notes, and repair follow-up without leaving the AutoIQ Pro flow.</p>
-    </div>
-
-    <!-- live camera scan first -->
-    <div id="scanIdle" class="scan-state" data-scan-anchor="true">
-      <div class="scan-hero">
-        <div class="scan-badge">Live Scan: Part Detection</div>
-        <div class="scan-camera-ring" id="scanRing">
-          <span class="scan-camera-icon">📸</span>
-        </div>
-        <h2 class="scan-hero-title">Point At The Car</h2>
-        <p class="scan-hero-sub">Camera-first triage anchors the rest of AutoIQ Pro, so every correction and recommendation can roll into a saved repair case.</p>
-      </div>
-      <div class="scan-tips">
-        <div class="scan-tip">💡 Step back enough to frame the whole damaged area</div>
-        <div class="scan-tip">📐 Keep the phone square to the panel when possible</div>
-        <div class="scan-tip">🚘 Use even light so edges and cracks are visible</div>
-      </div>
-      <button class="btn-scan" id="btnStartScan" onclick="window.scanModule?.startScan()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M20.94 11A8.994 8.994 0 0012 3a8.994 8.994 0 00-8.94 8M3.06 13A8.994 8.994 0 0012 21a8.994 8.994 0 008.94-8"/></svg>
-        Start Camera Scan
-      </button>
-      <p class="scan-settings-hint">
-        Backend and token: <button class="scan-settings-link" onclick="glowApp.navigate('settings')">⚙️ Settings</button>
-      </p>
-    </div>
-
-    <div id="scanLoading" class="scan-state hidden">
-      <div class="scan-preview-wrap">
-        <img id="scanPreviewImg" class="scan-preview-img" alt="Vehicle scan preview" />
-        <div class="scan-overlay">
-          <div class="scan-spinner"></div>
-          <span class="scan-overlay-text">Analyzing vehicle damage and identifying the likely part…</span>
-        </div>
-      </div>
-    </div>
-
-    <div id="scanError" class="scan-state hidden">
-      <div class="scan-error-card">
-        <span class="scan-error-icon">⚠️</span>
-        <p id="scanErrorMsg" class="scan-error-msg"></p>
-        <button class="btn-primary" style="margin-top:1rem;width:100%" onclick="glowApp.setScanState('idle')">Try Again</button>
-      </div>
-    </div>
-
-    <div class="studio-section-heading">
-      <div>
-        <div class="studio-section-kicker">More Modules</div>
-        <h3 class="studio-section-title">Repair Workspaces</h3>
-      </div>
-      <p class="studio-section-copy">Move from the live scan into focused repair workspaces for bumpers, wheels, glass, and panels.</p>
-    </div>
-
-    <div class="studio-module-grid">
-      <button class="studio-module-card live" onclick="glowApp.scrollToSkinScan()" aria-label="Open live scan">
-        <span class="studio-module-badge">Live</span>
-        <span class="studio-module-icon">🔬</span>
-        <span class="studio-module-name">Live Part ID</span>
-        <span class="studio-module-copy">Camera scan, likely part detection, and first-pass repair guidance.</span>
-      </button>
-      <button class="studio-module-card" onclick="glowApp.openStudioWorkspace('bumper')" aria-label="Open bumper workspace">
-        <span class="studio-module-badge muted">Studio</span>
-        <span class="studio-module-icon">🛻</span>
-        <span class="studio-module-name">Bumper Mapper</span>
-        <span class="studio-module-copy">Mark impact zones, clips, and cover damage before you save the case.</span>
-      </button>
-      <button class="studio-module-card" onclick="glowApp.openStudioWorkspace('wheel')" aria-label="Open wheel and tire workspace">
-        <span class="studio-module-badge muted">Studio</span>
-        <span class="studio-module-icon">🛞</span>
-        <span class="studio-module-name">Wheel &amp; Tire</span>
-        <span class="studio-module-copy">Capture curb rash, sidewall damage, and wheel-face issues into one case.</span>
-      </button>
-      <button class="studio-module-card" onclick="glowApp.openStudioWorkspace('glass')" aria-label="Open glass and lights workspace">
-        <span class="studio-module-badge muted">Studio</span>
-        <span class="studio-module-icon">💡</span>
-        <span class="studio-module-name">Glass &amp; Lights</span>
-        <span class="studio-module-copy">Track chips, cracks, lens damage, and visibility-related issues.</span>
-      </button>
-      <button class="studio-module-card wide" onclick="glowApp.openStudioWorkspace('panel')" aria-label="Open panel and paint workspace">
-        <span class="studio-module-badge muted">Studio</span>
-        <span class="studio-module-icon">🎨</span>
-        <span class="studio-module-name">Panel &amp; Paint</span>
-        <span class="studio-module-copy">Document dents, paint transfer, and finish damage with saved reference shots.</span>
-      </button>
-    </div>
-
-    <div class="studio-workspace-stack">
-      <section class="studio-workspace" id="bumperWorkspace" aria-label="Bumper mapping workspace">
-        <div class="workspace-header">
-          <div>
-            <div class="workspace-kicker">Live Workspace</div>
-            <h3 class="workspace-title">Bumper Mapper</h3>
-          </div>
-          <button class="workspace-chip" onclick="glowApp.createStudioSession('bumper')">Save Draft</button>
-        </div>
-        <p class="workspace-copy">Map the bumper impact zone on top of your own reference photo, tune the placement, and save the result back into Cases.</p>
-        <div class="workspace-capture-card">
-          <input class="workspace-file-input" id="bumperUploadInput" type="file" accept="image/*" capture="environment" onchange="glowApp.handleStudioUpload('bumper', event)" />
-          <div class="workspace-capture-preview empty" id="bumperPreview">
-            <span class="workspace-capture-icon">🛻</span>
-            <div class="workspace-capture-title">Add a bumper photo</div>
-            <p class="workspace-capture-copy">Use a straight-on bumper shot with good light for cleaner impact mapping and easier alignment.</p>
-          </div>
-          <div class="workspace-capture-actions">
-            <button class="btn-ghost" type="button" onclick="glowApp.triggerStudioUpload('bumper')">Capture Bumper</button>
-            <button class="btn-ghost" type="button" onclick="glowApp.autoFitAlignment('bumper')">Smart Fit</button>
-            <button class="btn-primary" type="button" onclick="glowApp.saveStudioCapture('bumper')">Save Capture</button>
-          </div>
-          <div class="alignment-panel" id="bumperAlignmentPanel">
-            <div class="alignment-header">
-              <span class="alignment-kicker">Manual Alignment</span>
-              <span class="alignment-copy">Fine-tune the bumper damage zone on your photo.</span>
-            </div>
-            <div class="alignment-grid">
-              <label class="alignment-control">
-                <span>Height</span>
-                <input type="range" min="18" max="42" value="30" oninput="glowApp.setBumperAlignment('y', event.target.value)" id="bumperAlignY" />
-              </label>
-              <label class="alignment-control">
-                <span>Inset</span>
-                <input type="range" min="4" max="24" value="15" oninput="glowApp.setBumperAlignment('x', event.target.value)" id="bumperAlignX" />
-              </label>
-              <label class="alignment-control">
-                <span>Width</span>
-                <input type="range" min="24" max="44" value="34" oninput="glowApp.setBumperAlignment('width', event.target.value)" id="bumperAlignWidth" />
-              </label>
-              <label class="alignment-control">
-                <span>Zone Height</span>
-                <input type="range" min="6" max="16" value="10" oninput="glowApp.setBumperAlignment('height', event.target.value)" id="bumperAlignHeight" />
-              </label>
-              <label class="alignment-control">
-                <span>Tilt</span>
-                <input type="range" min="-18" max="18" value="6" oninput="glowApp.setBumperAlignment('rotate', event.target.value)" id="bumperAlignRotate" />
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="workspace-preview-grid">
-          <button class="workspace-option" id="bumperOptionLowerCover" onclick="glowApp.applyStudioTryOn('bumper','lower-cover','Lower Cover','Lower bumper cover impact with scrape and clip risk.')">
-            <span class="workspace-option-icon">🛻</span>
-            <span class="workspace-option-name">Lower Cover</span>
-            <span class="workspace-option-copy">Scrape and clip risk across the lower edge.</span>
-          </button>
-          <button class="workspace-option" id="bumperOptionCornerHit" onclick="glowApp.applyStudioTryOn('bumper','corner-hit','Corner Hit','Corner bumper damage with wraparound seam involvement.')">
-            <span class="workspace-option-icon">📐</span>
-            <span class="workspace-option-name">Corner Hit</span>
-            <span class="workspace-option-copy">Wraparound seam and edge impact.</span>
-          </button>
-          <button class="workspace-option" id="bumperOptionCenterCrack" onclick="glowApp.applyStudioTryOn('bumper','center-crack','Center Crack','Front-center split or crack with likely bracket stress.')">
-            <span class="workspace-option-icon">⚠️</span>
-            <span class="workspace-option-name">Center Crack</span>
-            <span class="workspace-option-copy">Split line with bracket-stress risk.</span>
-          </button>
-        </div>
-      </section>
-
-      <section class="studio-workspace" id="wheelWorkspace" aria-label="Wheel and tire workspace">
-        <div class="workspace-header">
-          <div>
-            <div class="workspace-kicker">Live Workspace</div>
-            <h3 class="workspace-title">Wheel &amp; Tire</h3>
-          </div>
-          <button class="workspace-chip" onclick="glowApp.createStudioSession('wheel')">Save Draft</button>
-        </div>
-        <p class="workspace-copy">Map wheel-face and tire-sidewall damage on a real reference photo, adjust the inspection zone, and save each direction into your caseboard.</p>
-        <div class="workspace-capture-card">
-          <input class="workspace-file-input" id="wheelUploadInput" type="file" accept="image/*" capture="environment" onchange="glowApp.handleStudioUpload('wheel', event)" />
-          <div class="workspace-capture-preview empty" id="wheelPreview">
-            <span class="workspace-capture-icon">🛞</span>
-            <div class="workspace-capture-title">Add a wheel photo</div>
-            <p class="workspace-capture-copy">Capture the full wheel and tire in even light so saved damage notes are tied to a real reference image.</p>
-          </div>
-          <div class="workspace-capture-actions">
-            <button class="btn-ghost" type="button" onclick="glowApp.triggerStudioUpload('wheel')">Capture Wheel</button>
-            <button class="btn-ghost" type="button" onclick="glowApp.autoFitAlignment('wheel')">Smart Fit</button>
-            <button class="btn-primary" type="button" onclick="glowApp.saveStudioCapture('wheel')">Save Capture</button>
-          </div>
-          <div class="alignment-panel" id="wheelAlignmentPanel">
-            <div class="alignment-header">
-              <span class="alignment-kicker">Inspection Zone</span>
-              <span class="alignment-copy">Position the zone over the wheel face or tire area you want to document.</span>
-            </div>
-            <div class="alignment-grid">
-              <label class="alignment-control">
-                <span>Height</span>
-                <input type="range" min="6" max="28" value="12" oninput="glowApp.setWheelAlignment('y', event.target.value)" id="wheelAlignY" />
-              </label>
-              <label class="alignment-control">
-                <span>Inset</span>
-                <input type="range" min="6" max="24" value="12" oninput="glowApp.setWheelAlignment('x', event.target.value)" id="wheelAlignX" />
-              </label>
-              <label class="alignment-control">
-                <span>Width</span>
-                <input type="range" min="56" max="92" value="76" oninput="glowApp.setWheelAlignment('width', event.target.value)" id="wheelAlignWidth" />
-              </label>
-              <label class="alignment-control">
-                <span>Zone Height</span>
-                <input type="range" min="10" max="32" value="18" oninput="glowApp.setWheelAlignment('height', event.target.value)" id="wheelAlignHeight" />
-              </label>
-              <label class="alignment-control">
-                <span>Curve</span>
-                <input type="range" min="8" max="28" value="18" oninput="glowApp.setWheelAlignment('radius', event.target.value)" id="wheelAlignRadius" />
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="workspace-swatch-row">
-          <button class="swatch-card rose" id="wheelSwatchCurbRash" onclick="glowApp.applyStudioTryOn('wheel','curb-rash','Curb Rash','Wheel-face scrape with finish damage and cosmetic loss.')"><span>Curb Rash</span></button>
-          <button class="swatch-card cherry" id="wheelSwatchSidewallMark" onclick="glowApp.applyStudioTryOn('wheel','sidewall-mark','Sidewall Mark','Tire sidewall hit that needs closer safety review.')"><span>Sidewall Mark</span></button>
-          <button class="swatch-card mocha" id="wheelSwatchTreadWear" onclick="glowApp.applyStudioTryOn('wheel','tread-wear','Tread Wear','Uneven tread wear pattern worth logging for alignment follow-up.')"><span>Tread Wear</span></button>
-          <button class="swatch-card chrome" id="wheelSwatchBentLip" onclick="glowApp.applyStudioTryOn('wheel','bent-lip','Bent Lip','Possible rim lip bend or impact distortion near the edge.')"><span>Bent Lip</span></button>
-        </div>
-      </section>
-
-      <section class="studio-workspace" id="glassWorkspace" aria-label="Glass and lights workspace">
-        <div class="workspace-header">
-          <div>
-            <div class="workspace-kicker">Live Workspace</div>
-            <h3 class="workspace-title">Glass &amp; Lights</h3>
-          </div>
-          <button class="workspace-chip" onclick="glowApp.createStudioSession('glass')">Save Draft</button>
-        </div>
-        <p class="workspace-copy">Track cracks, chips, lens breaks, and trim damage on a real reference photo, then save the inspection zone into Cases.</p>
-        <div class="workspace-capture-card">
-          <input class="workspace-file-input" id="glassUploadInput" type="file" accept="image/*" capture="environment" onchange="glowApp.handleStudioUpload('glass', event)" />
-          <div class="workspace-capture-preview empty" id="glassPreview">
-            <span class="workspace-capture-icon">💡</span>
-            <div class="workspace-capture-title">Add a glass or light photo</div>
-            <p class="workspace-capture-copy">Capture the crack, chip, or damaged lens in even light so AutoIQ Pro can map the affected zone.</p>
-          </div>
-          <div class="workspace-capture-actions">
-            <button class="btn-ghost" type="button" onclick="glowApp.triggerStudioUpload('glass')">Capture Glass</button>
-            <button class="btn-ghost" type="button" onclick="glowApp.autoFitAlignment('glass')">Smart Fit</button>
-            <button class="btn-primary" type="button" onclick="glowApp.saveStudioCapture('glass')">Save Capture</button>
-          </div>
-          <div class="alignment-panel" id="glassAlignmentPanel">
-            <div class="alignment-header">
-              <span class="alignment-kicker">Damage Zone</span>
-              <span class="alignment-copy">Position the inspection mask over the glass or light section of your reference image.</span>
-            </div>
-            <div class="alignment-grid">
-              <label class="alignment-control">
-                <span>Height</span>
-                <input type="range" min="18" max="48" value="30" oninput="glowApp.setGlassAlignment('y', event.target.value)" id="glassAlignY" />
-              </label>
-              <label class="alignment-control">
-                <span>Inset</span>
-                <input type="range" min="4" max="20" value="10" oninput="glowApp.setGlassAlignment('x', event.target.value)" id="glassAlignX" />
-              </label>
-              <label class="alignment-control">
-                <span>Width</span>
-                <input type="range" min="62" max="94" value="82" oninput="glowApp.setGlassAlignment('width', event.target.value)" id="glassAlignWidth" />
-              </label>
-              <label class="alignment-control">
-                <span>Zone Height</span>
-                <input type="range" min="12" max="34" value="22" oninput="glowApp.setGlassAlignment('height', event.target.value)" id="glassAlignHeight" />
-              </label>
-              <label class="alignment-control">
-                <span>Curve</span>
-                <input type="range" min="10" max="32" value="20" oninput="glowApp.setGlassAlignment('radius', event.target.value)" id="glassAlignRadius" />
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="workspace-swatch-row">
-          <button class="swatch-card coral" id="glassSwatchWindshieldChip" onclick="glowApp.applyStudioTryOn('glass','windshield-chip','Windshield Chip','Small chip or star crack in the glass inspection zone.')"><span>Windshield Chip</span></button>
-          <button class="swatch-card ocean" id="glassSwatchLensCrack" onclick="glowApp.applyStudioTryOn('glass','lens-crack','Lens Crack','Cracked headlight or taillight lens with moisture risk.')"><span>Lens Crack</span></button>
-          <button class="swatch-card berry" id="glassSwatchHousingBreak" onclick="glowApp.applyStudioTryOn('glass','housing-break','Housing Break','Broken lamp housing or mount near the light assembly.')"><span>Housing Break</span></button>
-          <button class="swatch-card sand" id="glassSwatchTrimDamage" onclick="glowApp.applyStudioTryOn('glass','trim-damage','Trim Damage','Surrounding trim or seal damage around the glass area.')"><span>Trim Damage</span></button>
-        </div>
-      </section>
-
-      <section class="studio-workspace" id="panelWorkspace" aria-label="Panel and paint workspace">
-        <div class="workspace-header">
-          <div>
-            <div class="workspace-kicker">Live Workspace</div>
-            <h3 class="workspace-title">Panel &amp; Paint</h3>
-          </div>
-          <button class="workspace-chip" onclick="glowApp.createStudioSession('panel')">Save Draft</button>
-        </div>
-        <p class="workspace-copy">Map dents, paint transfer, and finish damage on a real panel photo so Cases can compare repair direction, not just isolated notes.</p>
-        <div class="workspace-capture-card">
-          <input class="workspace-file-input" id="panelUploadInput" type="file" accept="image/*" capture="environment" onchange="glowApp.handleStudioUpload('panel', event)" />
-          <div class="workspace-capture-preview empty" id="panelPreview">
-            <span class="workspace-capture-icon">🎨</span>
-            <div class="workspace-capture-title">Add a panel photo</div>
-            <p class="workspace-capture-copy">Use a straight-on panel photo so AutoIQ Pro can preview dent and finish placement cleanly.</p>
-          </div>
-          <div class="workspace-capture-actions">
-            <button class="btn-ghost" type="button" onclick="glowApp.triggerStudioUpload('panel')">Capture Panel</button>
-            <button class="btn-ghost" type="button" onclick="glowApp.autoFitAlignment('panel')">Smart Fit</button>
-            <button class="btn-primary" type="button" onclick="glowApp.saveStudioCapture('panel')">Save Capture</button>
-          </div>
-          <div class="alignment-panel" id="panelAlignmentPanel">
-            <div class="alignment-header">
-              <span class="alignment-kicker">Panel Zone</span>
-              <span class="alignment-copy">Place the inspection overlay over the body area you want to document and compare.</span>
-            </div>
-            <div class="alignment-grid">
-              <label class="alignment-control">
-                <span>Height</span>
-                <input type="range" min="18" max="46" value="28" oninput="glowApp.setPanelAlignment('y', event.target.value)" id="panelAlignY" />
-              </label>
-              <label class="alignment-control">
-                <span>Inset</span>
-                <input type="range" min="6" max="22" value="14" oninput="glowApp.setPanelAlignment('x', event.target.value)" id="panelAlignX" />
-              </label>
-              <label class="alignment-control">
-                <span>Width</span>
-                <input type="range" min="48" max="88" value="68" oninput="glowApp.setPanelAlignment('width', event.target.value)" id="panelAlignWidth" />
-              </label>
-              <label class="alignment-control">
-                <span>Layer Height</span>
-                <input type="range" min="28" max="72" value="54" oninput="glowApp.setPanelAlignment('height', event.target.value)" id="panelAlignHeight" />
-              </label>
-              <label class="alignment-control">
-                <span>Curve</span>
-                <input type="range" min="12" max="36" value="26" oninput="glowApp.setPanelAlignment('radius', event.target.value)" id="panelAlignRadius" />
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="workspace-swatch-row">
-          <button class="swatch-card noir" id="panelSwatchDentZone" onclick="glowApp.applyStudioTryOn('panel','dent-zone','Dent Zone','Panel dent area with broad metal displacement.')"><span>Dent Zone</span></button>
-          <button class="swatch-card linen" id="panelSwatchPaintTransfer" onclick="glowApp.applyStudioTryOn('panel','paint-transfer','Paint Transfer','Surface paint transfer that may polish out or need refinish work.')"><span>Paint Transfer</span></button>
-          <button class="swatch-card cobalt" id="panelSwatchCreaseLine" onclick="glowApp.applyStudioTryOn('panel','crease-line','Crease Line','Sharper body-line deformation that can raise repair complexity.')"><span>Crease Line</span></button>
-          <button class="swatch-card blush" id="panelSwatchClearcoatBreak" onclick="glowApp.applyStudioTryOn('panel','clearcoat-break','Clearcoat Break','Finish damage through the top coat with visible surface breakup.')"><span>Clearcoat Break</span></button>
-        </div>
-      </section>
-    </div>
-
-  </section>
-
-  <!-- ══ SCREEN: Scan Result ══ -->
-  <section class="screen hidden" id="screenScanResult" aria-label="Repair Guidance">
-    <div class="result-wrap" id="scanResultWrap"></div>
-  </section>
-
-  <!-- ══ SCREEN: Settings ══ -->
-  <section class="screen hidden" id="screenProfile" aria-label="Profile">
-    <div class="profile-shell" id="profileShell"></div>
-  </section>
-
-  <!-- ══ SCREEN: Settings ══ -->
-  <section class="screen hidden" id="screenSettings" aria-label="Settings">
-    <div class="settings-wrap">
-      <div class="form-group" style="margin-top:1rem">
-        <label class="form-label" for="settingsApiUrl">Backend API URL</label>
-        <input class="form-input" id="settingsApiUrl" type="url" placeholder="http://localhost:8000" autocomplete="off" />
-        <p style="font-size:0.75rem;color:var(--clr-text-muted);margin-top:0.4rem">Railway/Render URL after deploy</p>
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="settingsToken">API Token</label>
-        <input class="form-input" id="settingsToken" type="password" placeholder="your-api-token" autocomplete="off" />
-      </div>
-      <button class="btn-primary" style="width:100%;margin-top:0.5rem" onclick="glowApp.saveSettings()">Save Settings</button>
-      <p id="settingsSaved" class="settings-saved hidden">✅ Saved!</p>
-    </div>
-  </section>
-
-  <!-- ── Bottom Nav ── -->
-  <nav class="bottom-nav" aria-label="Main navigation">
-    <button class="nav-item active" id="navHome" onclick="glowApp.navigate('home')" aria-label="Home">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-      </svg>
-      Home
-    </button>
-    <button class="nav-item" id="navAppointments" onclick="glowApp.navigate('appointments')" aria-label="Caseboard">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
-      Cases
-    </button>
-    <button class="nav-item" id="navAnalysis" onclick="glowApp.navigate('analysis')" aria-label="Camera Triage">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      Scan
-    </button>
-    <button class="nav-item" id="navProfile" onclick="glowApp.navigate('profile')" aria-label="Profile">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
-      </svg>
-      Profile
-    </button>
-  </nav>
-
-</div><!-- #app -->
-
-<!-- ══ Modal: Add / Edit Service ══ -->
-<div class="modal-backdrop hidden" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle"
-  onclick="glowApp.closeModalIfBackdrop(event)">
-  <div class="modal-sheet" id="modalSheet">
-    <div class="modal-handle" aria-hidden="true"></div>
-    <h2 class="modal-title" id="modalTitle">New Service</h2>
-
-    <form id="apptForm" onsubmit="glowApp.saveAppointment(event)" novalidate>
-      <input type="hidden" id="formId" />
-
-      <div class="form-group">
-        <label class="form-label" for="formTitle">Title *</label>
-        <input class="form-input" id="formTitle" type="text" placeholder="e.g. Front bumper inspection" required maxlength="80" autocomplete="off" />
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" for="formDate">Date *</label>
-          <input class="form-input" id="formDate" type="date" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="formTime">Time *</label>
-          <input class="form-input" id="formTime" type="time" required />
-        </div>
-      </div>
-
-      <div class="form-group" id="formTypeGroup">
-        <label class="form-label" for="formType">Type</label>
-        <select class="form-select" id="formType"></select>
-      </div>
-
-      <div class="form-group" id="formClientGroup" style="display:none">
-        <label class="form-label" for="formClient">Client / Contact</label>
-        <input class="form-input" id="formClient" type="text" placeholder="Client name or company" maxlength="80" autocomplete="off" />
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="formStatus">Status</label>
-        <select class="form-select" id="formStatus">
-          <option value="confirmed">Confirmed</option>
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="formNotes">Notes</label>
-        <textarea class="form-textarea" id="formNotes" placeholder="Optional details..." maxlength="300"></textarea>
-      </div>
-
-      <div class="modal-actions" id="modalActions">
-        <button type="button" class="btn-ghost" onclick="glowApp.closeModal()">Cancel</button>
-        <button type="submit" class="btn-primary" id="btnSave">Save</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div class="modal-backdrop hidden" id="studioNoticeBackdrop" role="dialog" aria-modal="true" aria-labelledby="studioNoticeTitle"
-  onclick="glowApp.closeStudioNoticeIfBackdrop(event)">
-  <div class="modal-sheet studio-notice-sheet">
-    <div class="modal-handle" aria-hidden="true"></div>
-    <div class="studio-notice-icon" id="studioNoticeIcon">✨</div>
-    <div class="studio-notice-kicker" id="studioNoticeKicker">AutoIQ Pro</div>
-    <h2 class="modal-title" id="studioNoticeTitle">Repair Update</h2>
-    <p class="studio-notice-copy" id="studioNoticeCopy">AutoIQ Pro saved this update and synced it into your repair case flow.</p>
-    <div class="studio-notice-actions">
-      <button type="button" class="btn-ghost" onclick="glowApp.closeStudioNotice()">Noted</button>
-      <button type="button" class="btn-primary" onclick="glowApp.closeStudioNotice(); glowApp.navigate('appointments');">Open Cases</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop hidden" id="stackEditorBackdrop" role="dialog" aria-modal="true" aria-labelledby="stackEditorTitle"
-  onclick="glowApp.closeStackEditorIfBackdrop(event)">
-  <div class="modal-sheet stack-editor-sheet">
-    <div class="modal-handle" aria-hidden="true"></div>
-    <div class="studio-notice-kicker" id="stackEditorKicker">Caseboard</div>
-    <h2 class="modal-title" id="stackEditorTitle">Edit Stack</h2>
-    <p class="studio-notice-copy" id="stackEditorCopy">Choose how you want to update this saved stack.</p>
-    <div class="stack-editor-body" id="stackEditorBody"></div>
-    <div class="stack-editor-actions">
-      <button type="button" class="btn-ghost" onclick="glowApp.closeStackEditor()">Close</button>
-      <button type="button" class="btn-primary" id="stackEditorSaveBtn" onclick="glowApp.confirmStackEditor()">Save</button>
-    </div>
-  </div>
-</div>
-
-<script src="./scan.bundle.js"></script>
-<script src="./app.js"></script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () =>
-      navigator.serviceWorker.register('./sw.js').catch(() => {})
-    );
-  }
-</script>
+  <script src="./scan.bundle.js"></script>
+  <script src="./api-client.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

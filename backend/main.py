@@ -275,6 +275,25 @@ async def chat(
 async def health():
     return {"status": "ok", "service": "glowai-api"}
 
+@app.get("/capabilities")
+async def capabilities():
+    return {
+        "app": "GlowAI",
+        "positioning": "Scan-led beauty consultation for skin prep, salon planning, bookings, and concierge coaching.",
+        "agents": [
+            {"name": "Scan Coach", "skill": "skin read intake", "output": "skin type, focus areas, routine direction"},
+            {"name": "Beauty Stylist", "skill": "service sequencing", "output": "brows, makeup, hair, nails, or skin lane"},
+            {"name": "Safety Guide", "skill": "non-diagnostic guardrails", "output": "dermatology referral language for urgent concerns"},
+            {"name": "Scheduler", "skill": "booking handoff", "output": "appointment context and notes"},
+        ],
+        "trust_controls": [
+            "informational-only skin guidance",
+            "urgent concern escalation",
+            "scan confidence display",
+            "stored booking context",
+        ],
+    }
+
 @app.get("/health/db")
 async def health_db(db: AsyncSession = Depends(get_db)):
     try:

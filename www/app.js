@@ -162,6 +162,7 @@ window.glowaiApp = {
     this.bindFavorites();
     this.bindChat();
     this.bindScan();
+    this.bindAvatarSkills();
     this.renderFocus('brows');
     this.renderFavorites();
     this.renderBookings();
@@ -593,6 +594,9 @@ Your coaching style:
       tags: scanRecord.tags,
       steps: scanRecord.steps,
       metrics: scanRecord.metrics,
+      confidence: scanRecord.confidence,
+      safetyNote: scanRecord.safetyNote,
+      handoffs: scanRecord.handoffs,
     };
     const scans = this.getStored(this.storageKeys.scans);
     scans.unshift(historyEntry);
@@ -627,6 +631,9 @@ Your coaching style:
         salonLane: 'Skin Prep',
         serviceKey: 'skin',
         metrics: { balance: '82%', hydration: '68%', clarity: '79%' },
+        confidence: '84%',
+        safetyNote: 'Routine',
+        handoffs: ['Coach builds a barrier-support routine', 'Stylist keeps makeup skin-forward', 'Scheduler suggests prep before glam'],
       },
       {
         title: 'Brightness loss with texture focus',
@@ -636,6 +643,9 @@ Your coaching style:
         salonLane: 'Skin Prep',
         serviceKey: 'skin',
         metrics: { balance: '74%', hydration: '63%', clarity: '66%' },
+        confidence: '76%',
+        safetyNote: 'Prep first',
+        handoffs: ['Coach avoids aggressive exfoliation', 'Stylist softens complexion finish', 'Scheduler puts skin prep before event services'],
       },
       {
         title: 'Strong frame for brows and polished glam',
@@ -645,6 +655,9 @@ Your coaching style:
         salonLane: 'Eyebrow Studio',
         serviceKey: 'brows',
         metrics: { balance: '88%', hydration: '72%', clarity: '84%' },
+        confidence: '89%',
+        safetyNote: 'Routine',
+        handoffs: ['Coach keeps care simple before glam', 'Stylist starts with brow framing', 'Scheduler pairs brows before makeup'],
       },
     ];
 
@@ -666,6 +679,9 @@ Your coaching style:
     const metricBalance = document.getElementById('scanMetricBalance');
     const metricHydration = document.getElementById('scanMetricHydration');
     const metricClarity = document.getElementById('scanMetricClarity');
+    const qualityConfidence = document.getElementById('scanQualityConfidence');
+    const qualitySafety = document.getElementById('scanQualitySafety');
+    const handoffs = document.getElementById('scanAgentHandoffs');
 
     if (!latest) {
       if (title) title.textContent = 'No scan yet';
@@ -676,6 +692,9 @@ Your coaching style:
       if (metricBalance) metricBalance.textContent = '-';
       if (metricHydration) metricHydration.textContent = '-';
       if (metricClarity) metricClarity.textContent = '-';
+      if (qualityConfidence) qualityConfidence.textContent = '-';
+      if (qualitySafety) qualitySafety.textContent = 'Guide';
+      if (handoffs) handoffs.innerHTML = '';
       this.setScanStatus('Idle', 'Take a scan and GlowAI will surface a skin snapshot, recommended focus, and the salon lane that should come next.');
       this.renderScanHistory();
       return;
@@ -690,6 +709,12 @@ Your coaching style:
     if (metricBalance) metricBalance.textContent = latest.metrics?.balance || '-';
     if (metricHydration) metricHydration.textContent = latest.metrics?.hydration || '-';
     if (metricClarity) metricClarity.textContent = latest.metrics?.clarity || '-';
+    if (qualityConfidence) qualityConfidence.textContent = latest.confidence || 'Guided';
+    if (qualitySafety) qualitySafety.textContent = latest.safetyNote || 'Guide';
+    if (handoffs) {
+      const items = latest.handoffs || ['Coach builds the routine', 'Stylist aligns the service lane', 'Scheduler keeps timing clear'];
+      handoffs.innerHTML = items.map((item) => `<div class="agent-handoff">${item}</div>`).join('');
+    }
 
     if (preview && previewImage) {
       preview.classList.remove('hidden');
@@ -748,6 +773,23 @@ Your coaching style:
     if (title) title.textContent = titleText;
     if (copy) copy.textContent = copyText;
     if (pill) pill.textContent = titleText;
+  },
+
+  bindAvatarSkills() {
+    document.addEventListener('sw-avatar:skill', (event) => {
+      const skill = (event.detail?.skill || '').toLowerCase();
+      if (skill.includes('scan') || skill.includes('skin')) {
+        this.showPage('scan');
+      } else if (skill.includes('book') || skill.includes('schedule')) {
+        this.syncBookingService();
+        this.showPage('booking');
+      } else if (skill.includes('style') || skill.includes('service')) {
+        this.showPage('services');
+      } else if (skill.includes('coach') || skill.includes('chat')) {
+        this.showPage('concierge');
+        document.getElementById('chatInput')?.focus();
+      }
+    });
   },
 
   syncBookingService() {

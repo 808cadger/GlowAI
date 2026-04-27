@@ -40,35 +40,35 @@ window.glowaiApp = {
 
   focusContent: {
     brows: {
-      label: 'Eyebrow Studio',
-      title: 'Shape, tint, and map brows before booking.',
-      description: 'Preview soft arch, bold sculpt, and cleanup options with camera guidance and a service recommendation path.',
-      points: ['Shape analysis', 'Tint planning', 'Artist match'],
-      heroTitle: 'Brows after the skin baseline.',
-      heroCopy: 'Use the current scan to decide how much prep the complexion needs before shape framing and glam timing lock in.',
+      label: 'Brow Studio',
+      title: 'Frame the face after the skin read.',
+      description: 'Preview soft arch, lifted shape, and cleanup timing with camera guidance and a clear booking path.',
+      points: ['Shape read', 'Tint timing', 'Artist fit'],
+      heroTitle: 'Brows come after the baseline.',
+      heroCopy: 'Use the current scan to decide how much skin prep the complexion needs before shape and finish choices lock in.',
       previewLabel: 'Selected service',
-      previewTitle: 'Eyebrow design studio',
+      previewTitle: 'Brow design studio',
       previewBody: 'Shape mapping, tint guidance, and cleanup timing built around face framing.',
       previewTone: 'Warm sculpt',
       previewCTA: 'Open details',
-      detailTitle: 'Eyebrow design studio',
+      detailTitle: 'Brow design studio',
       detailSubtitle: 'Shape mapping, tint guidance, and cleanup timing built around face framing.',
       detailMoodLabel: 'GlowAI edit',
-      detailMoodTitle: 'Soft sculpt with polished framing.',
-      detailMoodBody: 'Use brows as the anchor for the whole look. Start here when you want stronger definition, cleaner symmetry, and a service that immediately changes the way the rest of the beauty plan feels.',
+      detailMoodTitle: 'Clean framing, no overdone finish.',
+      detailMoodBody: 'Use brows as the anchor when the skin read is stable and the face needs definition. The goal is structure that feels easy, not heavy.',
       detailTags: ['Shape mapping', 'Tint edit', 'Artist fit'],
-      detailList: ['Ideal for weddings, dinners, and polished day looks', 'Helps frame makeup and hair choices more clearly', 'Works best when booked before glam and final styling'],
+      detailList: ['Ideal for weddings, dinners, and polished day looks', 'Helps frame makeup and hair choices more clearly', 'Works best when booked before finish and final styling'],
       detailCTA: 'Book brow studio',
-      favoriteTitle: 'Brows first with soft glam follow-up',
+      favoriteTitle: 'Brows first with soft polish follow-up',
       favoriteSummary: 'Clean brow framing before makeup, with prep timed to keep the look polished and lifted.',
     },
     nails: {
-      label: 'Nail Bar',
-      title: 'Try nail length, finish, and color direction first.',
-      description: 'Move from quick neutrals to full statement sets with saved inspiration and direct booking into manicure services.',
-      points: ['Color preview', 'Set inspiration', 'Rebook favorites'],
-      heroTitle: 'Nails support the final look.',
-      heroCopy: 'Use the scan to keep skin prep realistic, then choose finish, color, and set direction around the event plan.',
+      label: 'Nail Studio',
+      title: 'Try color and finish without overthinking it.',
+      description: 'Move from clean neutrals to stronger sets with saved inspiration and direct booking into manicure services.',
+      points: ['Color preview', 'Finish compare', 'Rebook path'],
+      heroTitle: 'Nails support the whole plan.',
+      heroCopy: 'Use the scan to keep skin prep realistic, then choose finish, color, and set direction around timing.',
       previewLabel: 'Selected service',
       previewTitle: 'Manicure mood board',
       previewBody: 'Move from neutrals to statement sets with clearer finish direction and rebooking logic.',
@@ -77,21 +77,21 @@ window.glowaiApp = {
       detailTitle: 'Manicure mood board',
       detailSubtitle: 'Move from neutrals to statement sets with clearer finish and rebooking direction.',
       detailMoodLabel: 'GlowAI edit',
-      detailMoodTitle: 'Set the mood from the fingertips out.',
-      detailMoodBody: 'Use nails to establish texture, finish, and color energy early. A strong nail choice makes outfit direction and makeup tone feel easier to settle.',
+      detailMoodTitle: 'A small detail that changes the whole read.',
+      detailMoodBody: 'Use nails to set finish, color, and texture early. A clear nail choice makes the rest of the beauty direction easier to settle.',
       detailTags: ['Color preview', 'Finish compare', 'Rebook favorites'],
-      detailList: ['Best when you want one beauty detail to lead the whole look', 'Great for event planning and repeat salon visits', 'Easy to pair with soft glam or stronger fashion direction'],
+      detailList: ['Best when you want one beauty detail to lead the whole look', 'Great for event planning and repeat studio visits', 'Easy to pair with soft polish or stronger fashion direction'],
       detailCTA: 'Reserve nail set',
-      favoriteTitle: 'Gloss nails with soft evening glam',
+      favoriteTitle: 'Gloss nails with soft evening finish',
       favoriteSummary: 'A polished manicure path that keeps the rest of the beauty look clean, tonal, and event-ready.',
     },
     tryon: {
       label: 'Style Try-On',
-      title: 'Coordinate outfits with the rest of the beauty look.',
-      description: 'Use virtual try-on as part of a complete glam plan so clothing, makeup, brows, and nails feel aligned.',
-      points: ['Outfit pairing', 'Event styling', 'Look saves'],
-      heroTitle: 'Style direction comes after skin context.',
-      heroCopy: 'Set silhouette and palette once the skin plan is clear so glam, hair, and nails support the same final impression.',
+      title: 'Coordinate style with the skin plan.',
+      description: 'Use virtual try-on as part of one complete plan so clothing, makeup, brows, and nails feel aligned.',
+      points: ['Outfit pairing', 'Palette lock', 'Look saves'],
+      heroTitle: 'Style comes after skin context.',
+      heroCopy: 'Set silhouette and palette once the skin plan is clear so finish, hair, and nails support the same impression.',
       previewLabel: 'Selected service',
       previewTitle: 'Clothes and look try-on',
       previewBody: 'Pair outfit direction with makeup and nails so the whole look feels intentional before booking.',
@@ -100,8 +100,8 @@ window.glowaiApp = {
       detailTitle: 'Clothes and look try-on',
       detailSubtitle: 'Pair outfit direction with makeup and nails so the whole look feels intentional.',
       detailMoodLabel: 'GlowAI edit',
-      detailMoodTitle: 'Choose the silhouette, then style everything else around it.',
-      detailMoodBody: 'Try-on becomes more useful when it does not live alone. Use it to decide whether the beauty look should go softer, sharper, cleaner, or more dramatic.',
+      detailMoodTitle: 'Choose the silhouette, then simplify the rest.',
+      detailMoodBody: 'Try-on works best when it does not live alone. Use it to decide whether the rest of the look should go softer, sharper, cleaner, or more expressive.',
       detailTags: ['Outfit pairing', 'Palette lock', 'Look saves'],
       detailList: ['Best for weddings, parties, shoots, and big nights out', 'Useful when you are between two styling directions', 'Helps hair and makeup feel matched instead of random'],
       detailCTA: 'Save styled look',
@@ -109,73 +109,73 @@ window.glowaiApp = {
       favoriteSummary: 'Use the dress or outfit first, then let GlowAI align makeup, hair, nails, and prep around it.',
     },
     makeup: {
-      label: 'Makeup Lounge',
-      title: 'Compare glam directions before you sit in the chair.',
-      description: 'Help users explore soft glam, bridal, editorial, and day-to-night looks with artist and timing guidance.',
-      points: ['Finish selection', 'Artist guidance', 'Look comparison'],
-      heroTitle: 'Makeup works better with scan-led prep.',
+      label: 'Finish Studio',
+      title: 'Compare finish directions before booking.',
+      description: 'Explore soft, polished, editorial, and day-to-night looks with artist and timing guidance.',
+      points: ['Finish choice', 'Artist guidance', 'Look compare'],
+      heroTitle: 'Finish works better with scan-led care.',
       heroCopy: 'Use the latest skin read to decide whether the finish should stay dewy, satin, brightening, or coverage-focused.',
       previewLabel: 'Selected service',
-      previewTitle: 'Soft glam planner',
-      previewBody: 'Compare finish directions and move users toward the right artist, timing, and event makeup energy.',
+      previewTitle: 'Soft polish planner',
+      previewBody: 'Compare finish directions and move users toward the right artist, timing, and event finish energy.',
       previewTone: 'Finish edit',
       previewCTA: 'Open details',
-      detailTitle: 'Soft glam planner',
-      detailSubtitle: 'Compare finish directions and move toward the right artist, timing, and event makeup energy.',
+      detailTitle: 'Soft polish planner',
+      detailSubtitle: 'Compare finish directions and move toward the right artist, timing, and event finish energy.',
       detailMoodLabel: 'GlowAI edit',
-      detailMoodTitle: 'Decide the finish before the rest of the beauty plan hardens.',
-      detailMoodBody: 'Soft glam, bridal polish, editorial shine, or clean skin-forward makeup all pull the rest of the beauty stack in different directions. Use this page to settle that decision early.',
+      detailMoodTitle: 'Decide the finish before the plan gets crowded.',
+      detailMoodBody: 'Soft polish, editorial shine, or clean skin-forward makeup all pull the rest of the plan in different directions. Settle that decision early.',
       detailTags: ['Finish selection', 'Artist guidance', 'Look comparison'],
       detailList: ['Best when the makeup look is the centerpiece', 'Pairs well with saved outfit and brow decisions', 'Useful for timing estimates and artist matching'],
-      detailCTA: 'Plan glam session',
-      favoriteTitle: 'Soft glam with skin-led prep',
-      favoriteSummary: 'A smooth, polished glam plan that keeps brows, prep, and final finish aligned.',
+      detailCTA: 'Plan finish session',
+      favoriteTitle: 'Soft polish with skin-led prep',
+      favoriteSummary: 'A smooth, polished finish plan that keeps brows, prep, and final finish aligned.',
     },
     skin: {
-      label: 'Skin Prep',
-      title: 'Keep scan and care planning as the beauty base layer.',
-      description: 'The current scan foundation should support prep and treatment recommendations as part of a full salon journey.',
-      points: ['Skin scan', 'Prep routine', 'Treatment fit'],
+      label: 'Skin Ritual',
+      title: 'Keep the scan as the base layer.',
+      description: 'The current read should support prep, product, and treatment recommendations across the full flow.',
+      points: ['Skin scan', 'Routine', 'Treatment fit'],
       heroTitle: 'Prep starts with measurable skin signals.',
       heroCopy: 'Lead with camera-guided prep so routines, products, and service timing respond to hydration, tone, clarity, and texture.',
       previewLabel: 'Selected service',
-      previewTitle: 'Skin scan and prep',
-      previewBody: 'Keep scan-led prep as one strong module inside the broader beauty flow rather than the whole identity.',
-      previewTone: 'Prep layer',
+      previewTitle: 'Skin read and routine',
+      previewBody: 'Keep scan-led care as the base layer inside the broader beauty flow.',
+      previewTone: 'Base layer',
       previewCTA: 'Open details',
-      detailTitle: 'Skin scan and prep',
-      detailSubtitle: 'Keep scan-led prep as one strong module inside the broader beauty flow.',
+      detailTitle: 'Skin read and routine',
+      detailSubtitle: 'Keep scan-led care as the base layer inside the broader beauty flow.',
       detailMoodLabel: 'GlowAI edit',
-      detailMoodTitle: 'Prep the skin so the entire look lands better.',
-      detailMoodBody: 'Skin prep should make the rest of the services easier. Use scan-led planning to decide timing, hydration, recovery, and what to avoid right before the event.',
+      detailMoodTitle: 'Let the skin set the pace.',
+      detailMoodBody: 'Skin care should make the rest of the services easier. Use scan-led planning to decide timing, hydration, recovery, and what to avoid.',
       detailTags: ['Skin scan', 'Prep routine', 'Treatment fit'],
-      detailList: ['Best started before any makeup-heavy event week', 'Helps avoid overdoing treatments too close to the date', 'Supports brow, glam, and hair planning with better timing'],
+      detailList: ['Best started before any finish-heavy event week', 'Helps avoid overdoing treatments too close to the date', 'Supports brow, finish, and hair planning with better timing'],
       detailCTA: 'Start skin prep',
       favoriteTitle: 'Prep-first beauty week',
       favoriteSummary: 'Use skin as the base layer so makeup, brows, and hair all sit better on the final event day.',
     },
     hair: {
-      label: 'Hair Lounge',
-      title: 'Pair styling services with the rest of the event look.',
-      description: 'Organize blowouts, silk press, curl sets, and finish work inside the same planning flow as glam and outfit choices.',
+      label: 'Hair Studio',
+      title: 'Pair styling with the rest of the plan.',
+      description: 'Organize blowouts, silk press, curl sets, and finish work inside the same flow as skin, outfit, and makeup choices.',
       points: ['Style preview', 'Care notes', 'Return booking'],
-      heroTitle: 'Hair is the final polish.',
-      heroCopy: 'Use hair as the finishing layer after scan-led prep, makeup timing, and event styling are settled.',
+      heroTitle: 'Hair is the final shape.',
+      heroCopy: 'Use hair as the finishing layer after scan-led care, finish timing, and event styling are settled.',
       previewLabel: 'Selected service',
       previewTitle: 'Style and finish lounge',
-      previewBody: 'Bring blowouts, curls, and finish work into the same planning stack as glam so the look lands cohesively.',
+      previewBody: 'Bring blowouts, curls, and finish work into the same planning stack as finish so the look lands cohesively.',
       previewTone: 'Finish motion',
       previewCTA: 'Open details',
       detailTitle: 'Style and finish lounge',
-      detailSubtitle: 'Bring blowouts, curls, and finish work into the same planning stack as glam.',
+      detailSubtitle: 'Bring blowouts, curls, and finish work into the same planning stack as finish.',
       detailMoodLabel: 'GlowAI edit',
       detailMoodTitle: 'Finish with shape, movement, and timing.',
-      detailMoodBody: 'Hair often lands last, but it changes everything. Use this page to decide whether the look needs soft movement, polished structure, or a cleaner return-to-salon plan.',
+      detailMoodBody: 'Hair often lands last, but it changes everything. Use this page to decide whether the look needs soft movement, polished structure, or a cleaner return path.',
       detailTags: ['Style preview', 'Care notes', 'Return booking'],
-      detailList: ['Best when hair needs to harmonize with outfit neckline and glam', 'Useful for timing around makeup and prep services', 'Supports repeat styling and maintenance planning'],
+      detailList: ['Best when hair needs to harmonize with outfit neckline and finish', 'Useful for timing around makeup and prep services', 'Supports repeat styling and maintenance planning'],
       detailCTA: 'Book hair finish',
       favoriteTitle: 'Finish-first hair timing',
-      favoriteSummary: 'A polished hair finish plan that works with outfit shape, makeup timing, and repeat salon visits.',
+      favoriteSummary: 'A polished hair finish plan that works with outfit shape, makeup timing, and repeat studio visits.',
     },
   },
 
@@ -206,7 +206,7 @@ window.glowaiApp = {
   ensureSeedData() {
     if (!localStorage.getItem(this.storageKeys.chat)) {
       const seeded = [
-        { role: 'assistant', text: "Hi! I'm your GlowAI beauty coach — part esthetician, part product expert, part salon director. Tell me what's going on with your skin or what look you're going for, and I'll ask a few quick questions before giving you a real plan." },
+        { role: 'assistant', text: "Hi, I'm your GlowAI skin coach. Tell me what your skin is doing today, what climate you are in, and what result you want. I will ask one focused question, then build a practical plan." },
       ];
       localStorage.setItem(this.storageKeys.chat, JSON.stringify(seeded));
     }
@@ -535,7 +535,7 @@ window.glowaiApp = {
         metrics,
         routine,
       },
-      climate: this.getStored(this.storageKeys.climate, { location: 'Pearl City, Hawaii', humidityMode: 'humid' }),
+      climate: this.getStored(this.storageKeys.climate, { location: 'coastal climate', humidityMode: 'humid' }),
     };
 
     if (type === 'booking') {
@@ -575,9 +575,9 @@ window.glowaiApp = {
           'Before selfie with hydration and texture overlay',
           `Routine reveal: AM ${routine.morning}`,
           `Progress forecast: ${latest?.forecast?.[2]?.score || '86'}% glow score by day 30`,
-          'After frame with salon CTA and product cart code GLOWAI30',
+          'After frame with studio CTA and product cart code GLOWAI30',
         ],
-        captions: ['AI skin scan', 'Hawaii humidity routine', '30-day glow forecast', 'Book + shop from scan'],
+        captions: ['AI skin scan', 'coastal humidity routine', '30-day glow forecast', 'Book + shop from scan'],
       },
     };
   },
@@ -590,7 +590,7 @@ window.glowaiApp = {
       { handle: 'gentle-cleanser', title: 'Low-pH gentle cleanser', reason: 'Daily reset without stripping.' },
       { handle: hydration < 68 ? 'hyaluronic-serum' : 'antioxidant-serum', title: hydration < 68 ? 'Hyaluronic hydration serum' : 'Vitamin C antioxidant serum', reason: hydration < 68 ? 'Rebuilds water balance.' : 'Supports brightness and daytime defense.' },
       { handle: oil > 66 ? 'gel-moisturizer' : 'barrier-cream', title: oil > 66 ? 'Humidity-safe gel moisturizer' : 'Ceramide barrier cream', reason: oil > 66 ? 'Lightweight for humid shine control.' : 'Supports overnight recovery.' },
-      { handle: 'water-resistant-spf', title: 'Water-resistant SPF 30+', reason: 'Hawaii sun and humidity baseline.' },
+      { handle: 'water-resistant-spf', title: 'Water-resistant SPF 30+', reason: 'coastal sun and humidity baseline.' },
       ...(texture < 70 ? [{ handle: 'pha-exfoliant', title: 'PHA gentle exfoliant', reason: 'Texture support 1-2 nights weekly.' }] : []),
     ];
   },
@@ -636,10 +636,10 @@ window.glowaiApp = {
   },
 
   launchWhiteLabelWorkspace() {
-    const salon = document.getElementById('whiteLabelSalon')?.value.trim() || 'Pearl City Glow Studio';
+    const studio = document.getElementById('whiteLabelStudio')?.value.trim() || 'Pearl City Glow Studio';
     const plan = document.getElementById('whiteLabelPlan')?.value || 'starter';
     const workspace = {
-      salon,
+      studio,
       plan,
       monthlyPrice: plan === 'starter' ? 299 : plan === 'growth' ? 799 : 'custom',
       features: plan === 'starter'
@@ -650,8 +650,8 @@ window.glowaiApp = {
       launchedAt: new Date().toISOString(),
     };
     this.setStored(this.storageKeys.whiteLabel, workspace);
-    this.logAgentAction('white-label', `Salon workspace launched for ${salon}`, workspace);
-    this.pushAssistantMessage(`${salon} white-label workspace launched on the ${plan} plan. The agent cockpit is ready for salon lead capture and scan-to-revenue workflows.`);
+    this.logAgentAction('white-label', `Studio workspace launched for ${studio}`, workspace);
+    this.pushAssistantMessage(`${studio} white-label workspace launched on the ${plan} plan. The agent cockpit is ready for studio lead capture and scan-to-revenue workflows.`);
     this.renderAgentOps();
   },
 
@@ -673,12 +673,12 @@ window.glowaiApp = {
     const calendar = document.getElementById('calendarEndpoint');
     const shopify = document.getElementById('shopifyEndpoint');
     const reel = document.getElementById('reelEndpoint');
-    const salon = document.getElementById('whiteLabelSalon');
+    const studio = document.getElementById('whiteLabelStudio');
     const plan = document.getElementById('whiteLabelPlan');
     if (calendar && config.calendarEndpoint) calendar.value = config.calendarEndpoint;
     if (shopify && config.shopifyEndpoint) shopify.value = config.shopifyEndpoint;
     if (reel && config.reelEndpoint) reel.value = config.reelEndpoint;
-    if (salon && whiteLabel.salon) salon.value = whiteLabel.salon;
+    if (studio && whiteLabel.studio) studio.value = whiteLabel.studio;
     if (plan && whiteLabel.plan) plan.value = whiteLabel.plan;
 
     const container = document.getElementById('agentLogList');
@@ -805,7 +805,7 @@ window.glowaiApp = {
 
     if (wantsHumidity) {
       this.setStored(this.storageKeys.climate, {
-        location: 'Pearl City, Hawaii',
+        location: 'coastal climate',
         humidityMode: 'humid',
         updatedAt: new Date().toISOString(),
       });
@@ -813,7 +813,7 @@ window.glowaiApp = {
 
     if (wantsScan) {
       this.pushUserMessage(text);
-      this.pushAssistantMessage('Starting a live skin scan now. Keep your face centered and I will adjust the routine for Hawaii humidity.');
+      this.pushAssistantMessage('Starting a live skin scan now. Keep your face centered and I will adjust the routine for coastal humidity.');
       this.speak('Starting a live skin scan now. Keep your face centered.');
       this.showPage('scan');
       await this.startLiveSkinScan();
@@ -840,7 +840,7 @@ window.glowaiApp = {
     const apiKey = this.getApiKey();
     this.pushUserMessage(text);
     if (!apiKey) {
-      this.pushAssistantMessage('Add your Claude API key to activate live voice coaching. I saved the Hawaii humidity preference locally.');
+      this.pushAssistantMessage('Add your Claude API key to activate live voice coaching. I saved the coastal humidity preference locally.');
       this.speak('Add your Claude API key to activate live voice coaching.');
       return;
     }
@@ -871,9 +871,9 @@ window.glowaiApp = {
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.text }));
 
-    const climate = this.getStored(this.storageKeys.climate, { location: 'Pearl City, Hawaii', humidityMode: 'humid' });
+    const climate = this.getStored(this.storageKeys.climate, { location: 'coastal climate', humidityMode: 'humid' });
     const latestScan = this.latestScan || this.getStored(this.storageKeys.scans)[0] || null;
-    const systemPrompt = `You are GlowAI, a world-class beauty coach and product advisor. You have the combined expertise of a licensed esthetician, cosmetic chemist, and luxury salon director.
+    const systemPrompt = `You are GlowAI, a world-class beauty coach and product advisor. You have the combined expertise of a licensed esthetician, cosmetic chemist, and premium studio operator.
 
 Current context:
 - User location/climate: ${climate.location}, humidity mode ${climate.humidityMode}
@@ -883,8 +883,8 @@ Your coaching style:
 - Ask ONE targeted question at a time to understand the person before recommending
 - Cover: skin type (dry/oily/combo/sensitive/normal), top concerns (acne, aging, hyperpigmentation, texture, redness, dryness), current routine, lifestyle (how much time, budget range), climate/environment, any allergies or sensitivities
 - After 2-3 questions, deliver a SPECIFIC plan: exact product types + ingredient recommendations (like "a vitamin C serum with 15% L-ascorbic acid"), morning vs night routines, order of application, frequency
-- When asked about beauty services (brows, nails, glam, hair): give pro-level advice on prep, timing, what to avoid beforehand, how to maintain results
-- Recommend product TYPES and key ingredients — not just brand names, so the advice stays useful and budget-flexible. When you do name brands, give options across price points (drugstore + mid + luxury)
+- When asked about beauty services (brows, nails, finish, hair): give pro-level advice on prep, timing, what to avoid beforehand, how to maintain results
+- Recommend product TYPES and key ingredients — not just brand names, so the advice stays useful and budget-flexible. When you do name brands, give options across price points (drugstore + mid + premium)
 - Be direct, warm, and specific. No generic "everyone's skin is different" hedging — ask the follow-up questions to get specific, then commit to a recommendation
 - Keep responses concise: 2-4 sentences of coaching + a clear next question or action`;
 
@@ -976,7 +976,7 @@ Your coaching style:
     const faceCopy = sample.faceQuality?.available && sample.faceQuality?.confidence
       ? `Face ${sample.faceQuality.confidence}%.`
       : 'Guided signal read.';
-    this.setScanStatus('Live scanning', `${faceCopy} Hydration ${signals.hydration}%, texture ${signals.texture}%, Hawaii humidity load ${signals.humidityStress}%.`);
+    this.setScanStatus('Live scanning', `${faceCopy} Hydration ${signals.hydration}%, texture ${signals.texture}%, coastal humidity load ${signals.humidityStress}%.`);
 
     if (this.liveScan.samples.length >= 6) {
       const badge = document.getElementById('scanResultBadge');
@@ -1281,7 +1281,7 @@ Your coaching style:
       createdAt: scanRecord.createdAt,
       title: scanRecord.title,
       summary: scanRecord.summary,
-      salonLane: scanRecord.salonLane,
+      studioLane: scanRecord.studioLane,
       serviceKey: scanRecord.serviceKey,
       tags: scanRecord.tags,
       steps: scanRecord.steps,
@@ -1305,7 +1305,7 @@ Your coaching style:
     this.renderScanSummary();
     this.renderScanHistory();
     this.renderForecast();
-    this.pushAssistantMessage(`Face scan complete. I’d start with ${analysis.salonLane.toLowerCase()} based on what GlowAI picked up.`);
+    this.pushAssistantMessage(`Face scan complete. I’d start with ${analysis.studioLane.toLowerCase()} based on what GlowAI picked up.`);
   },
 
   handleScanError(message) {
@@ -1323,23 +1323,23 @@ Your coaching style:
     const profiles = [
       {
         title: 'Balanced skin with slight dehydration',
-        summary: 'Your skin looks generally balanced, with mild dehydration around the cheeks and a good base for soft glam or prep-first services.',
+        summary: 'Your skin looks generally balanced, with mild dehydration around the cheeks and a good base for soft polish or prep-first services.',
         tags: ['Hydration', 'Soft texture', 'Prep ready'],
-        steps: ['Start with hydration and barrier support before makeup-heavy services', 'Use a gentle humectant serum before moisturizer and SPF', 'Keep exfoliation minimal if the event is close'],
-        salonLane: 'Skin Prep',
+        steps: ['Start with hydration and barrier support before finish-heavy services', 'Use a gentle humectant serum before moisturizer and SPF', 'Keep exfoliation minimal if the event is close'],
+        studioLane: 'Skin Prep',
         serviceKey: 'skin',
         metrics: { balance: '82%', hydration: '68%', clarity: '79%', texture: '76%', tone: '81%', oil: '72%' },
         routine: { morning: 'Gentle cleanse, hyaluronic serum, moisturizer, SPF 30+', night: 'Cleanse, ceramide cream, no exfoliation tonight' },
         confidence: '84%',
         safetyNote: 'Routine',
-        handoffs: ['Coach builds a barrier-support routine', 'Progress tracker saves this as the baseline', 'Scheduler suggests prep before glam'],
+        handoffs: ['Coach builds a barrier-support routine', 'Progress tracker saves this as the baseline', 'Scheduler suggests prep before finish'],
       },
       {
         title: 'Brightness loss with texture focus',
-        summary: 'GlowAI picked up mild texture and uneven brightness, which makes skin prep the clearest first move before the full salon flow.',
+        summary: 'GlowAI picked up mild texture and uneven brightness, which makes skin prep the clearest first move before the full studio flow.',
         tags: ['Texture', 'Brightness', 'Calm prep'],
-        steps: ['Prioritize barrier-friendly brightening before finish-heavy services', 'Use niacinamide or azelaic acid on non-exfoliation nights', 'Save glam and hair after the prep window'],
-        salonLane: 'Skin Prep',
+        steps: ['Prioritize barrier-friendly brightening before finish-heavy services', 'Use niacinamide or azelaic acid on non-exfoliation nights', 'Save finish and hair after the prep window'],
+        studioLane: 'Skin Prep',
         serviceKey: 'skin',
         metrics: { balance: '74%', hydration: '63%', clarity: '66%', texture: '61%', tone: '65%', oil: '70%' },
         routine: { morning: 'Cleanse, niacinamide, moisturizer, SPF 50', night: 'Cleanse, barrier cream, pause harsh scrubs' },
@@ -1348,17 +1348,17 @@ Your coaching style:
         handoffs: ['Coach avoids aggressive exfoliation', 'Progress tracker watches tone and texture', 'Scheduler puts skin prep before event services'],
       },
       {
-        title: 'Strong frame for brows and polished glam',
-        summary: 'Your features would respond well to clean brow framing and a polished glam finish, with skin prep as support rather than the headline.',
-        tags: ['Brows', 'Framing', 'Glam ready'],
-        steps: ['Start with brow shaping or cleanup first', 'Use light prep and avoid overloading the skin right before glam', 'Keep SPF and moisturizer steady so makeup sits evenly'],
-        salonLane: 'Eyebrow Studio',
+        title: 'Strong frame for brows and polished finish',
+        summary: 'Your features would respond well to clean brow framing and a polished finish, with skin prep as support rather than the headline.',
+        tags: ['Brows', 'Framing', 'Finish ready'],
+        steps: ['Start with brow shaping or cleanup first', 'Use light prep and avoid overloading the skin right before finish', 'Keep SPF and moisturizer steady so finish sits evenly'],
+        studioLane: 'Eyebrow Studio',
         serviceKey: 'brows',
         metrics: { balance: '88%', hydration: '72%', clarity: '84%', texture: '80%', tone: '83%', oil: '77%' },
         routine: { morning: 'Cleanse, lightweight moisturizer, SPF 30+', night: 'Cleanse, calming serum, moisturizer' },
         confidence: '89%',
         safetyNote: 'Routine',
-        handoffs: ['Coach keeps care simple before glam', 'Progress tracker monitors hydration', 'Scheduler pairs brows before makeup'],
+        handoffs: ['Coach keeps care simple before finish', 'Progress tracker monitors hydration', 'Scheduler pairs brows before makeup'],
       },
     ];
 
@@ -1366,7 +1366,7 @@ Your coaching style:
     const qualityTags = [];
 
     if (skinSignals) {
-      const climate = this.getStored(this.storageKeys.climate, { location: 'Pearl City, Hawaii', humidityMode: 'humid' });
+      const climate = this.getStored(this.storageKeys.climate, { location: 'coastal climate', humidityMode: 'humid' });
       const hydration = skinSignals.hydration || 70;
       const clarity = skinSignals.clarity || 72;
       const texture = skinSignals.texture || 72;
@@ -1375,8 +1375,8 @@ Your coaching style:
       const balance = Math.round((hydration + clarity + texture + tone + (100 - Math.abs(oil - 58))) / 5);
       const humidityStress = skinSignals.humidityStress || Math.round((oil + (100 - hydration)) / 2);
       const humidAdjustment = humidityStress > 58
-        ? 'Use lighter layers for Hawaii humidity: gel moisturizer, water-resistant SPF, and blotting instead of extra powder.'
-        : 'Keep a flexible Hawaii routine: hydration first, SPF daily, and avoid heavy occlusive layers in midday heat.';
+        ? 'Use lighter layers for coastal humidity: gel moisturizer, water-resistant SPF, and blotting instead of extra powder.'
+        : 'Keep a flexible coastal routine: hydration first, SPF daily, and avoid heavy occlusive layers in midday heat.';
 
       selected.title = hydration < 64
         ? 'Live scan shows dehydration under humidity stress'
@@ -1399,12 +1399,12 @@ Your coaching style:
         hydration < 66 ? 'Add a humectant serum under moisturizer morning and night.' : 'Keep hydration steady and do not overload layers.',
         texture < 68 ? 'Use gentle chemical exfoliation only 1-2 nights weekly, never on irritated days.' : 'Maintain texture with a low-friction cleanse and consistent SPF.',
       ];
-      selected.salonLane = 'Skin Prep';
+      selected.studioLane = 'Skin Prep';
       selected.serviceKey = 'skin';
       selected.safetyNote = humidityStress > 65 ? 'Humidity adjust' : 'Routine';
       selected.forecast = this.generateGlowForecast(selected.metrics, skinSignals);
       selected.handoffs = [
-        `Hawaii humidity load: ${humidityStress}%`,
+        `coastal humidity load: ${humidityStress}%`,
         'Coach can adjust AM routine for sweat, SPF reapplication, and lighter layers',
         'Progress tracker projects 7, 14, and 30 day changes',
       ];
@@ -1484,7 +1484,7 @@ Your coaching style:
     const preview = document.getElementById('scanPreview');
     const previewImage = document.getElementById('scanPreviewImage');
     const badge = document.getElementById('scanResultBadge');
-    const salonCTA = document.getElementById('scanSalonCTA');
+    const studioCTA = document.getElementById('scanStudioCTA');
     const heroTitle = document.getElementById('heroFocusTitle');
     const heroCopy = document.getElementById('heroFocusCopy');
     const metricBalance = document.getElementById('scanMetricBalance');
@@ -1521,7 +1521,7 @@ Your coaching style:
     if (badge) badge.textContent = 'Ready';
     if (heroTitle) heroTitle.textContent = latest.title;
     if (heroCopy) heroCopy.textContent = latest.summary;
-    if (salonCTA) salonCTA.textContent = `Open ${latest.salonLane}`;
+    if (studioCTA) studioCTA.textContent = `Open ${latest.studioLane}`;
     if (metricBalance) metricBalance.textContent = latest.metrics?.balance || '-';
     if (metricHydration) metricHydration.textContent = latest.metrics?.hydration || '-';
     if (metricClarity) metricClarity.textContent = latest.metrics?.clarity || '-';
@@ -1573,7 +1573,7 @@ Your coaching style:
 
     container.innerHTML = scans.slice(0, 3).map((scan) => `
       <article class="note-card saved-card scan-history-card">
-        <p class="card-label">${scan.salonLane}</p>
+        <p class="card-label">${scan.studioLane}</p>
         <h3>${scan.title}</h3>
         <p>${scan.summary}</p>
         <div class="detail-tags">
@@ -1713,6 +1713,6 @@ Your coaching style:
   },
 
 };
-// Aloha from Pearl City! GlowAI beauty coach — powered by Claude Sonnet 4.6
+// GlowAI beauty coach — powered by Claude Sonnet 4.6
 
 document.addEventListener('DOMContentLoaded', () => window.glowaiApp.init());

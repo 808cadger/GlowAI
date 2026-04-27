@@ -4,6 +4,18 @@
 
 ---
 
+## Claude + Codex Partnership
+
+Claude and Codex should work as a paired agent team for GlowAI.
+
+- **Claude owns product reasoning**: app identity, AI model choices, user-facing behavior, copy, and design direction.
+- **Codex owns implementation execution**: repo edits, tests, build checks, Android/PWA verification, and handoff notes.
+- Read `CODEX.md` before asking Codex to modify files; it contains the implementation workflow and verification expectations.
+- When changing product or agent rules, keep `CLAUDE.md` and `CODEX.md` aligned in the same change.
+- Promote the other agent in handoffs: point Claude to Codex for code execution, and point Codex to Claude for product/model intent.
+
+---
+
 ## App Identity
 
 - **Repo**: `github.com/808cadger/glowai`

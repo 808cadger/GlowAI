@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#f4c7b8" />
   <title>GlowAI</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="./styles.css" />
@@ -14,7 +13,7 @@
     <header class="app-header">
       <div class="header-brand">
         <p class="eyebrow">GlowAI</p>
-        <h1 class="app-title">Pocket salon planner.</h1>
+        <h1 class="app-title">AI skin coach.</h1>
       </div>
 
       <div class="header-actions">
@@ -41,12 +40,12 @@
       <section class="hero-panel tone-home">
         <div class="hero-copy">
           <p class="section-kicker">Face scan first</p>
-          <h2>Start with your skin, then branch into the full salon.</h2>
-          <p class="hero-text">GlowAI now opens with face scan as the first move. Capture a quick selfie analysis, then step into full salon planning only if you want brows, glam, hair, nails, and styling layered on top.</p>
+          <h2>Know what your skin needs before you buy or book.</h2>
+          <p class="hero-text">GlowAI turns a quick selfie into skin scores, focus zones, AM/PM guidance, progress tracking, and salon-ready next steps. It is built for skincare decisions first, with beauty services layered in when they actually help.</p>
 
           <div class="hero-actions">
             <button class="primary-btn" id="homeStartScan" type="button">Start face scan</button>
-            <button class="secondary-btn" type="button" data-nav-target="services">Open full salon</button>
+            <button class="secondary-btn" type="button" data-nav-target="concierge">Ask the coach</button>
           </div>
 
           <div class="page-pills">
@@ -59,51 +58,83 @@
         <aside class="hero-spotlight">
           <p class="card-label">Scan preview</p>
           <h3 id="heroFocusTitle">No scan yet. Start with a fresh face read.</h3>
-          <p id="heroFocusCopy">GlowAI will capture a selfie, build a quick skin summary, and suggest what to do next before you enter the broader salon flow.</p>
+          <p id="heroFocusCopy">GlowAI will capture a selfie, build a six-point skin snapshot, and turn the result into a routine, product direction, and optional booking path.</p>
 
           <div class="spotlight-meta">
-            <div class="spotlight-chip warm">Camera-first</div>
-            <div class="spotlight-chip coral">Skin summary</div>
-            <div class="spotlight-chip plum">Salon optional</div>
+            <div class="spotlight-chip warm">Daily scans</div>
+            <div class="spotlight-chip coral">AM/PM routine</div>
+            <div class="spotlight-chip plum">Private by design</div>
           </div>
         </aside>
       </section>
 
+      <section class="market-strip" aria-label="GlowAI product strengths">
+        <article class="market-stat">
+          <strong>6</strong>
+          <span>skin signals</span>
+        </article>
+        <article class="market-stat">
+          <strong>AM/PM</strong>
+          <span>routine planning</span>
+        </article>
+        <article class="market-stat">
+          <strong>Zone</strong>
+          <span>focus mapping</span>
+        </article>
+        <article class="market-stat">
+          <strong>Local</strong>
+          <span>scan history</span>
+        </article>
+      </section>
+
       <section class="dashboard-grid">
         <article class="dashboard-card tone-peach">
-          <p class="card-label">Step 1</p>
-          <h3>Scan your face</h3>
-          <p>Use the front camera for a fast skin read and a clear starting point before you make any beauty decisions.</p>
+          <p class="card-label">Analyze</p>
+          <h3>Face-first skin scoring</h3>
+          <p>Capture hydration, texture, clarity, tone, redness, and oil-balance signals in one simple scan flow.</p>
         </article>
 
         <article class="dashboard-card tone-rose">
-          <p class="card-label">Step 2</p>
-          <h3>Review the result</h3>
-          <p>See a quick skin snapshot, recommended focus areas, and the salon lane that makes the most sense next.</p>
+          <p class="card-label">Adapt</p>
+          <h3>Routine recommendations</h3>
+          <p>Turn scan results into morning and night care guidance with ingredients, habits, and timing that fit the current read.</p>
         </article>
 
         <article class="dashboard-card tone-gold">
-          <p class="card-label">Step 3</p>
-          <h3>Go full salon if you want</h3>
-          <p>Once the face scan is done, move into brows, glam, hair, nails, and bookings with a more grounded beauty plan.</p>
+          <p class="card-label">Track</p>
+          <h3>Visible progress trail</h3>
+          <p>Save recent reads so users can compare changes over time instead of guessing whether a routine is working.</p>
+        </article>
+      </section>
+
+      <section class="market-feature-band" aria-label="Market-ready GlowAI features">
+        <article class="market-feature">
+          <p class="card-label">Product fit</p>
+          <h3>Ingredient-aware coaching</h3>
+          <p>GlowAI recommends ingredient types and flags routine conflicts before users add more products to sensitive or overloaded skin.</p>
+        </article>
+        <article class="market-feature">
+          <p class="card-label">Progress</p>
+          <h3>Daily check-ins without the clutter</h3>
+          <p>The app keeps scan history, current focus, and next action close together so the product feels useful after the first selfie.</p>
         </article>
       </section>
 
       <section class="luxury-consult-grid" aria-label="GlowAI consultation quality">
         <article class="consult-tile">
           <p class="card-label">Consultation mode</p>
-          <h3>Scan-led intake</h3>
-          <p>Every beauty recommendation starts from the latest skin read, then moves into service planning.</p>
+          <h3>Scan-led personalization</h3>
+          <p>Every recommendation starts from the latest skin read, then moves into routines, products, or service planning.</p>
         </article>
         <article class="consult-tile">
           <p class="card-label">Safety layer</p>
-          <h3>Informational guidance</h3>
-          <p>GlowAI keeps care advice non-diagnostic and routes urgent concerns toward in-person care.</p>
+          <h3>Wellness guidance</h3>
+          <p>GlowAI keeps care advice cosmetic and educational, with clear boundaries for medical concerns.</p>
         </article>
         <article class="consult-tile">
           <p class="card-label">Agent skills</p>
-          <h3>Coach, stylist, scheduler</h3>
-          <p>The assistant can jump users to scan, services, booking, or concierge without hunting through menus.</p>
+          <h3>Coach, tracker, scheduler</h3>
+          <p>The assistant can move users from scan results to routine advice, saved plans, services, or booking.</p>
         </article>
       </section>
     </section>
@@ -112,7 +143,7 @@
       <section class="page-lead">
         <p class="section-kicker">Face Scan</p>
         <h2>Your skin read comes first.</h2>
-        <p class="section-copy">Open the front camera, capture a fresh selfie, and let GlowAI turn it into a quick skin summary and next-step salon suggestion.</p>
+        <p class="section-copy">Open the front camera, capture a fresh selfie, and let GlowAI turn it into scores, focus areas, routine steps, and a next action.</p>
       </section>
 
       <section class="detail-hero booking-layout">
@@ -122,7 +153,7 @@
             <span class="scan-launch-ring scan-launch-ring-two"></span>
             <span class="scan-launch-icon">◉</span>
             <span class="scan-launch-title">Start face scan</span>
-            <span class="scan-launch-sub">Front camera, quick skin read, instant next step.</span>
+            <span class="scan-launch-sub">Front camera, skin scores, instant routine direction.</span>
           </button>
 
           <article class="scan-status-card" id="scanStatusCard">
@@ -131,7 +162,7 @@
               <span class="scan-status-pill" id="scanStatusPill">Idle</span>
             </div>
             <h3 id="scanStatusTitle">Ready for a fresh face read.</h3>
-            <p id="scanStatusCopy">Take a scan and GlowAI will surface a skin snapshot, recommended focus, and the salon lane that should come next.</p>
+            <p id="scanStatusCopy">Take a scan and GlowAI will surface a skin snapshot, recommended focus, and the care step that should come next.</p>
           </article>
 
           <div class="scan-preview hidden" id="scanPreview">
@@ -145,7 +176,7 @@
             <span class="scan-result-badge" id="scanResultBadge">Waiting</span>
           </div>
           <h3 id="scanResultTitle">No scan yet</h3>
-          <p id="scanResultSummary">Start a face scan to see your current skin snapshot, focus areas, and a suggested beauty lane.</p>
+          <p id="scanResultSummary">Start a face scan to see your current skin snapshot, focus areas, and suggested care lane.</p>
           <div class="detail-tags" id="scanResultTags">
             <span class="detail-tag">Hydration</span>
             <span class="detail-tag">Texture</span>
@@ -165,6 +196,16 @@
               <strong id="scanMetricClarity">-</strong>
             </article>
           </div>
+          <div class="routine-plan" id="scanRoutinePlan">
+            <article>
+              <p class="card-label">Morning</p>
+              <strong id="scanRoutineMorning">Cleanse, hydrate, SPF</strong>
+            </article>
+            <article>
+              <p class="card-label">Night</p>
+              <strong id="scanRoutineNight">Barrier support</strong>
+            </article>
+          </div>
           <div class="scan-quality-panel" aria-label="Scan quality review">
             <article class="quality-item">
               <p class="card-label">Confidence</p>
@@ -181,7 +222,7 @@
             <li>Keep your full face in frame</li>
             <li>GlowAI will suggest what to do next</li>
           </ul>
-          <button class="secondary-btn secondary-btn-full" id="scanSalonCTA" type="button" data-nav-target="services">Continue into full salon</button>
+          <button class="secondary-btn secondary-btn-full" id="scanSalonCTA" type="button" data-nav-target="services">View matched services</button>
         </article>
       </section>
 
@@ -205,8 +246,8 @@
     <section class="page" id="page-services" data-page-panel="services">
       <section class="page-lead">
         <p class="section-kicker">Services</p>
-        <h2>Choose the beauty lane you want, then go deeper.</h2>
-        <p class="section-copy">This page replaces the overloaded home feed with a dedicated service browser and a cleaner focus card.</p>
+        <h2>Choose the beauty lane that matches the scan.</h2>
+        <p class="section-copy">Browse services as add-ons to the skincare plan, not disconnected offers. Each lane explains when it helps and how to time it.</p>
       </section>
 
       <div class="focus-switcher" role="tablist" aria-label="Beauty focus switcher">
@@ -298,6 +339,63 @@
             <span class="detail-tag">Artist fit</span>
             <span class="detail-tag">Bookable outcome</span>
           </div>
+
+          <section class="tryon-studio hidden" id="tryonStudio" aria-label="Virtual try-on studio">
+            <div class="tryon-toolbar">
+              <div>
+                <p class="card-label" id="tryonLabel">Virtual Try-On</p>
+                <h3 id="tryonTitle">Preview before booking.</h3>
+              </div>
+              <button class="secondary-btn tryon-capture" id="tryonCaptureBtn" type="button">Use camera</button>
+            </div>
+
+            <div class="tryon-stage" id="tryonStage" data-tryon-mode="brows">
+              <img class="tryon-photo hidden" id="tryonPhoto" alt="Try-on preview" />
+              <div class="tryon-placeholder" id="tryonPlaceholder">
+                <span class="tryon-face-icon" aria-hidden="true"></span>
+                <strong id="tryonPlaceholderTitle">Open camera to start.</strong>
+                <p id="tryonPlaceholderCopy">GlowAI will place the preview layer over your photo so you can compare options.</p>
+              </div>
+              <div class="brow-overlay hidden" id="browOverlay" aria-hidden="true">
+                <span class="brow brow-left"></span>
+                <span class="brow brow-right"></span>
+              </div>
+              <div class="nail-overlay hidden" id="nailOverlay" aria-hidden="true">
+                <span class="nail n1"></span>
+                <span class="nail n2"></span>
+                <span class="nail n3"></span>
+                <span class="nail n4"></span>
+                <span class="nail n5"></span>
+              </div>
+            </div>
+
+            <div class="tryon-controls">
+              <div class="tryon-control-group" id="browControls">
+                <p class="card-label">Brow style</p>
+                <div class="segmented-control">
+                  <button class="tryon-option is-active" type="button" data-brow-style="soft">Soft arch</button>
+                  <button class="tryon-option" type="button" data-brow-style="lifted">Lifted</button>
+                  <button class="tryon-option" type="button" data-brow-style="bold">Bold sculpt</button>
+                </div>
+              </div>
+
+              <div class="tryon-control-group hidden" id="nailControls">
+                <p class="card-label">Nail color</p>
+                <div class="color-swatches" aria-label="Nail colors">
+                  <button class="color-swatch swatch-berry is-active" type="button" data-nail-color="var(--nail-berry)" aria-label="Berry gloss"></button>
+                  <button class="color-swatch swatch-milky" type="button" data-nail-color="var(--nail-milky)" aria-label="Milky nude"></button>
+                  <button class="color-swatch swatch-black" type="button" data-nail-color="var(--nail-black)" aria-label="Black gel"></button>
+                  <button class="color-swatch swatch-gold" type="button" data-nail-color="var(--nail-gold)" aria-label="Gold chrome"></button>
+                  <button class="color-swatch swatch-blue" type="button" data-nail-color="var(--nail-blue)" aria-label="Blue gloss"></button>
+                </div>
+                <div class="segmented-control">
+                  <button class="tryon-option is-active" type="button" data-nail-length="short">Short</button>
+                  <button class="tryon-option" type="button" data-nail-length="medium">Medium</button>
+                  <button class="tryon-option" type="button" data-nail-length="long">Long</button>
+                </div>
+              </div>
+            </div>
+          </section>
         </article>
 
         <article class="detail-side">
@@ -357,32 +455,32 @@
     <section class="page" id="page-journey" data-page-panel="journey">
       <section class="page-lead">
         <p class="section-kicker">Journey</p>
-        <h2>One route from analysis to booking.</h2>
-        <p class="section-copy">Instead of mixing the journey into every card, it now lives on its own page with a clearer story.</p>
+        <h2>One route from scan to visible progress.</h2>
+        <p class="section-copy">GlowAI is designed around repeat use: scan, adjust the routine, track changes, and only book services when the timing makes sense.</p>
       </section>
 
       <div class="journey-grid">
         <article class="journey-card tone-coral">
           <p class="card-label">Step 1</p>
           <h3>Analyze</h3>
-          <p>Use camera features for skin, brows, and look previews to build confidence before booking.</p>
+          <p>Use the face scan to create a current skin baseline with clear scores and focus areas.</p>
         </article>
         <article class="journey-card tone-gold">
           <p class="card-label">Step 2</p>
-          <h3>Try On</h3>
-          <p>Compare nails, makeup, hair, and outfit direction so the beauty plan feels cohesive.</p>
+          <h3>Adjust</h3>
+          <p>Update morning and night care based on what changed instead of following a static routine forever.</p>
         </article>
         <article class="journey-card tone-plum">
           <p class="card-label">Step 3</p>
           <h3>Book</h3>
-          <p>Move into appointments with saved preferences, clearer context, and fewer repeated decisions.</p>
+          <p>Move into appointments with scan context, saved preferences, and clearer prep timing.</p>
         </article>
       </div>
 
       <article class="wide-card">
         <p class="card-label">Signature outcome</p>
-        <h3>A complete look, not a pile of disconnected tools.</h3>
-        <p>GlowAI should connect prep, styling, and booking into one itinerary. This page exists to keep that logic visible without overwhelming the home screen.</p>
+        <h3>A skincare companion, not a one-time scanner.</h3>
+        <p>GlowAI connects daily reads, adaptive routines, coach guidance, and booking into one product path users can return to.</p>
       </article>
     </section>
 
@@ -393,11 +491,11 @@
         <p class="section-copy">Ask about skin concerns, product picks, routines, and event prep. GlowAI asks smart follow-up questions and gives you a real plan — not generic advice.</p>
       </section>
 
-      <div class="coach-key-bar" id="coachKeyBar" style="display:none">
-        <p class="card-label" style="margin-bottom:0.4rem">Claude API key required</p>
-        <div style="display:flex;gap:0.5rem;align-items:center">
-          <input id="coachApiKeyInput" type="password" class="field-input" style="flex:1;font-size:0.82rem;padding:0.55rem 0.75rem" placeholder="sk-ant-..." />
-          <button class="primary-btn" id="coachApiKeySave" type="button" style="white-space:nowrap;padding:0.55rem 1rem;font-size:0.82rem">Save key</button>
+      <div class="coach-key-bar hidden" id="coachKeyBar">
+        <p class="card-label coach-key-label">Claude API key required</p>
+        <div class="coach-key-row">
+          <input id="coachApiKeyInput" type="password" class="field-input coach-key-input" placeholder="sk-ant-..." />
+          <button class="primary-btn coach-key-save" id="coachApiKeySave" type="button">Save key</button>
         </div>
       </div>
 

@@ -4,6 +4,16 @@ window.glowaiApp = {
   currentPage: 'home',
   currentService: 'brows',
   latestScan: null,
+  tryonState: {
+    mode: 'brows',
+    browStyle: 'soft',
+    nailColor: 'var(--nail-berry)',
+    nailLength: 'short',
+    photos: {
+      brows: '',
+      nails: '',
+    },
+  },
   storageKeys: {
     favorites: 'glowai_favorites',
     bookings: 'glowai_bookings',
@@ -17,8 +27,8 @@ window.glowaiApp = {
       title: 'Shape, tint, and map brows before booking.',
       description: 'Preview soft arch, bold sculpt, and cleanup options with camera guidance and a service recommendation path.',
       points: ['Shape analysis', 'Tint planning', 'Artist match'],
-      heroTitle: 'Brows first, then skin prep.',
-      heroCopy: 'Start with shape framing, then keep complexion prep soft, bright, and event-ready before makeup and styling lock in.',
+      heroTitle: 'Brows after the skin baseline.',
+      heroCopy: 'Use the current scan to decide how much prep the complexion needs before shape framing and glam timing lock in.',
       previewLabel: 'Selected service',
       previewTitle: 'Eyebrow design studio',
       previewBody: 'Shape mapping, tint guidance, and cleanup timing built around face framing.',
@@ -40,8 +50,8 @@ window.glowaiApp = {
       title: 'Try nail length, finish, and color direction first.',
       description: 'Move from quick neutrals to full statement sets with saved inspiration and direct booking into manicure services.',
       points: ['Color preview', 'Set inspiration', 'Rebook favorites'],
-      heroTitle: 'Nails set the tone early.',
-      heroCopy: 'Lock finish, color, and set direction first so the rest of the beauty stack follows a cleaner visual mood.',
+      heroTitle: 'Nails support the final look.',
+      heroCopy: 'Use the scan to keep skin prep realistic, then choose finish, color, and set direction around the event plan.',
       previewLabel: 'Selected service',
       previewTitle: 'Manicure mood board',
       previewBody: 'Move from neutrals to statement sets with clearer finish direction and rebooking logic.',
@@ -63,8 +73,8 @@ window.glowaiApp = {
       title: 'Coordinate outfits with the rest of the beauty look.',
       description: 'Use virtual try-on as part of a complete glam plan so clothing, makeup, brows, and nails feel aligned.',
       points: ['Outfit pairing', 'Event styling', 'Look saves'],
-      heroTitle: 'Style direction clarifies everything.',
-      heroCopy: 'Set silhouette and palette early so glam, hair, and nails all support the same final impression.',
+      heroTitle: 'Style direction comes after skin context.',
+      heroCopy: 'Set silhouette and palette once the skin plan is clear so glam, hair, and nails support the same final impression.',
       previewLabel: 'Selected service',
       previewTitle: 'Clothes and look try-on',
       previewBody: 'Pair outfit direction with makeup and nails so the whole look feels intentional before booking.',
@@ -86,8 +96,8 @@ window.glowaiApp = {
       title: 'Compare glam directions before you sit in the chair.',
       description: 'Help users explore soft glam, bridal, editorial, and day-to-night looks with artist and timing guidance.',
       points: ['Finish selection', 'Artist guidance', 'Look comparison'],
-      heroTitle: 'Makeup defines the finish.',
-      heroCopy: 'Use glam direction to decide how skin prep, brows, and styling should behave together for the event.',
+      heroTitle: 'Makeup works better with scan-led prep.',
+      heroCopy: 'Use the latest skin read to decide whether the finish should stay dewy, satin, brightening, or coverage-focused.',
       previewLabel: 'Selected service',
       previewTitle: 'Soft glam planner',
       previewBody: 'Compare finish directions and move users toward the right artist, timing, and event makeup energy.',
@@ -109,8 +119,8 @@ window.glowaiApp = {
       title: 'Keep scan and care planning as the beauty base layer.',
       description: 'The current scan foundation should support prep and treatment recommendations as part of a full salon journey.',
       points: ['Skin scan', 'Prep routine', 'Treatment fit'],
-      heroTitle: 'Prep starts with the skin.',
-      heroCopy: 'Lead with camera-guided prep so the rest of the look builds on hydration, tone, and treatment timing.',
+      heroTitle: 'Prep starts with measurable skin signals.',
+      heroCopy: 'Lead with camera-guided prep so routines, products, and service timing respond to hydration, tone, clarity, and texture.',
       previewLabel: 'Selected service',
       previewTitle: 'Skin scan and prep',
       previewBody: 'Keep scan-led prep as one strong module inside the broader beauty flow rather than the whole identity.',
@@ -133,7 +143,7 @@ window.glowaiApp = {
       description: 'Organize blowouts, silk press, curl sets, and finish work inside the same planning flow as glam and outfit choices.',
       points: ['Style preview', 'Care notes', 'Return booking'],
       heroTitle: 'Hair is the final polish.',
-      heroCopy: 'Use hair as the finishing layer so volume, movement, and timing support the rest of the beauty plan.',
+      heroCopy: 'Use hair as the finishing layer after scan-led prep, makeup timing, and event styling are settled.',
       previewLabel: 'Selected service',
       previewTitle: 'Style and finish lounge',
       previewBody: 'Bring blowouts, curls, and finish work into the same planning stack as glam so the look lands cohesively.',
@@ -162,6 +172,7 @@ window.glowaiApp = {
     this.bindFavorites();
     this.bindChat();
     this.bindScan();
+    this.bindTryOn();
     this.bindAvatarSkills();
     this.renderFocus('brows');
     this.renderFavorites();
@@ -275,6 +286,51 @@ window.glowaiApp = {
     });
   },
 
+  bindTryOn() {
+    document.getElementById('tryonCaptureBtn')?.addEventListener('click', async () => {
+      const mode = this.tryonState.mode;
+      const facing = mode === 'brows' ? 'front' : 'rear';
+      const button = document.getElementById('tryonCaptureBtn');
+      if (button) button.textContent = 'Opening...';
+
+      try {
+        const capture = await window.scanModule?.captureStudioPhoto?.({ facing });
+        if (!capture?.dataUrl) {
+          if (button) button.textContent = 'Use camera';
+          return;
+        }
+
+        this.tryonState.photos[mode] = capture.dataUrl;
+        this.renderTryOn();
+      } catch {
+        this.pushAssistantMessage('Camera did not open for try-on. Check camera permission and try again.');
+      } finally {
+        if (button) button.textContent = mode === 'brows' ? 'Retake selfie' : 'Retake hand photo';
+      }
+    });
+
+    document.querySelectorAll('[data-brow-style]').forEach((button) => {
+      button.addEventListener('click', () => {
+        this.tryonState.browStyle = button.getAttribute('data-brow-style') || 'soft';
+        this.renderTryOn();
+      });
+    });
+
+    document.querySelectorAll('[data-nail-color]').forEach((button) => {
+      button.addEventListener('click', () => {
+        this.tryonState.nailColor = button.getAttribute('data-nail-color') || 'var(--nail-berry)';
+        this.renderTryOn();
+      });
+    });
+
+    document.querySelectorAll('[data-nail-length]').forEach((button) => {
+      button.addEventListener('click', () => {
+        this.tryonState.nailLength = button.getAttribute('data-nail-length') || 'short';
+        this.renderTryOn();
+      });
+    });
+  },
+
   bindBookingFlow() {
     const detailCTA = document.getElementById('detailCTA');
     const form = document.getElementById('bookingForm');
@@ -357,13 +413,13 @@ window.glowaiApp = {
     const keySaveBtn = document.getElementById('coachApiKeySave');
     const keyInput = document.getElementById('coachApiKeyInput');
 
-    if (!this.getApiKey() && keyBar) keyBar.style.display = 'block';
+    if (!this.getApiKey() && keyBar) keyBar.classList.remove('hidden');
 
     keySaveBtn?.addEventListener('click', () => {
       const k = keyInput?.value.trim();
       if (!k.startsWith('sk-ant-')) { alert('Paste a valid Anthropic key (starts with sk-ant-).'); return; }
       localStorage.setItem('glowai_apikey', k);
-      if (keyBar) keyBar.style.display = 'none';
+      if (keyBar) keyBar.classList.add('hidden');
       this.pushAssistantMessage("Key saved! I'm your GlowAI beauty coach. Tell me about your skin — type, concerns, goals — and I'll build a real plan for you.");
     });
 
@@ -373,7 +429,7 @@ window.glowaiApp = {
       if (!message) return;
       const apiKey = this.getApiKey();
       if (!apiKey) {
-        if (keyBar) keyBar.style.display = 'block';
+        if (keyBar) keyBar.classList.remove('hidden');
         this.pushAssistantMessage('Add your Claude API key above to activate the live beauty coach.');
         return;
       }
@@ -574,6 +630,68 @@ Your coaching style:
     }
 
     this.syncBookingService();
+    this.syncTryOnStudio(key);
+  },
+
+  syncTryOnStudio(key) {
+    const studio = document.getElementById('tryonStudio');
+    const label = document.getElementById('tryonLabel');
+    const title = document.getElementById('tryonTitle');
+    const placeholderTitle = document.getElementById('tryonPlaceholderTitle');
+    const placeholderCopy = document.getElementById('tryonPlaceholderCopy');
+    const captureBtn = document.getElementById('tryonCaptureBtn');
+    const browControls = document.getElementById('browControls');
+    const nailControls = document.getElementById('nailControls');
+    const enabled = key === 'brows' || key === 'nails';
+
+    studio?.classList.toggle('hidden', !enabled);
+    if (!enabled) return;
+
+    this.tryonState.mode = key;
+    if (label) label.textContent = key === 'brows' ? 'Eyebrow try-on' : 'Nail try-on';
+    if (title) title.textContent = key === 'brows' ? 'Compare brow shapes on your face.' : 'Preview color and length on your hand.';
+    if (placeholderTitle) placeholderTitle.textContent = key === 'brows' ? 'Take a selfie for brow mapping.' : 'Take a hand photo for nail preview.';
+    if (placeholderCopy) placeholderCopy.textContent = key === 'brows'
+      ? 'Center your face in even light. GlowAI places brows where they are easiest to compare.'
+      : 'Place your hand flat in good light. GlowAI overlays the selected manicure set for quick comparison.';
+    if (captureBtn) captureBtn.textContent = this.tryonState.photos[key] ? (key === 'brows' ? 'Retake selfie' : 'Retake hand photo') : 'Use camera';
+    browControls?.classList.toggle('hidden', key !== 'brows');
+    nailControls?.classList.toggle('hidden', key !== 'nails');
+    this.renderTryOn();
+  },
+
+  renderTryOn() {
+    const mode = this.tryonState.mode;
+    const stage = document.getElementById('tryonStage');
+    const photo = document.getElementById('tryonPhoto');
+    const placeholder = document.getElementById('tryonPlaceholder');
+    const browOverlay = document.getElementById('browOverlay');
+    const nailOverlay = document.getElementById('nailOverlay');
+
+    stage?.setAttribute('data-tryon-mode', mode);
+    stage?.setAttribute('data-brow-style', this.tryonState.browStyle);
+    stage?.setAttribute('data-nail-length', this.tryonState.nailLength);
+    if (stage) stage.style.setProperty('--nail-color', this.tryonState.nailColor);
+
+    const activePhoto = this.tryonState.photos[mode] || '';
+    const hasPhoto = Boolean(activePhoto);
+    if (photo) {
+      photo.classList.toggle('hidden', !hasPhoto);
+      if (hasPhoto) photo.src = activePhoto;
+    }
+    placeholder?.classList.toggle('hidden', hasPhoto);
+    browOverlay?.classList.toggle('hidden', !hasPhoto || mode !== 'brows');
+    nailOverlay?.classList.toggle('hidden', !hasPhoto || mode !== 'nails');
+
+    document.querySelectorAll('[data-brow-style]').forEach((button) => {
+      button.classList.toggle('is-active', button.getAttribute('data-brow-style') === this.tryonState.browStyle);
+    });
+    document.querySelectorAll('[data-nail-color]').forEach((button) => {
+      button.classList.toggle('is-active', button.getAttribute('data-nail-color') === this.tryonState.nailColor);
+    });
+    document.querySelectorAll('[data-nail-length]').forEach((button) => {
+      button.classList.toggle('is-active', button.getAttribute('data-nail-length') === this.tryonState.nailLength);
+    });
   },
 
   handleScanCapture(dataUrl) {
@@ -594,6 +712,7 @@ Your coaching style:
       tags: scanRecord.tags,
       steps: scanRecord.steps,
       metrics: scanRecord.metrics,
+      routine: scanRecord.routine,
       confidence: scanRecord.confidence,
       safetyNote: scanRecord.safetyNote,
       handoffs: scanRecord.handoffs,
@@ -627,37 +746,40 @@ Your coaching style:
         title: 'Balanced skin with slight dehydration',
         summary: 'Your skin looks generally balanced, with mild dehydration around the cheeks and a good base for soft glam or prep-first services.',
         tags: ['Hydration', 'Soft texture', 'Prep ready'],
-        steps: ['Start with hydration and barrier support before makeup-heavy services', 'Brows or soft glam would layer well after a light prep day', 'Keep exfoliation minimal if the event is close'],
+        steps: ['Start with hydration and barrier support before makeup-heavy services', 'Use a gentle humectant serum before moisturizer and SPF', 'Keep exfoliation minimal if the event is close'],
         salonLane: 'Skin Prep',
         serviceKey: 'skin',
-        metrics: { balance: '82%', hydration: '68%', clarity: '79%' },
+        metrics: { balance: '82%', hydration: '68%', clarity: '79%', texture: '76%', tone: '81%', oil: '72%' },
+        routine: { morning: 'Gentle cleanse, hyaluronic serum, moisturizer, SPF 30+', night: 'Cleanse, ceramide cream, no exfoliation tonight' },
         confidence: '84%',
         safetyNote: 'Routine',
-        handoffs: ['Coach builds a barrier-support routine', 'Stylist keeps makeup skin-forward', 'Scheduler suggests prep before glam'],
+        handoffs: ['Coach builds a barrier-support routine', 'Progress tracker saves this as the baseline', 'Scheduler suggests prep before glam'],
       },
       {
         title: 'Brightness loss with texture focus',
         summary: 'GlowAI picked up mild texture and uneven brightness, which makes skin prep the clearest first move before the full salon flow.',
         tags: ['Texture', 'Brightness', 'Calm prep'],
-        steps: ['Book skin prep before anything finish-heavy', 'Keep makeup soft and skin-led until tone feels more even', 'Save glam and hair after the prep window'],
+        steps: ['Prioritize barrier-friendly brightening before finish-heavy services', 'Use niacinamide or azelaic acid on non-exfoliation nights', 'Save glam and hair after the prep window'],
         salonLane: 'Skin Prep',
         serviceKey: 'skin',
-        metrics: { balance: '74%', hydration: '63%', clarity: '66%' },
+        metrics: { balance: '74%', hydration: '63%', clarity: '66%', texture: '61%', tone: '65%', oil: '70%' },
+        routine: { morning: 'Cleanse, niacinamide, moisturizer, SPF 50', night: 'Cleanse, barrier cream, pause harsh scrubs' },
         confidence: '76%',
         safetyNote: 'Prep first',
-        handoffs: ['Coach avoids aggressive exfoliation', 'Stylist softens complexion finish', 'Scheduler puts skin prep before event services'],
+        handoffs: ['Coach avoids aggressive exfoliation', 'Progress tracker watches tone and texture', 'Scheduler puts skin prep before event services'],
       },
       {
         title: 'Strong frame for brows and polished glam',
         summary: 'Your features would respond well to clean brow framing and a polished glam finish, with skin prep as support rather than the headline.',
         tags: ['Brows', 'Framing', 'Glam ready'],
-        steps: ['Start with brow shaping or cleanup first', 'Use light prep and avoid overloading the skin right before glam', 'Move into makeup once the brow frame is set'],
+        steps: ['Start with brow shaping or cleanup first', 'Use light prep and avoid overloading the skin right before glam', 'Keep SPF and moisturizer steady so makeup sits evenly'],
         salonLane: 'Eyebrow Studio',
         serviceKey: 'brows',
-        metrics: { balance: '88%', hydration: '72%', clarity: '84%' },
+        metrics: { balance: '88%', hydration: '72%', clarity: '84%', texture: '80%', tone: '83%', oil: '77%' },
+        routine: { morning: 'Cleanse, lightweight moisturizer, SPF 30+', night: 'Cleanse, calming serum, moisturizer' },
         confidence: '89%',
         safetyNote: 'Routine',
-        handoffs: ['Coach keeps care simple before glam', 'Stylist starts with brow framing', 'Scheduler pairs brows before makeup'],
+        handoffs: ['Coach keeps care simple before glam', 'Progress tracker monitors hydration', 'Scheduler pairs brows before makeup'],
       },
     ];
 
@@ -679,23 +801,27 @@ Your coaching style:
     const metricBalance = document.getElementById('scanMetricBalance');
     const metricHydration = document.getElementById('scanMetricHydration');
     const metricClarity = document.getElementById('scanMetricClarity');
+    const routineMorning = document.getElementById('scanRoutineMorning');
+    const routineNight = document.getElementById('scanRoutineNight');
     const qualityConfidence = document.getElementById('scanQualityConfidence');
     const qualitySafety = document.getElementById('scanQualitySafety');
     const handoffs = document.getElementById('scanAgentHandoffs');
 
     if (!latest) {
       if (title) title.textContent = 'No scan yet';
-      if (summary) summary.textContent = 'Start a face scan to see your current skin snapshot, focus areas, and a suggested beauty lane.';
+      if (summary) summary.textContent = 'Start a face scan to see your current skin snapshot, focus areas, and a suggested care lane.';
       if (badge) badge.textContent = 'Waiting';
       if (preview) preview.classList.add('hidden');
       if (previewImage) previewImage.removeAttribute('src');
       if (metricBalance) metricBalance.textContent = '-';
       if (metricHydration) metricHydration.textContent = '-';
       if (metricClarity) metricClarity.textContent = '-';
+      if (routineMorning) routineMorning.textContent = 'Cleanse, hydrate, SPF';
+      if (routineNight) routineNight.textContent = 'Barrier support';
       if (qualityConfidence) qualityConfidence.textContent = '-';
       if (qualitySafety) qualitySafety.textContent = 'Guide';
       if (handoffs) handoffs.innerHTML = '';
-      this.setScanStatus('Idle', 'Take a scan and GlowAI will surface a skin snapshot, recommended focus, and the salon lane that should come next.');
+      this.setScanStatus('Idle', 'Take a scan and GlowAI will surface a skin snapshot, recommended focus, and the care step that should come next.');
       this.renderScanHistory();
       return;
     }
@@ -709,6 +835,8 @@ Your coaching style:
     if (metricBalance) metricBalance.textContent = latest.metrics?.balance || '-';
     if (metricHydration) metricHydration.textContent = latest.metrics?.hydration || '-';
     if (metricClarity) metricClarity.textContent = latest.metrics?.clarity || '-';
+    if (routineMorning) routineMorning.textContent = latest.routine?.morning || 'Cleanse, hydrate, SPF';
+    if (routineNight) routineNight.textContent = latest.routine?.night || 'Barrier support';
     if (qualityConfidence) qualityConfidence.textContent = latest.confidence || 'Guided';
     if (qualitySafety) qualitySafety.textContent = latest.safetyNote || 'Guide';
     if (handoffs) {
@@ -761,6 +889,9 @@ Your coaching style:
           <span class="detail-tag">Balance ${scan.metrics?.balance || '-'}</span>
           <span class="detail-tag">Hydration ${scan.metrics?.hydration || '-'}</span>
           <span class="detail-tag">Clarity ${scan.metrics?.clarity || '-'}</span>
+          <span class="detail-tag">Texture ${scan.metrics?.texture || '-'}</span>
+          <span class="detail-tag">Tone ${scan.metrics?.tone || '-'}</span>
+          <span class="detail-tag">Oil ${scan.metrics?.oil || '-'}</span>
         </div>
       </article>
     `).join('');

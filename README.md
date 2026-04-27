@@ -51,6 +51,31 @@ AI-powered skin analysis, appointment booking, and personal skincare chatbot —
 
 ---
 
+## Problem it solves
+
+Skincare users often jump between product advice, appointment booking, and vague progress tracking. GlowAI connects a camera scan to personalized care recommendations, appointment flow, and a skincare assistant so the user has one place to understand concerns and plan next steps.
+
+## Screenshots
+
+Add screenshots here after capture:
+
+| Skin scan | Routine plan | AI chat |
+|-----------|--------------|---------|
+| `docs/screenshots/skin-scan.png` | `docs/screenshots/routine-plan.png` | `docs/screenshots/ai-chat.png` |
+
+## Developer highlights
+
+- Built a full-stack AI health-adjacent app with camera capture, FastAPI routes, async database models, and Android packaging.
+- Separated vision analysis from conversational support so scan results and chatbot guidance can evolve independently.
+- Added appointment workflows around the AI result, turning analysis into a product path users can act on.
+- Demonstrates practical AI integration across frontend, backend, authentication, storage, and mobile build tooling.
+
+## Recruiter signal
+
+- Strong fit for full-stack AI, mobile health-tech, and applied computer-vision roles.
+- Shows ability to combine frontend UX, backend APIs, database models, camera input, and AI services into one product.
+- Review this project for evidence of production-style architecture around a sensitive consumer workflow.
+
 ## Features
 
 - **Skin Scan** — Claude Opus 4.6 vision analyzes a camera photo and returns condition tags, severity, confidence, and care recommendations

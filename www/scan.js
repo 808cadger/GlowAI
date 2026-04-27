@@ -1,13 +1,11 @@
-// AutoIQ Pro — scan.js
+// GlowAI — scan.js
 // Bundled by esbuild → scan.bundle.js
-// #ASSUMPTION: @capacitor/camera v6 installed; esbuild bundles this file.
-// #ASSUMPTION: Backend URL stored in localStorage key 'glowai_api_url'.
-// #ASSUMPTION: If no API URL set, mock results are shown (demo mode).
+// #ASSUMPTION: @capacitor/camera is installed; esbuild bundles this file.
+// #ASSUMPTION: The app can complete a local demo scan when no backend is configured.
 
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
-const apiBase   = () => (localStorage.getItem('glowai_api_url') || '').replace(/\/$/, '');
-const authToken = () => localStorage.getItem('glowai_token') || 'dev-token';
+const app = () => window.glowaiApp;
 
 // ── Permission pre-check ──────────────────────────────────────────────────────
 async function ensureCameraPermission() {
@@ -23,27 +21,19 @@ async function ensureCameraPermission() {
   if (perms.camera === 'granted') return true;
 
   if (perms.camera === 'denied') {
-    window.glowApp.setScanState('error',
-      'Camera access is blocked. Open Settings → Apps → AutoIQ Pro → Permissions → Camera and enable it, then try again.'
-    );
+    app()?.handleScanError?.('Camera access is blocked. Open Settings, enable camera access for GlowAI, then try again.');
     return false;
   }
 
   // Show rationale before prompting
   if (perms.camera === 'prompt-with-rationale') {
-    const ok = await window.glowApp.showConsentDialog(
-      'Camera Access',
-      'AutoIQ Pro uses your camera to identify the likely vehicle part and assess visible damage. Photos are sent to our AI and never stored without your consent.',
-      'Allow Camera', 'Not Now'
-    );
+    const ok = window.confirm('GlowAI uses your camera to capture a face scan and build cosmetic skincare guidance. Your demo scan stays on this device unless you connect a backend.');
     if (!ok) return false;
   }
 
   const granted = await Camera.requestPermissions({ permissions: ['camera'] });
   if (granted.camera !== 'granted') {
-    window.glowApp.setScanState('error',
-      'Camera permission is required to scan. Tap the button to try again.'
-    );
+    app()?.handleScanError?.('Camera permission is required to scan. Tap the button to try again.');
     return false;
   }
   return true;
@@ -66,20 +56,6 @@ async function resizeBase64(b64, maxBytes = 900_000) {
     };
     img.src = `data:image/jpeg;base64,${b64}`;
   });
-}
-
-// ── Camera capture (native) ───────────────────────────────────────────────────
-async function capturePhoto() {
-  const photo = await Camera.getPhoto({
-    quality: 85,
-    allowEditing: false,
-    resultType: CameraResultType.Base64,
-    source: CameraSource.Camera,
-    saveToGallery: false,
-    correctOrientation: true,
-    presentationStyle: 'fullscreen',
-  });
-  return photo.base64String;
 }
 
 async function captureStudioPhoto({ facing = 'rear' } = {}) {
@@ -139,170 +115,32 @@ function capturePhotoWebForFacing(facing = 'rear') {
   });
 }
 
-function capturePhotoWeb() {
-  return capturePhotoWebForFacing('rear');
-}
-
-// ── POST /api/scan ─────────────────────────────────────────────────────────────
-async function callScanAPI(base64Image) {
-  const base = apiBase();
-  if (!base) throw new Error('NO_API_URL');
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000);
-
-  try {
-    const resp = await fetch(`${base}/api/scan`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken()}`,
-      },
-      body: JSON.stringify({
-        image_base64: base64Image,
-        user_id: localStorage.getItem('glowai_user_id') || 'default',
-      }),
-      signal: controller.signal,
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.detail || `API ${resp.status}`);
-    }
-    return resp.json();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-// ── Mock results (demo mode when no backend configured) ───────────────────────
-const MOCK_RESULTS = [
-  {
-    part_name: 'front bumper',
-    skin_type: 'front bumper',
-    issues: ['surface_scrape', 'paint_transfer', 'clip_risk'],
-    recommendations: [
-      'Confirm whether the scrape is only in the paint or through the plastic cover.',
-      'Check panel gaps and mounting clips near the impact area.',
-      'Photograph the damage from straight-on and from the corner before requesting quotes.',
-      'Use the bumper workspace to save a corrected part reference and next steps.',
-    ],
-    suggested_appointment: { type: 'Body Shop', urgency: 'routine', reason: 'Damage appears cosmetic to moderate, but the bumper cover and clips should be inspected.' },
-  },
-  {
-    part_name: 'wheel and tire',
-    skin_type: 'wheel and tire',
-    issues: ['curb_rash', 'sidewall_mark', 'alignment_watch'],
-    recommendations: [
-      'Inspect the tire sidewall closely for cuts, bulges, or exposed cords.',
-      'Capture the full wheel face and tire shoulder in even light.',
-      'If steering feel changed after impact, schedule an alignment check.',
-      'Use the wheel workspace to document cosmetic versus safety-related damage.',
-    ],
-    suggested_appointment: { type: 'Tire Shop', urgency: 'soon', reason: 'Wheel damage may be cosmetic, but the tire should be checked soon for safety.' },
-  },
-  {
-    part_name: 'windshield',
-    skin_type: 'windshield',
-    issues: ['chip', 'crack_spread_risk', 'visibility_concern'],
-    recommendations: [
-      'Photograph the chip or crack from inside and outside the vehicle.',
-      'Track whether the crack is spreading toward the driver view area.',
-      'Avoid high-pressure washing or strong temperature swings until inspected.',
-      'Use the glass workspace to save the case and compare repair versus replacement paths.',
-    ],
-    suggested_appointment: { type: 'Glass Repair', urgency: 'soon', reason: 'Visible glass damage can spread quickly and affect visibility.' },
-  },
-];
-
-function mockResult() {
-  const r = MOCK_RESULTS[Math.floor(Math.random() * MOCK_RESULTS.length)];
-  return { ...r, id: 'demo-' + Date.now(), created_at: new Date().toISOString(), _demo: true };
-}
-
 // ── Main: startScan() ─────────────────────────────────────────────────────────
 async function startScan() {
-  const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
-
-  // Permission gate — before any loading state
-  const permitted = await ensureCameraPermission();
-  if (!permitted) return;
-
-  window.glowApp.setScanState('loading');
-
-  let b64 = null;
   try {
-    if (isNative) {
-      try {
-        b64 = await capturePhoto();
-      } catch (camErr) {
-        const msg = String(camErr);
-        if (msg.includes('cancel') || msg.includes('No image') || msg.includes('User cancelled')) {
-          window.glowApp.setScanState('idle');
-          return;
-        }
-        if (msg.includes('permission') || msg.includes('denied')) {
-          window.glowApp.setScanState('error',
-            'Camera access denied. Go to Settings → Apps → AutoIQ Pro → Permissions.'
-          );
-          return;
-        }
-        // Hardware failure — fall back to file picker
-        console.warn('dev note: native camera failed, falling back to file picker', msg);
-        b64 = await capturePhotoWeb();
-      }
-    } else {
-      b64 = await capturePhotoWeb();
-    }
-  } catch (err) {
-    window.glowApp.setScanState('error',
-      'Could not access camera. Please check app permissions and try again.'
-    );
-    return;
-  }
+    const permitted = await ensureCameraPermission();
+    if (!permitted) return;
 
-  if (!b64) { window.glowApp.setScanState('idle'); return; }
+    app()?.setScanStatus?.('Opening camera', 'Use even light, center your face, and keep the phone steady.');
+    const capture = await captureStudioPhoto({ facing: 'front' });
 
-  b64 = await resizeBase64(b64);
-  window.glowApp?.setLastStudioPhoto?.({
-    name: `vehicle-scan-${Date.now()}.jpg`,
-    dataUrl: `data:image/jpeg;base64,${b64}`,
-    source: 'vehicle-scan',
-    updatedAt: new Date().toISOString(),
-  });
-  window.glowApp.setScanState('analyzing', b64);
-
-  try {
-    let result;
-    if (!apiBase()) {
-      await new Promise(r => setTimeout(r, 1800));
-      result = mockResult();
-      result._demo = true;
-    } else {
-      result = await callScanAPI(b64);
-    }
-    saveScanToHistory(result, b64);
-    window.glowApp.showScanResult(result);
-  } catch (err) {
-    if (err.name === 'AbortError') {
-      window.glowApp.setScanState('error', 'Analysis timed out. Check your connection and try again.');
+    if (!capture?.dataUrl) {
+      app()?.setScanStatus?.('Idle', 'Scan canceled. Start again when you are ready.');
       return;
     }
-    // API error — degrade to demo with warning
-    const demo = mockResult();
-    demo._demo = true;
-    demo._apiError = err.message;
-    saveScanToHistory(demo, b64);
-    window.glowApp.showScanResult(demo);
-  }
-}
 
-function saveScanToHistory(result, b64) {
-  try {
-    const history = JSON.parse(localStorage.getItem('glowai_scan_history') || '[]');
-    history.unshift({ ...result, thumb: b64.slice(0, 200) });
-    localStorage.setItem('glowai_scan_history', JSON.stringify(history.slice(0, 20)));
-  } catch { /* non-critical */ }
+    app()?.setScanStatus?.('Analyzing scan', 'Reading hydration, tone, texture, clarity, and routine fit.');
+    const resized = await resizeBase64(capture.dataUrl.split(',')[1]);
+    await new Promise(resolve => setTimeout(resolve, 700));
+    app()?.handleScanCapture?.(`data:image/jpeg;base64,${resized}`);
+  } catch (err) {
+    const msg = String(err?.message || err);
+    if (msg.includes('cancel') || msg.includes('No image') || msg.includes('User cancelled')) {
+      app()?.setScanStatus?.('Idle', 'Scan canceled. Start again when you are ready.');
+      return;
+    }
+    app()?.handleScanError?.('Could not access camera. Check camera permissions and try again.');
+  }
 }
 
 window.scanModule = { startScan, captureStudioPhoto };

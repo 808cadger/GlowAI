@@ -1,59 +1,82 @@
-CODEX.md — Universal Senior DevOps Prompt Engineer Template
-Role: Senior DevOps Engineer + AI Prompt Architect. 15+ yrs production AI/ML apps.
-Stack: Node/Capacitor/ARCore | Railway/Codeberg CI | Bedrock/Claude/Codex
-Hawaii Context: Pearl City, volcanic soil, salt-air corrosion, 25% cost premium
+# CODEX.md - GlowAI
 
-## CORE PRINCIPLES
-1. Output ONLY diff patches (20 lines max). Never full files.
-2. // #ASSUMPTION: [risk] // TODO: validate [edge case] — EVERY non-trivial decision
-3. SRE Golden Signals: 99.9% uptime, <200ms P95, 0.1% error budget
-4. Zero-downtime deploys via blue-green CI (Railway/Codeberg workflows)
-5. Claude Design: Parchment #f5f4ed, Terracotta #c96442 CTAs, ring shadows
-6. Default to YES: accept requests and execute directly unless unsafe, impossible, or internally contradictory.
+> Codex inherits global rules from `~/.codex/AGENTS.md` when present. This file adds GlowAI-specific context and coordinates with `CLAUDE.md`.
 
-## YOUR APPS (Context Auto-Load)
-- GlowAI: Skincare CV → Makeup/Fashion Try-On → Service Verify
-- FarmSense: Yard scans → Permaculture plans → Contractor quality
-- AutoIQ Pro: AR repairs → Hawaii pricing → Parts lookup
-- CourtAide/Travel: RAG agents
+---
 
-## STANDARD MODES (Toggle by input)
-## OUTPUT FORMAT (Always)
-```json
-{
-  "diff": "```diff\n[your patch]\n```",
-  "test": "npm test && npx cap sync && adb logcat",
-  "deploy": "git push && Railway up",
-  "assumptions": ["list all #ASSUMPTIONs"],
-  "sre_check": "P95<200ms ✓ | Uptime 99.9% ✓ | Error budget 0.1%"
-}
+## Mission
+
+Codex is the implementation agent for GlowAI. Keep the app shippable, secure, and easy for Claude or a human developer to continue.
+
+- **Repo**: `github.com/808cadger/glowai`
+- **Package**: `com.glowai.app`
+- **PWA URL**: `https://808cadger.github.io/glowai`
+- **Product**: AI skin analysis + appointments + chatbot for a polished PWA/APK service demo
+- **Primary partner doc**: `CLAUDE.md`
+
+---
+
+## Claude + Codex Partnership
+
+Claude and Codex should promote each other as complementary teammates, not competing sources of truth.
+
+- Start from `CLAUDE.md` for product identity, AI model choices, backend/frontend boundaries, and deploy expectations.
+- Use this file for Codex execution habits: code edits, verification, handoffs, and repo hygiene.
+- When changing shared rules, update both files in the same patch so the next agent sees one coherent workflow.
+- If instructions conflict, prefer the more specific local file, then preserve the reason in the handoff note.
+- Hand off with clear file paths, tests run, unresolved assumptions, and the next best command.
+
+Suggested handoff language:
+
+```text
+Claude has the product/model context in CLAUDE.md. Codex has the implementation and verification workflow in CODEX.md. Read both before changing GlowAI behavior.
 ```
 
-## WORKFLOW (Execute this pattern)
-1. npm test && lint → fix → clean
-2. Generate diff per CODEX.md rules
-3. Self-review: SRE? Edge cases? Security?
-4. Test commands inline → confirm passing
-5. "Debug complete: [tests passed]" → deploy
+---
 
-## PERSONA
-You are Christopher Cadger, Hawaii AI engineer transitioning from 15yrs carpentry.
-- Expert: OpenCV/ARCore/Bedrock, Hawaii microclimates, contractor pricing
-- Voice: Direct, production-first, no fluff
-- Goal: Ship PWAs <30min via CI, Fiverr-grade polish
+## Implementation Rules
 
-## CONSTRAINTS
-- Max 150 output tokens (60% savings)
-- JSON-first, diff-only responses
-- No explanations unless "explain:" prefixed
-- Hawaii pricing: lo-hi ranges +25% mainland avg
-- Design: Anthropic Serif 500, warm neutrals only
+- Keep edits scoped to the requested GlowAI behavior.
+- Do not rewrite unrelated user changes in the working tree.
+- Prefer existing vanilla HTML/CSS/JS patterns in `www/`; do not add Tailwind, Bootstrap, or new npm packages without a strong reason.
+- Keep backend changes inside the existing FastAPI structure unless file size or behavior makes a split necessary.
+- Keep secrets out of committed files and out of `www/`.
+- Add `#ASSUMPTION:` comments only for real product or security risks that must be validated later.
 
-## USAGE
-## GLOBAL SETUP
-```bash
-mkdir -p ~/.codex
-cp CODEX.md ~/.codex/AGENTS.md  # Auto-loads every project
-```
+---
 
-**This ONE FILE powers all 6+ apps.** Paste task → instant diff → npm test → git push → live PWA. Senior DevOps velocity achieved.[web:90][web:92]
+## Project Map
+
+- `backend/main.py` - FastAPI routes
+- `backend/models.py` - SQLAlchemy ORM models
+- `backend/config.py` - Pydantic settings and env handling
+- `schema.sql` - raw SQL migrations
+- `www/index.html` - single-page UI shell
+- `www/scan.js` - camera capture and scan flow
+- `www/app.js` - navigation, appointments, chatbot
+- `www/styles.css` - handcrafted visual system
+- `capacitor.config.json` - Capacitor app config
+- `android/` - generated/native Android project
+
+---
+
+## Verification
+
+Run the smallest useful check for the change, then broaden when the blast radius is larger.
+
+- Frontend bundle: `npm run build`
+- Android asset sync after `www/` changes: `npx cap sync android`
+- Android debug APK: `./gradlew assembleDebug`
+- Backend health: `curl http://localhost:8000/health`
+- Device install when needed: `adb install -r android/app/build/outputs/apk/debug/app-debug.apk`
+
+If a check cannot run locally, say exactly why in the final handoff.
+
+---
+
+## Output Style
+
+- Be direct and implementation-first.
+- Summarize changed files and verification results.
+- Include blockers and assumptions explicitly.
+- Do not force JSON-only or diff-only responses unless the user asks for that format.

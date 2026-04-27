@@ -772,6 +772,35 @@ p {
   transform: translateY(var(--motion-lift-sm));
 }
 
+.scan-now-cta,
+.scan-now-pill {
+  animation: calm-scan-pulse 2.8s ease-in-out infinite;
+}
+
+.scan-now-cta {
+  position: relative;
+}
+
+@keyframes calm-scan-pulse {
+  0%,
+  100% {
+    box-shadow: var(--shadow-button);
+    transform: translateY(0);
+  }
+
+  45% {
+    box-shadow: 0 0 0 0.28rem rgba(76, 166, 146, 0.2), var(--shadow-hover);
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-now-cta,
+  .scan-now-pill {
+    animation: none;
+  }
+}
+
 .secondary-btn,
 .focus-tab {
   border: 1px solid var(--border);

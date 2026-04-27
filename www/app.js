@@ -959,8 +959,14 @@ ${extraContext}`.trim();
     if ((!force && !this.voiceCoach.speakReplies) || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text.replace(/\s+/g, ' ').slice(0, 260));
-    utterance.rate = 0.98;
-    utterance.pitch = 1.02;
+    const voices = window.speechSynthesis.getVoices?.() || [];
+    const calmVoice = voices.find((voice) => /hawai|hawaiian/i.test(`${voice.name} ${voice.lang}`))
+      || voices.find((voice) => /samantha|ava|allison|google us english|english united states/i.test(`${voice.name} ${voice.lang}`));
+    if (calmVoice) utterance.voice = calmVoice;
+    utterance.lang = calmVoice?.lang || 'en-US';
+    utterance.rate = 0.88;
+    utterance.pitch = 0.96;
+    utterance.volume = 0.92;
     window.speechSynthesis.speak(utterance);
   },
 

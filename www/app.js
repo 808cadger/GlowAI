@@ -40,6 +40,12 @@ window.glowaiApp = {
     greeting: 'glowai_greeting_spoken',
   },
 
+  shareConfig: {
+    title: 'GlowAI',
+    url: 'https://808cadger.github.io/GlowAI/download.html',
+    text: 'Try GlowAI. Scan your face for instant skin insights, appointment options, and product suggestions that keep your routine in rhythm.',
+  },
+
   focusContent: {
     brows: {
       label: 'Brow Studio',
@@ -191,6 +197,7 @@ window.glowaiApp = {
     this.bindFavorites();
     this.bindChat();
     this.bindScan();
+    this.bindShare();
     this.bindVoiceCoach();
     this.bindAgentOps();
     this.bindTryOn();
@@ -1406,6 +1413,42 @@ Skin support:
     });
     document.querySelectorAll('[data-product-tryon]').forEach((button) => {
       button.classList.toggle('is-active', button.getAttribute('data-product-tryon') === this.tryonState.product);
+    });
+  },
+
+  bindShare() {
+    const button = document.getElementById('shareAppBtn');
+    const status = document.getElementById('shareAppStatus');
+    button?.addEventListener('click', async () => {
+      const payload = {
+        title: this.shareConfig.title,
+        text: this.shareConfig.text,
+        url: this.shareConfig.url,
+      };
+      const message = `${payload.text} ${payload.url}`;
+
+      try {
+        if (navigator.share) {
+          await navigator.share(payload);
+          if (status) status.textContent = 'Ready to send.';
+          return;
+        }
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+      }
+
+      const smsUrl = `sms:?body=${encodeURIComponent(message)}`;
+      window.location.href = smsUrl;
+      if (status) status.textContent = 'Opening your text app.';
+
+      window.setTimeout(async () => {
+        try {
+          await navigator.clipboard?.writeText(message);
+          if (status) status.textContent = 'Invite copied. Paste it into any message.';
+        } catch {
+          if (status) status.textContent = message;
+        }
+      }, 900);
     });
   },
 

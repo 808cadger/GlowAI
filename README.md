@@ -232,13 +232,17 @@ All routes require `Authorization: Bearer <API_TOKEN>`.
 
 ## PWA Install
 
-Visit `https://808cadger.github.io/glowai` in Brave/Chrome → **Add to Home Screen**.
+Visit `https://808cadger.github.io/GlowAI/` in Brave/Chrome → **Add to Home Screen**.
+
+For sharing by text, send friends to:
+
+`https://808cadger.github.io/GlowAI/download.html`
 
 ---
 
 ## APK Release
 
-Download from [Releases](https://github.com/808cadger/glowai/releases) — install with **Allow from unknown sources** enabled.
+Download from [Releases](https://github.com/808cadger/GlowAI/releases) — install with **Allow from unknown sources** enabled.
 
 ---
 

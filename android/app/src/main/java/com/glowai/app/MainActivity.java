@@ -14,7 +14,7 @@ import java.util.Locale;
 
 public class MainActivity extends BridgeActivity {
     private static final String TAG = "GlowAIStartupVoice";
-    private static final String STARTUP_GREETING = "Hello, let's scan your face.";
+    private static final String STARTUP_GREETING = "Welcome to GlowAI. Scan your face, keep it in rhythm.";
     private TextToSpeech textToSpeech;
     private boolean ttsReady = false;
 

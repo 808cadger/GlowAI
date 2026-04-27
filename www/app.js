@@ -7,6 +7,8 @@ window.glowaiApp = {
   tryonState: {
     mode: 'brows',
     browStyle: 'soft',
+    browOffset: { x: 0, y: 0 },
+    browSpread: 0,
     nailColor: 'var(--nail-berry)',
     nailLength: 'short',
     photos: {
@@ -284,30 +286,27 @@ window.glowaiApp = {
         this.showPage('detail');
       });
     });
+
+    document.querySelectorAll('[data-open-tryon]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const service = button.getAttribute('data-open-tryon') || 'brows';
+        this.renderFocus(service);
+        this.showPage('detail');
+        await this.startTryOnCapture();
+      });
+    });
   },
 
   bindTryOn() {
-    document.getElementById('tryonCaptureBtn')?.addEventListener('click', async () => {
-      const mode = this.tryonState.mode;
-      const facing = mode === 'brows' ? 'front' : 'rear';
-      const button = document.getElementById('tryonCaptureBtn');
-      if (button) button.textContent = 'Opening...';
-
-      try {
-        const capture = await window.scanModule?.captureStudioPhoto?.({ facing });
-        if (!capture?.dataUrl) {
-          if (button) button.textContent = 'Use camera';
-          return;
-        }
-
-        this.tryonState.photos[mode] = capture.dataUrl;
-        this.renderTryOn();
-      } catch {
-        this.pushAssistantMessage('Camera did not open for try-on. Check camera permission and try again.');
-      } finally {
-        if (button) button.textContent = mode === 'brows' ? 'Retake selfie' : 'Retake hand photo';
-      }
+    document.getElementById('tryonCaptureBtn')?.addEventListener('click', () => this.startTryOnCapture());
+    document.getElementById('browCloserBtn')?.addEventListener('click', () => this.adjustBrowSpread(-6));
+    document.getElementById('browWiderBtn')?.addEventListener('click', () => this.adjustBrowSpread(6));
+    document.getElementById('browResetBtn')?.addEventListener('click', () => {
+      this.tryonState.browOffset = { x: 0, y: 0 };
+      this.tryonState.browSpread = 0;
+      this.renderTryOn();
     });
+    this.bindBrowDrag();
 
     document.querySelectorAll('[data-brow-style]').forEach((button) => {
       button.addEventListener('click', () => {
@@ -329,6 +328,54 @@ window.glowaiApp = {
         this.renderTryOn();
       });
     });
+  },
+
+  adjustBrowSpread(delta) {
+    this.tryonState.browSpread = Math.max(-24, Math.min(34, this.tryonState.browSpread + delta));
+    this.renderTryOn();
+  },
+
+  bindBrowDrag() {
+    const overlay = document.getElementById('browOverlay');
+    const stage = document.getElementById('tryonStage');
+    if (!overlay || !stage) return;
+
+    let drag = null;
+    const startDrag = (event) => {
+      if (this.tryonState.mode !== 'brows' || overlay.classList.contains('hidden')) return;
+      event.preventDefault();
+      overlay.setPointerCapture?.(event.pointerId);
+      overlay.classList.add('is-dragging');
+      drag = {
+        id: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        originX: this.tryonState.browOffset.x,
+        originY: this.tryonState.browOffset.y,
+      };
+    };
+    const moveDrag = (event) => {
+      if (!drag || drag.id !== event.pointerId) return;
+      const rect = stage.getBoundingClientRect();
+      const limitX = rect.width * 0.28;
+      const limitY = rect.height * 0.22;
+      this.tryonState.browOffset = {
+        x: Math.max(-limitX, Math.min(limitX, drag.originX + event.clientX - drag.startX)),
+        y: Math.max(-limitY, Math.min(limitY, drag.originY + event.clientY - drag.startY)),
+      };
+      this.renderTryOn();
+    };
+    const endDrag = (event) => {
+      if (!drag || drag.id !== event.pointerId) return;
+      overlay.releasePointerCapture?.(event.pointerId);
+      overlay.classList.remove('is-dragging');
+      drag = null;
+    };
+
+    overlay.addEventListener('pointerdown', startDrag);
+    overlay.addEventListener('pointermove', moveDrag);
+    overlay.addEventListener('pointerup', endDrag);
+    overlay.addEventListener('pointercancel', endDrag);
   },
 
   bindBookingFlow() {
@@ -567,6 +614,7 @@ Your coaching style:
     const previewBody = document.getElementById('servicePreviewBody');
     const previewTone = document.getElementById('servicePreviewTone');
     const previewCTA = document.getElementById('servicePreviewCTA');
+    const tryOnCTA = document.getElementById('serviceTryOnCTA');
     const detailTitle = document.getElementById('detailTitle');
     const detailSubtitle = document.getElementById('detailSubtitle');
     const detailMoodLabel = document.getElementById('detailMoodLabel');
@@ -588,6 +636,12 @@ Your coaching style:
     if (previewCTA) {
       previewCTA.textContent = content.previewCTA;
       previewCTA.setAttribute('data-open-detail', key);
+    }
+    if (tryOnCTA) {
+      const supportsSelfieTryOn = key === 'brows';
+      tryOnCTA.classList.toggle('hidden', !supportsSelfieTryOn);
+      tryOnCTA.setAttribute('data-open-tryon', key);
+      tryOnCTA.textContent = 'Try on from selfie';
     }
     if (detailTitle) detailTitle.textContent = content.detailTitle;
     if (detailSubtitle) detailSubtitle.textContent = content.detailSubtitle;
@@ -660,6 +714,28 @@ Your coaching style:
     this.renderTryOn();
   },
 
+  async startTryOnCapture() {
+    const mode = this.tryonState.mode;
+    const facing = mode === 'brows' ? 'front' : 'rear';
+    const button = document.getElementById('tryonCaptureBtn');
+    if (button) button.textContent = 'Opening...';
+
+    try {
+      const capture = await window.scanModule?.captureStudioPhoto?.({ facing });
+      if (!capture?.dataUrl) {
+        if (button) button.textContent = 'Use camera';
+        return;
+      }
+
+      this.tryonState.photos[mode] = capture.dataUrl;
+      this.renderTryOn();
+    } catch {
+      this.pushAssistantMessage('Camera did not open for try-on. Check camera permission and try again.');
+    } finally {
+      if (button) button.textContent = mode === 'brows' ? 'Retake selfie' : 'Retake hand photo';
+    }
+  },
+
   renderTryOn() {
     const mode = this.tryonState.mode;
     const stage = document.getElementById('tryonStage');
@@ -671,7 +747,12 @@ Your coaching style:
     stage?.setAttribute('data-tryon-mode', mode);
     stage?.setAttribute('data-brow-style', this.tryonState.browStyle);
     stage?.setAttribute('data-nail-length', this.tryonState.nailLength);
-    if (stage) stage.style.setProperty('--nail-color', this.tryonState.nailColor);
+    if (stage) {
+      stage.style.setProperty('--nail-color', this.tryonState.nailColor);
+      stage.style.setProperty('--brow-drag-x', `${this.tryonState.browOffset.x}px`);
+      stage.style.setProperty('--brow-drag-y', `${this.tryonState.browOffset.y}px`);
+      stage.style.setProperty('--brow-spread', `${this.tryonState.browSpread}px`);
+    }
 
     const activePhoto = this.tryonState.photos[mode] || '';
     const hasPhoto = Boolean(activePhoto);

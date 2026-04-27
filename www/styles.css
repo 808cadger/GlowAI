@@ -296,6 +296,9 @@
   --size-brow-width: 24%;
   --size-brow-height: 4.2%;
   --size-brow-bold-height: 5.7%;
+  --brow-offset-x: 0px;
+  --brow-offset-y: 0px;
+  --brow-gap-adjust: 0px;
   --size-nail-width: 8.5%;
   --size-nail-short-height: 15%;
   --size-nail-medium-height: 18%;
@@ -976,6 +979,12 @@ p {
   color: var(--color-mauve-ink);
 }
 
+.tryon-link {
+  border: 1px solid var(--state-pill-border-hover);
+  background: var(--gradient-pill-active);
+  color: var(--state-accent-active);
+}
+
 .focus-points {
   grid-template-columns: repeat(3, minmax(0, max-content));
   margin-top: var(--space-lg);
@@ -1107,6 +1116,9 @@ p {
 
 .tryon-stage {
   --nail-color: var(--default-nail-color);
+  --brow-drag-x: var(--brow-offset-x);
+  --brow-drag-y: var(--brow-offset-y);
+  --brow-spread: var(--brow-gap-adjust);
   position: relative;
   min-height: var(--size-tryon-min-height);
   aspect-ratio: 4 / 5;
@@ -1158,6 +1170,20 @@ p {
 .nail-overlay {
   position: absolute;
   inset: 0;
+}
+
+.brow-overlay {
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  transform: translate(var(--brow-drag-x), var(--brow-drag-y));
+}
+
+.brow-overlay.is-dragging {
+  cursor: grabbing;
+}
+
+.nail-overlay {
   pointer-events: none;
 }
 
@@ -1174,25 +1200,25 @@ p {
 .brow-left {
   left: 22%;
   border-radius: var(--radius-brow-left);
-  transform: rotate(-7deg);
+  transform: translateX(calc(var(--brow-spread) * -1)) rotate(-7deg);
   clip-path: polygon(0 64%, 22% 20%, 56% 4%, 100% 32%, 88% 72%, 52% 48%, 18% 78%);
 }
 
 .brow-right {
   right: 22%;
   border-radius: var(--radius-brow-right);
-  transform: rotate(7deg);
+  transform: translateX(var(--brow-spread)) rotate(7deg);
   clip-path: polygon(0 32%, 44% 4%, 78% 20%, 100% 64%, 82% 78%, 48% 48%, 12% 72%);
 }
 
 .tryon-stage[data-brow-style="lifted"] .brow-left {
   top: 31%;
-  transform: rotate(-13deg);
+  transform: translateX(calc(var(--brow-spread) * -1)) rotate(-13deg);
 }
 
 .tryon-stage[data-brow-style="lifted"] .brow-right {
   top: 31%;
-  transform: rotate(13deg);
+  transform: translateX(var(--brow-spread)) rotate(13deg);
 }
 
 .tryon-stage[data-brow-style="bold"] .brow {

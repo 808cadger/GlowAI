@@ -1,5 +1,6 @@
 node_modules/
 www/scan.bundle.js
+www/local-key.js
 android/.gradle/
 android/app/build/
 android/build/

@@ -189,6 +189,7 @@ window.glowaiApp = {
 
   init() {
     this.ensureSeedData();
+    this.seedLocalApiKey();
     this.bindMenu();
     this.bindPageButtons();
     this.bindFocusTabs();
@@ -227,6 +228,18 @@ window.glowaiApp = {
       return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
     } catch {
       return fallback;
+    }
+  },
+
+  seedLocalApiKey() {
+    const key = window.GLOWAI_LOCAL_API_KEY;
+    if (typeof key === 'string' && key.startsWith('sk-ant-') && !this.getApiKey()) {
+      localStorage.setItem('glowai_apikey', key);
+    }
+    try {
+      delete window.GLOWAI_LOCAL_API_KEY;
+    } catch {
+      window.GLOWAI_LOCAL_API_KEY = '';
     }
   },
 

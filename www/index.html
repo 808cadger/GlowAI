@@ -45,7 +45,7 @@
           <p class="hero-text">GlowAI reads your skin through the camera, adapts your AM/PM routine to light, heat, and humidity, then turns the next step into something you can actually do: book, shop, track, or ask.</p>
 
           <div class="hero-actions">
-            <button class="primary-btn" id="homeStartScan" type="button">Start scan</button>
+            <button class="primary-btn" id="homeStartScan" type="button">Hello, scan my face</button>
             <button class="secondary-btn" type="button" data-nav-target="concierge">Open coach</button>
           </div>
 
@@ -651,14 +651,14 @@
         <div class="voice-coach-bar">
           <button class="secondary-btn compact-btn" id="voiceCoachStart" type="button">Voice coach</button>
           <button class="secondary-btn compact-btn hidden" id="voiceCoachStop" type="button">Stop</button>
-          <span class="voice-coach-status" id="voiceCoachStatus">Say "scan my skin now" or ask for a coastal humidity adjustment.</span>
+          <span class="voice-coach-status" id="voiceCoachStatus">Say "scan my skin now" or "remind me to wash my face tonight."</span>
         </div>
         <div class="chat-thread" id="chatThread"></div>
         <div class="chat-typing hidden" id="chatTyping">
           <div class="chat-row assistant"><div class="chat-bubble typing-bubble"><span></span><span></span><span></span></div></div>
         </div>
         <form class="chat-form" id="chatForm">
-          <input class="chat-input" id="chatInput" type="text" maxlength="400" placeholder="What's your skin type? What are you dealing with? Ask anything..." required />
+          <input class="chat-input" id="chatInput" type="text" maxlength="400" placeholder="Ask for a routine, reminder, check-in, or skin scan..." required />
           <button class="primary-btn chat-send" type="submit" id="chatSendBtn">Send</button>
         </form>
       </section>

@@ -257,6 +257,32 @@ async function resizeBase64(b64, maxBytes = 900_000) {
   });
 }
 
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Photo conversion failed'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function normalizeCameraPhoto(photo) {
+  if (!photo) return null;
+  if (photo.dataUrl?.startsWith('data:image/')) return photo.dataUrl;
+  if (photo.base64String) {
+    const format = photo.format || 'jpeg';
+    return `data:image/${format};base64,${photo.base64String}`;
+  }
+
+  const uri = photo.webPath || photo.path;
+  if (!uri) return null;
+
+  const response = await fetch(uri);
+  if (!response.ok) throw new Error('Captured photo could not be loaded');
+  const blob = await response.blob();
+  return blobToDataUrl(blob);
+}
+
 async function captureStudioPhoto({ facing = 'rear' } = {}) {
   const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
   if (isNative) {
@@ -266,7 +292,7 @@ async function captureStudioPhoto({ facing = 'rear' } = {}) {
     const photo = await Camera.getPhoto({
       quality: 90,
       allowEditing: false,
-      resultType: CameraResultType.Base64,
+      resultType: CameraResultType.DataUrl,
       source: CameraSource.Camera,
       saveToGallery: false,
       correctOrientation: true,
@@ -274,9 +300,10 @@ async function captureStudioPhoto({ facing = 'rear' } = {}) {
       direction: facing === 'front' ? 'front' : 'rear',
     });
 
-    if (!photo?.base64String) return null;
+    const dataUrl = await normalizeCameraPhoto(photo);
+    if (!dataUrl) return null;
     return {
-      dataUrl: `data:image/jpeg;base64,${photo.base64String}`,
+      dataUrl,
       name: `${facing === 'front' ? 'selfie' : 'capture'}-${Date.now()}.jpg`,
     };
   }

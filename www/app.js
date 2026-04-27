@@ -36,6 +36,8 @@ window.glowaiApp = {
     agentConfig: 'glowai_agent_config',
     agentLog: 'glowai_agent_log',
     whiteLabel: 'glowai_white_label',
+    habits: 'glowai_habit_preferences',
+    greeting: 'glowai_greeting_spoken',
   },
 
   focusContent: {
@@ -200,13 +202,14 @@ window.glowaiApp = {
     this.renderScanSummary();
     this.renderForecast();
     this.renderAgentOps();
+    window.setTimeout(() => this.greetUserOnce({ forceSpeech: true }), 450);
     this.showPage('home');
   },
 
   ensureSeedData() {
     if (!localStorage.getItem(this.storageKeys.chat)) {
       const seeded = [
-        { role: 'assistant', text: "Hi, I'm your GlowAI skin coach. Tell me what your skin is doing today, what climate you are in, and what result you want. I will ask one focused question, then build a practical plan." },
+        { role: 'assistant', text: "Hello, let’s scan your face." },
       ];
       localStorage.setItem(this.storageKeys.chat, JSON.stringify(seeded));
     }
@@ -231,6 +234,44 @@ window.glowaiApp = {
     } catch {
       return false;
     }
+  },
+
+  getGlowAISystemPrompt(extraContext = '') {
+    return `You are GlowAI, a proactive, friendly, and reliable AI agent that helps the user build healthy habits and stay on track with daily routines. You speak in warm, concise, human-like English, and you always prioritize action and clarity over being verbose.
+
+Core identity:
+- You are a personal assistant, not just a chatbot.
+- Your main tasks are reminders, check-ins, habit coaching, simple planning, skin routines, and scan-based follow-through.
+- Assume the user is mobile-first and may be mid-task, tired, or distracted, so responses should be short, clear, and minimally intrusive.
+
+Behavior rules:
+- Always keep responses under 2-3 sentences unless the user asks for more detail.
+- Use natural, friendly language. No markdown, no code blocks, and no lists unless explicitly asked.
+- If unsure about intent, ask 1 short clarifying question instead of elaborating.
+- Never pretend to know private facts you have not been told.
+- Never pressure or shame the user; be supportive and non-judgmental.
+
+Reminder and task protocol:
+- If the user mentions a goal, habit, or chore, propose a time and an optional follow-up check-in.
+- If the user asks whether they did a habit today, lightly confirm if clear; if not done, ask whether they want to do it now or be reminded later.
+- For recurring reminders, ask how often and what time window they prefer.
+- If the user says "don't ask me again", "turn this off", or "cancel that", confirm briefly and stop that reminder.
+- If tools exist, confirm intent before triggering reminders. If no real tool exists, keep behavior virtual and remember the preference in chat memory.
+
+Communication style:
+- For check-ins, start with a short recap, then ask status.
+- If they say yes, celebrate briefly and ask if they want another reminder.
+- If they say no or not yet, offer "do it now" or "remind me later" with a specific time.
+- If they get annoyed, de-escalate and offer to mute the reminder.
+
+Error handling and ambiguity:
+- If the user says only "remind me", ask: "What should I remind you about?"
+- If the user changes their mind, confirm briefly: "OK, I've turned that reminder off."
+
+Goal:
+Keep the loop short: ask, confirm, set reminder, follow up, close. In every interaction, identify the next concrete action and phrase the reply so it helps the user act now or commit to a specific time/trigger later.
+
+${extraContext}`.trim();
   },
 
   bindMenu() {
@@ -724,6 +765,10 @@ window.glowaiApp = {
       event.preventDefault();
       const message = input?.value.trim();
       if (!message) return;
+      if (this.handleLocalHabitIntent(message)) {
+        input.value = '';
+        return;
+      }
       const apiKey = this.getApiKey();
       if (!apiKey) {
         if (keyBar) keyBar.classList.remove('hidden');
@@ -734,6 +779,61 @@ window.glowaiApp = {
       input.value = '';
       await this.callBeautyCoach(apiKey);
     });
+  },
+
+  handleLocalHabitIntent(message) {
+    const text = message.toLowerCase();
+    const habits = this.getStored(this.storageKeys.habits, {});
+    const stopMatch = /(stop|cancel|turn off|don't ask|do not ask).*(remind|reminder|ask)/.test(text);
+    const reminderMatch = /(remind me|reminder|check in|check-in)/.test(text);
+    const habitMatch = /(wash my face|face wash|drink water|work out|exercise|backup|back up|charge|routine|skin routine)/.test(text);
+    const doneCheck = /(did i|did you|have i).*(wash|drink|work out|exercise|backup|back up|charge|routine)/.test(text);
+
+    if (stopMatch) {
+      this.pushUserMessage(message);
+      this.setStored(this.storageKeys.habits, { ...habits, muted: true, mutedAt: new Date().toISOString() });
+      this.pushAssistantMessage('OK, I’ve turned that reminder off.');
+      return true;
+    }
+
+    if (doneCheck) {
+      this.pushUserMessage(message);
+      const lastHabit = habits.lastHabit || 'that habit';
+      this.pushAssistantMessage(`Last time you wanted help with ${lastHabit}. Did you manage to do it?`);
+      return true;
+    }
+
+    if (reminderMatch && !habitMatch) {
+      this.pushUserMessage(message);
+      this.pushAssistantMessage('What should I remind you about?');
+      return true;
+    }
+
+    if (habitMatch || reminderMatch) {
+      this.pushUserMessage(message);
+      const habit = this.extractHabitName(text);
+      const suggestedTime = text.includes('tonight') || text.includes('bed') ? 'tonight' : text.includes('tomorrow') ? 'tomorrow morning' : 'in 30 minutes';
+      this.setStored(this.storageKeys.habits, {
+        ...habits,
+        lastHabit: habit,
+        suggestedTime,
+        updatedAt: new Date().toISOString(),
+      });
+      this.pushAssistantMessage(`Want me to remind you ${suggestedTime}? I can also check in after.`);
+      return true;
+    }
+
+    return false;
+  },
+
+  extractHabitName(text) {
+    if (text.includes('wash') || text.includes('face')) return 'washing your face';
+    if (text.includes('water')) return 'drinking water';
+    if (text.includes('work out') || text.includes('exercise')) return 'working out';
+    if (text.includes('backup') || text.includes('back up')) return 'backing things up';
+    if (text.includes('charge')) return 'charging your device';
+    if (text.includes('routine')) return 'your routine';
+    return 'that habit';
   },
 
   bindVoiceCoach() {
@@ -761,6 +861,7 @@ window.glowaiApp = {
     start?.classList.add('hidden');
     stop?.classList.remove('hidden');
     if (status) status.textContent = 'Listening...';
+    this.greetUserOnce({ forceSpeech: true });
 
     recognition.onresult = async (event) => {
       const text = Array.from(event.results)
@@ -820,6 +921,13 @@ window.glowaiApp = {
       return;
     }
 
+    if (this.handleLocalHabitIntent(text)) {
+      const messages = this.getStored(this.storageKeys.chat);
+      const latest = messages[messages.length - 1]?.text || 'OK, I’ll help you stay on track.';
+      this.speak(latest);
+      return;
+    }
+
     if (wantsAgent) {
       this.pushUserMessage(text);
       this.showPage('agents');
@@ -847,13 +955,25 @@ window.glowaiApp = {
     await this.callBeautyCoach(apiKey);
   },
 
-  speak(text) {
-    if (!this.voiceCoach.speakReplies || !window.speechSynthesis) return;
+  speak(text, { force = false } = {}) {
+    if ((!force && !this.voiceCoach.speakReplies) || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text.replace(/\s+/g, ' ').slice(0, 260));
     utterance.rate = 0.98;
     utterance.pitch = 1.02;
     window.speechSynthesis.speak(utterance);
+  },
+
+  greetUserOnce({ forceSpeech = false } = {}) {
+    const greeting = 'Hello, let’s scan your face.';
+    const alreadySpoken = localStorage.getItem(this.storageKeys.greeting) === 'true';
+    if (!alreadySpoken) {
+      const messages = this.getStored(this.storageKeys.chat);
+      const hasGreeting = messages.some((message) => message.role === 'assistant' && message.text === greeting);
+      if (!hasGreeting) this.pushAssistantMessage(greeting);
+      localStorage.setItem(this.storageKeys.greeting, 'true');
+    }
+    if (forceSpeech || this.voiceCoach.speakReplies) this.speak(greeting, { force: forceSpeech });
   },
 
   async callBeautyCoach(apiKey) {
@@ -873,20 +993,16 @@ window.glowaiApp = {
 
     const climate = this.getStored(this.storageKeys.climate, { location: 'coastal climate', humidityMode: 'humid' });
     const latestScan = this.latestScan || this.getStored(this.storageKeys.scans)[0] || null;
-    const systemPrompt = `You are GlowAI, a world-class beauty coach and product advisor. You have the combined expertise of a licensed esthetician, cosmetic chemist, and premium studio operator.
-
-Current context:
+    const habits = this.getStored(this.storageKeys.habits, {});
+    const systemPrompt = this.getGlowAISystemPrompt(`Current context:
 - User location/climate: ${climate.location}, humidity mode ${climate.humidityMode}
 - Latest scan summary: ${latestScan ? `${latestScan.title}; metrics ${JSON.stringify(latestScan.metrics || {})}; routine ${JSON.stringify(latestScan.routine || {})}` : 'No scan yet'}
+- Soft habit memory: ${JSON.stringify(habits || {})}
 
-Your coaching style:
-- Ask ONE targeted question at a time to understand the person before recommending
-- Cover: skin type (dry/oily/combo/sensitive/normal), top concerns (acne, aging, hyperpigmentation, texture, redness, dryness), current routine, lifestyle (how much time, budget range), climate/environment, any allergies or sensitivities
-- After 2-3 questions, deliver a SPECIFIC plan: exact product types + ingredient recommendations (like "a vitamin C serum with 15% L-ascorbic acid"), morning vs night routines, order of application, frequency
-- When asked about beauty services (brows, nails, finish, hair): give pro-level advice on prep, timing, what to avoid beforehand, how to maintain results
-- Recommend product TYPES and key ingredients — not just brand names, so the advice stays useful and budget-flexible. When you do name brands, give options across price points (drugstore + mid + premium)
-- Be direct, warm, and specific. No generic "everyone's skin is different" hedging — ask the follow-up questions to get specific, then commit to a recommendation
-- Keep responses concise: 2-4 sentences of coaching + a clear next question or action`;
+Skin support:
+- You can still answer skincare, product, routine, scan, brow, nail, finish, and booking questions.
+- Keep skincare advice cosmetic and educational. Do not diagnose medical conditions or recommend prescription treatment.
+- When the user asks about a routine, turn it into a small next action or reminder option.`);
 
     try {
       const res = await window.ClaudeAPI.call(apiKey, {
@@ -917,6 +1033,7 @@ Your coaching style:
 
   bindScan() {
     document.getElementById('homeStartScan')?.addEventListener('click', () => {
+      this.speak('Hello, let’s scan your face.', { force: true });
       this.showPage('scan');
       this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
       window.scanModule?.startScan?.();
@@ -1055,7 +1172,10 @@ Your coaching style:
 
     if (pageId === 'booking') this.syncBookingService();
     if (pageId === 'notes') this.renderFavorites();
-    if (pageId === 'concierge') this.renderChat();
+    if (pageId === 'concierge') {
+      this.renderChat();
+      this.greetUserOnce();
+    }
     if (pageId === 'agents') this.renderAgentOps();
     if (pageId === 'scan') {
       this.renderScanSummary();
@@ -1205,20 +1325,27 @@ Your coaching style:
     const mode = this.tryonState.mode;
     const facing = mode === 'nails' ? 'rear' : 'front';
     const button = document.getElementById('tryonCaptureBtn');
+    const stage = document.getElementById('tryonStage');
     if (button) button.textContent = 'Opening...';
+    stage?.classList.add('is-capturing');
 
     try {
       const capture = await window.scanModule?.captureStudioPhoto?.({ facing });
       if (!capture?.dataUrl) {
         if (button) button.textContent = 'Use camera';
+        this.pushAssistantMessage('No photo came back from the camera. Try again and confirm the capture instead of backing out.');
         return;
       }
 
       this.tryonState.photos[mode] = capture.dataUrl;
       this.renderTryOn();
-    } catch {
-      this.pushAssistantMessage('Camera did not open for try-on. Check camera permission and try again.');
+      this.pushAssistantMessage(mode === 'nails'
+        ? 'Hand photo captured. Pick a color or length to preview the nail overlay.'
+        : 'Selfie captured. Pick a brow shape, then drag or widen the overlay until it lines up.');
+    } catch (error) {
+      this.pushAssistantMessage(`Camera did not return a usable photo: ${error?.message || 'check permission and try again.'}`);
     } finally {
+      stage?.classList.remove('is-capturing');
       if (button) button.textContent = mode === 'nails' ? 'Retake hand photo' : 'Retake photo';
     }
   },
@@ -1245,9 +1372,17 @@ Your coaching style:
 
     const activePhoto = this.tryonState.photos[mode] || (mode === 'product' ? this.latestScan?.photo : '') || '';
     const hasPhoto = Boolean(activePhoto);
+    stage?.classList.toggle('has-photo', hasPhoto);
     if (photo) {
       photo.classList.toggle('hidden', !hasPhoto);
-      if (hasPhoto) photo.src = activePhoto;
+      if (hasPhoto && photo.src !== activePhoto) {
+        photo.onload = () => stage?.classList.add('photo-ready');
+        photo.onerror = () => {
+          stage?.classList.remove('has-photo', 'photo-ready');
+          this.pushAssistantMessage('The captured image could not be displayed. Retake the photo and try again.');
+        };
+        photo.src = activePhoto;
+      }
     }
     placeholder?.classList.toggle('hidden', hasPhoto);
     browOverlay?.classList.toggle('hidden', !hasPhoto || mode !== 'brows');

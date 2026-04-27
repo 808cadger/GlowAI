@@ -209,7 +209,7 @@ window.glowaiApp = {
   ensureSeedData() {
     if (!localStorage.getItem(this.storageKeys.chat)) {
       const seeded = [
-        { role: 'assistant', text: "Welcome to GlowAI. Scan your face, keep it in rhythm." },
+        { role: 'assistant', text: "Welcome to GlowAI. Scan your face to get instant skin insights, appointment options, and product suggestions that keep your routine in rhythm." },
       ];
       localStorage.setItem(this.storageKeys.chat, JSON.stringify(seeded));
     }
@@ -971,7 +971,7 @@ ${extraContext}`.trim();
   },
 
   greetUserOnce({ forceSpeech = false } = {}) {
-    const greeting = 'Welcome to GlowAI. Scan your face, keep it in rhythm.';
+    const greeting = 'Welcome to GlowAI. Scan your face to get instant skin insights, appointment options, and product suggestions that keep your routine in rhythm.';
     const alreadySpoken = localStorage.getItem(this.storageKeys.greeting) === 'true';
     if (!alreadySpoken) {
       const messages = this.getStored(this.storageKeys.chat);
@@ -1039,7 +1039,7 @@ Skin support:
 
   bindScan() {
     document.getElementById('homeStartScan')?.addEventListener('click', () => {
-      this.speak('Welcome to GlowAI. Scan your face, keep it in rhythm.', { force: true });
+      this.speak('Welcome to GlowAI. Scan your face to get instant skin insights, appointment options, and product suggestions that keep your routine in rhythm.', { force: true });
       this.showPage('scan');
       this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
       window.scanModule?.startScan?.();

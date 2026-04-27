@@ -4,8 +4,19 @@ window.glowaiApp = {
   currentPage: 'home',
   currentService: 'brows',
   latestScan: null,
+  liveScan: {
+    active: false,
+    samples: [],
+    lastFrame: '',
+  },
+  voiceCoach: {
+    recognition: null,
+    active: false,
+    speakReplies: false,
+  },
   tryonState: {
     mode: 'brows',
+    product: 'spf',
     browStyle: 'soft',
     browOffset: { x: 0, y: 0 },
     browSpread: 0,
@@ -21,6 +32,10 @@ window.glowaiApp = {
     bookings: 'glowai_bookings',
     chat: 'glowai_chat_history',
     scans: 'glowai_scans',
+    climate: 'glowai_climate_profile',
+    agentConfig: 'glowai_agent_config',
+    agentLog: 'glowai_agent_log',
+    whiteLabel: 'glowai_white_label',
   },
 
   focusContent: {
@@ -174,6 +189,8 @@ window.glowaiApp = {
     this.bindFavorites();
     this.bindChat();
     this.bindScan();
+    this.bindVoiceCoach();
+    this.bindAgentOps();
     this.bindTryOn();
     this.bindAvatarSkills();
     this.renderFocus('brows');
@@ -181,6 +198,8 @@ window.glowaiApp = {
     this.renderBookings();
     this.renderChat();
     this.renderScanSummary();
+    this.renderForecast();
+    this.renderAgentOps();
     this.showPage('home');
   },
 
@@ -328,6 +347,13 @@ window.glowaiApp = {
         this.renderTryOn();
       });
     });
+
+    document.querySelectorAll('[data-product-tryon]').forEach((button) => {
+      button.addEventListener('click', () => {
+        this.tryonState.product = button.getAttribute('data-product-tryon') || 'spf';
+        this.renderTryOn();
+      });
+    });
   },
 
   adjustBrowSpread(delta) {
@@ -448,6 +474,230 @@ window.glowaiApp = {
     });
   },
 
+  bindAgentOps() {
+    document.getElementById('saveAgentConfigBtn')?.addEventListener('click', () => this.saveAgentConfig());
+    document.getElementById('agentBookBtn')?.addEventListener('click', () => this.runAgentAction('booking'));
+    document.getElementById('agentOrderBtn')?.addEventListener('click', () => this.runAgentAction('commerce'));
+    document.getElementById('agentReelBtn')?.addEventListener('click', () => this.runAgentAction('reel'));
+    document.getElementById('agentAutopilotBtn')?.addEventListener('click', async () => {
+      await this.runAgentAction('booking');
+      await this.runAgentAction('commerce');
+      await this.runAgentAction('reel');
+    });
+    document.getElementById('whiteLabelLaunchBtn')?.addEventListener('click', () => this.launchWhiteLabelWorkspace());
+  },
+
+  saveAgentConfig() {
+    const config = {
+      calendarEndpoint: document.getElementById('calendarEndpoint')?.value.trim() || '',
+      shopifyEndpoint: document.getElementById('shopifyEndpoint')?.value.trim() || '',
+      reelEndpoint: document.getElementById('reelEndpoint')?.value.trim() || '',
+      updatedAt: new Date().toISOString(),
+    };
+    this.setStored(this.storageKeys.agentConfig, config);
+    this.logAgentAction('config', 'Integrations saved', config);
+    this.pushAssistantMessage('Agent integrations saved. Actions will run in demo mode unless a production endpoint is configured.');
+    this.renderAgentOps();
+  },
+
+  runAgentAction(type) {
+    const latest = this.latestScan || this.getStored(this.storageKeys.scans)[0] || null;
+    const config = this.getStored(this.storageKeys.agentConfig, {});
+    const payload = this.buildAgentPayload(type, latest, config);
+    const endpoint = type === 'booking' ? config.calendarEndpoint : type === 'commerce' ? config.shopifyEndpoint : config.reelEndpoint;
+    const status = endpoint ? 'Ready for API handoff' : 'Demo executed';
+    const label = type === 'booking'
+      ? 'Appointment agent prepared esthetician booking'
+      : type === 'commerce'
+        ? 'Shopify agent built routine cart'
+        : 'Reel agent generated TikTok-ready before/after plan';
+
+    this.logAgentAction(type, label, { status, endpoint: endpoint || 'local-demo', payload });
+    if (type === 'booking') this.materializeAgentBooking(payload);
+    if (type === 'commerce') this.materializeShopifyCart(payload);
+    if (type === 'reel') this.materializeReelPlan(payload);
+    this.pushAssistantMessage(`${label}. ${endpoint ? 'Production endpoint is configured for handoff.' : 'Demo mode saved it locally.'}`);
+    this.renderAgentOps();
+  },
+
+  buildAgentPayload(type, latest, config) {
+    const service = latest?.serviceKey || this.currentService || 'skin';
+    const content = this.focusContent[service] || this.focusContent.skin;
+    const metrics = latest?.metrics || { hydration: '70%', clarity: '72%', texture: '74%', oil: '58%' };
+    const routine = latest?.routine || { morning: 'Gentle cleanse, gel moisturizer, SPF', night: 'Cleanse, barrier support' };
+    const base = {
+      userId: 'local-demo-user',
+      source: 'GlowAI agent cockpit',
+      createdAt: new Date().toISOString(),
+      scan: {
+        title: latest?.title || 'No scan yet',
+        summary: latest?.summary || 'Agent used default skin-prep profile.',
+        metrics,
+        routine,
+      },
+      climate: this.getStored(this.storageKeys.climate, { location: 'Pearl City, Hawaii', humidityMode: 'humid' }),
+    };
+
+    if (type === 'booking') {
+      const date = new Date();
+      date.setDate(date.getDate() + 3);
+      return {
+        ...base,
+        appointment: {
+          service: content.detailTitle,
+          date: date.toISOString().slice(0, 10),
+          time: '10:30',
+          staffPreference: 'First available esthetician',
+          notes: `${base.scan.summary} Routine: AM ${routine.morning}; PM ${routine.night}`,
+        },
+      };
+    }
+
+    if (type === 'commerce') {
+      return {
+        ...base,
+        shopify: {
+          cartUrl: config.shopifyEndpoint || 'local-demo-cart',
+          products: this.recommendProductsFromMetrics(metrics),
+          discountCode: 'GLOWAI30',
+          attribution: 'scan-to-cart-agent',
+        },
+      };
+    }
+
+    return {
+      ...base,
+      reel: {
+        format: '9:16',
+        durationSeconds: 18,
+        hook: 'I let AI scan my skin and build my 30-day glow plan.',
+        scenes: [
+          'Before selfie with hydration and texture overlay',
+          `Routine reveal: AM ${routine.morning}`,
+          `Progress forecast: ${latest?.forecast?.[2]?.score || '86'}% glow score by day 30`,
+          'After frame with salon CTA and product cart code GLOWAI30',
+        ],
+        captions: ['AI skin scan', 'Hawaii humidity routine', '30-day glow forecast', 'Book + shop from scan'],
+      },
+    };
+  },
+
+  recommendProductsFromMetrics(metrics) {
+    const hydration = Number.parseInt(String(metrics.hydration || '70'), 10);
+    const texture = Number.parseInt(String(metrics.texture || '72'), 10);
+    const oil = Number.parseInt(String(metrics.oil || '58'), 10);
+    return [
+      { handle: 'gentle-cleanser', title: 'Low-pH gentle cleanser', reason: 'Daily reset without stripping.' },
+      { handle: hydration < 68 ? 'hyaluronic-serum' : 'antioxidant-serum', title: hydration < 68 ? 'Hyaluronic hydration serum' : 'Vitamin C antioxidant serum', reason: hydration < 68 ? 'Rebuilds water balance.' : 'Supports brightness and daytime defense.' },
+      { handle: oil > 66 ? 'gel-moisturizer' : 'barrier-cream', title: oil > 66 ? 'Humidity-safe gel moisturizer' : 'Ceramide barrier cream', reason: oil > 66 ? 'Lightweight for humid shine control.' : 'Supports overnight recovery.' },
+      { handle: 'water-resistant-spf', title: 'Water-resistant SPF 30+', reason: 'Hawaii sun and humidity baseline.' },
+      ...(texture < 70 ? [{ handle: 'pha-exfoliant', title: 'PHA gentle exfoliant', reason: 'Texture support 1-2 nights weekly.' }] : []),
+    ];
+  },
+
+  materializeAgentBooking(payload) {
+    const bookings = this.getStored(this.storageKeys.bookings);
+    bookings.unshift({
+      id: `agent-${Date.now().toString(36)}`,
+      service: payload.appointment.service,
+      serviceTitle: payload.appointment.service,
+      name: 'GlowAI client',
+      date: payload.appointment.date,
+      time: payload.appointment.time,
+      notes: payload.appointment.notes,
+      agentGenerated: true,
+    });
+    this.setStored(this.storageKeys.bookings, bookings.slice(0, 12));
+    this.renderBookings();
+  },
+
+  materializeShopifyCart(payload) {
+    const favorites = this.getStored(this.storageKeys.favorites);
+    favorites.unshift({
+      id: `cart-${Date.now().toString(36)}`,
+      service: 'skin',
+      title: 'Agent-built Shopify routine cart',
+      summary: payload.shopify.products.map((item) => item.title).join(', '),
+    });
+    this.setStored(this.storageKeys.favorites, favorites.slice(0, 12));
+    this.renderFavorites();
+  },
+
+  materializeReelPlan(payload) {
+    const favorites = this.getStored(this.storageKeys.favorites);
+    favorites.unshift({
+      id: `reel-${Date.now().toString(36)}`,
+      service: 'tryon',
+      title: 'TikTok-ready before/after reel',
+      summary: `${payload.reel.durationSeconds}s, ${payload.reel.format}: ${payload.reel.hook}`,
+    });
+    this.setStored(this.storageKeys.favorites, favorites.slice(0, 12));
+    this.renderFavorites();
+  },
+
+  launchWhiteLabelWorkspace() {
+    const salon = document.getElementById('whiteLabelSalon')?.value.trim() || 'Pearl City Glow Studio';
+    const plan = document.getElementById('whiteLabelPlan')?.value || 'starter';
+    const workspace = {
+      salon,
+      plan,
+      monthlyPrice: plan === 'starter' ? 299 : plan === 'growth' ? 799 : 'custom',
+      features: plan === 'starter'
+        ? ['Branded scan app', 'Agent booking leads', 'Basic Shopify cart']
+        : plan === 'growth'
+          ? ['White-label app', 'Calendar + Shopify agents', 'Reel generator', 'Lead analytics']
+          : ['Custom domain', 'Multi-location routing', 'POS/CRM integration', 'Dedicated model tuning'],
+      launchedAt: new Date().toISOString(),
+    };
+    this.setStored(this.storageKeys.whiteLabel, workspace);
+    this.logAgentAction('white-label', `Salon workspace launched for ${salon}`, workspace);
+    this.pushAssistantMessage(`${salon} white-label workspace launched on the ${plan} plan. The agent cockpit is ready for salon lead capture and scan-to-revenue workflows.`);
+    this.renderAgentOps();
+  },
+
+  logAgentAction(type, title, detail) {
+    const log = this.getStored(this.storageKeys.agentLog);
+    log.unshift({
+      id: `${type}-${Date.now().toString(36)}`,
+      type,
+      title,
+      detail,
+      createdAt: new Date().toISOString(),
+    });
+    this.setStored(this.storageKeys.agentLog, log.slice(0, 20));
+  },
+
+  renderAgentOps() {
+    const config = this.getStored(this.storageKeys.agentConfig, {});
+    const whiteLabel = this.getStored(this.storageKeys.whiteLabel, {});
+    const calendar = document.getElementById('calendarEndpoint');
+    const shopify = document.getElementById('shopifyEndpoint');
+    const reel = document.getElementById('reelEndpoint');
+    const salon = document.getElementById('whiteLabelSalon');
+    const plan = document.getElementById('whiteLabelPlan');
+    if (calendar && config.calendarEndpoint) calendar.value = config.calendarEndpoint;
+    if (shopify && config.shopifyEndpoint) shopify.value = config.shopifyEndpoint;
+    if (reel && config.reelEndpoint) reel.value = config.reelEndpoint;
+    if (salon && whiteLabel.salon) salon.value = whiteLabel.salon;
+    if (plan && whiteLabel.plan) plan.value = whiteLabel.plan;
+
+    const container = document.getElementById('agentLogList');
+    if (!container) return;
+    const log = this.getStored(this.storageKeys.agentLog);
+    if (!log.length) {
+      container.innerHTML = '<article class="agent-log-item"><p class="card-label">No actions yet</p><h3>Run an agent to create booking, commerce, reel, or white-label output.</h3><p>Every action writes a payload that can be sent to your production APIs.</p></article>';
+      return;
+    }
+    container.innerHTML = log.slice(0, 8).map((item) => `
+      <article class="agent-log-item">
+        <p class="card-label">${item.type}</p>
+        <h3>${item.title}</h3>
+        <p>${new Date(item.createdAt).toLocaleString()}</p>
+        <pre>${JSON.stringify(item.detail, null, 2)}</pre>
+      </article>
+    `).join('');
+  },
+
   // #ASSUMPTION: API key stored in localStorage under 'glowai_apikey'
   getApiKey() {
     return localStorage.getItem('glowai_apikey') || '';
@@ -486,6 +736,126 @@ window.glowaiApp = {
     });
   },
 
+  bindVoiceCoach() {
+    const start = document.getElementById('voiceCoachStart');
+    const stop = document.getElementById('voiceCoachStop');
+    start?.addEventListener('click', () => this.startVoiceCoach());
+    stop?.addEventListener('click', () => this.stopVoiceCoach());
+  },
+
+  startVoiceCoach() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const status = document.getElementById('voiceCoachStatus');
+    const start = document.getElementById('voiceCoachStart');
+    const stop = document.getElementById('voiceCoachStop');
+    if (!SpeechRecognition) {
+      if (status) status.textContent = 'Voice recognition is not supported in this browser.';
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    this.voiceCoach = { recognition, active: true, speakReplies: true };
+    start?.classList.add('hidden');
+    stop?.classList.remove('hidden');
+    if (status) status.textContent = 'Listening...';
+
+    recognition.onresult = async (event) => {
+      const text = Array.from(event.results)
+        .map((result) => result[0]?.transcript || '')
+        .join(' ')
+        .trim();
+      if (!text) return;
+      if (status) status.textContent = `Heard: ${text}`;
+      await this.handleVoiceCommand(text);
+    };
+    recognition.onerror = () => {
+      if (status) status.textContent = 'Voice input stopped. Tap Voice coach to try again.';
+      this.stopVoiceCoach(false);
+    };
+    recognition.onend = () => {
+      if (this.voiceCoach.active) {
+        start?.classList.remove('hidden');
+        stop?.classList.add('hidden');
+        this.voiceCoach.active = false;
+      }
+    };
+    recognition.start();
+  },
+
+  stopVoiceCoach(cancelSpeech = true) {
+    const status = document.getElementById('voiceCoachStatus');
+    const start = document.getElementById('voiceCoachStart');
+    const stop = document.getElementById('voiceCoachStop');
+    this.voiceCoach.active = false;
+    try { this.voiceCoach.recognition?.stop?.(); } catch {}
+    if (cancelSpeech) window.speechSynthesis?.cancel?.();
+    start?.classList.remove('hidden');
+    stop?.classList.add('hidden');
+    if (status) status.textContent = 'Voice coach ready.';
+  },
+
+  async handleVoiceCommand(text) {
+    const normalized = text.toLowerCase();
+    const wantsScan = normalized.includes('scan') && (normalized.includes('skin') || normalized.includes('face'));
+    const wantsHumidity = normalized.includes('hawaii') || normalized.includes('humidity') || normalized.includes('humid');
+    const wantsAgent = normalized.includes('book') || normalized.includes('order') || normalized.includes('shopify') || normalized.includes('reel') || normalized.includes('tiktok') || normalized.includes('autopilot');
+
+    if (wantsHumidity) {
+      this.setStored(this.storageKeys.climate, {
+        location: 'Pearl City, Hawaii',
+        humidityMode: 'humid',
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    if (wantsScan) {
+      this.pushUserMessage(text);
+      this.pushAssistantMessage('Starting a live skin scan now. Keep your face centered and I will adjust the routine for Hawaii humidity.');
+      this.speak('Starting a live skin scan now. Keep your face centered.');
+      this.showPage('scan');
+      await this.startLiveSkinScan();
+      return;
+    }
+
+    if (wantsAgent) {
+      this.pushUserMessage(text);
+      this.showPage('agents');
+      if (normalized.includes('autopilot')) {
+        await this.runAgentAction('booking');
+        await this.runAgentAction('commerce');
+        await this.runAgentAction('reel');
+        this.speak('Autopilot prepared booking, product cart, and reel plan.');
+        return;
+      }
+      if (normalized.includes('book')) await this.runAgentAction('booking');
+      if (normalized.includes('order') || normalized.includes('shopify')) await this.runAgentAction('commerce');
+      if (normalized.includes('reel') || normalized.includes('tiktok')) await this.runAgentAction('reel');
+      this.speak('Agent action prepared. Review the agent log.');
+      return;
+    }
+
+    const apiKey = this.getApiKey();
+    this.pushUserMessage(text);
+    if (!apiKey) {
+      this.pushAssistantMessage('Add your Claude API key to activate live voice coaching. I saved the Hawaii humidity preference locally.');
+      this.speak('Add your Claude API key to activate live voice coaching.');
+      return;
+    }
+    await this.callBeautyCoach(apiKey);
+  },
+
+  speak(text) {
+    if (!this.voiceCoach.speakReplies || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text.replace(/\s+/g, ' ').slice(0, 260));
+    utterance.rate = 0.98;
+    utterance.pitch = 1.02;
+    window.speechSynthesis.speak(utterance);
+  },
+
   async callBeautyCoach(apiKey) {
     const typingEl = document.getElementById('chatTyping');
     const sendBtn = document.getElementById('chatSendBtn');
@@ -501,7 +871,13 @@ window.glowaiApp = {
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.text }));
 
+    const climate = this.getStored(this.storageKeys.climate, { location: 'Pearl City, Hawaii', humidityMode: 'humid' });
+    const latestScan = this.latestScan || this.getStored(this.storageKeys.scans)[0] || null;
     const systemPrompt = `You are GlowAI, a world-class beauty coach and product advisor. You have the combined expertise of a licensed esthetician, cosmetic chemist, and luxury salon director.
+
+Current context:
+- User location/climate: ${climate.location}, humidity mode ${climate.humidityMode}
+- Latest scan summary: ${latestScan ? `${latestScan.title}; metrics ${JSON.stringify(latestScan.metrics || {})}; routine ${JSON.stringify(latestScan.routine || {})}` : 'No scan yet'}
 
 Your coaching style:
 - Ask ONE targeted question at a time to understand the person before recommending
@@ -521,6 +897,8 @@ Your coaching style:
       });
       const reply = res.content?.[0]?.text || 'Something went wrong — try again.';
       this.pushAssistantMessage(reply);
+      this.speak(reply);
+      return reply;
     } catch (err) {
       const msg = err.status === 401
         ? 'Invalid API key — check your key in the bar above.'
@@ -528,6 +906,8 @@ Your coaching style:
           ? 'Too many errors — wait a minute and try again.'
           : `Coach error: ${err.message}`;
       this.pushAssistantMessage(msg);
+      this.speak(msg);
+      return msg;
     } finally {
       if (typingEl) typingEl.classList.add('hidden');
       if (sendBtn) sendBtn.disabled = false;
@@ -546,6 +926,93 @@ Your coaching style:
       this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
       window.scanModule?.startScan?.();
     });
+
+    document.getElementById('liveScanStart')?.addEventListener('click', () => this.startLiveSkinScan());
+    document.getElementById('liveScanStop')?.addEventListener('click', () => this.finishLiveSkinScan());
+  },
+
+  async startLiveSkinScan() {
+    const video = document.getElementById('liveScanVideo');
+    const canvas = document.getElementById('liveScanCanvas');
+    const startBtn = document.getElementById('liveScanStart');
+    const stopBtn = document.getElementById('liveScanStop');
+    if (!video || !canvas) return;
+
+    this.liveScan = { active: true, samples: [], lastFrame: '' };
+    startBtn?.classList.add('hidden');
+    stopBtn?.classList.remove('hidden');
+    this.showPage('scan');
+    this.setScanStatus('Live scanning', 'Keep your face in the oval while GlowAI samples texture, tone, oil, and humidity fit.');
+
+    try {
+      await window.scanModule?.startLiveSkinScan?.({
+        video,
+        canvas,
+        onSample: (sample) => this.handleLiveScanSample(sample),
+        onError: (error) => this.handleScanError(error.message || 'Live scan failed.'),
+      });
+    } catch (error) {
+      startBtn?.classList.remove('hidden');
+      stopBtn?.classList.add('hidden');
+      this.liveScan.active = false;
+      this.handleScanError(error.message || 'Live camera could not start.');
+    }
+  },
+
+  handleLiveScanSample(sample) {
+    if (!this.liveScan.active) return;
+    this.liveScan.samples.push(sample);
+    this.liveScan.lastFrame = sample.dataUrl;
+    if (this.liveScan.samples.length > 12) this.liveScan.samples.shift();
+
+    const signals = sample.skinSignals || {};
+    const hydration = document.getElementById('liveHydration');
+    const texture = document.getElementById('liveTexture');
+    const humidity = document.getElementById('liveHumidity');
+    if (hydration) hydration.textContent = `${signals.hydration || '-'}%`;
+    if (texture) texture.textContent = `${signals.texture || '-'}%`;
+    if (humidity) humidity.textContent = signals.humidityStress > 62 ? 'High' : signals.humidityStress > 44 ? 'Moderate' : 'Low';
+
+    const faceCopy = sample.faceQuality?.available && sample.faceQuality?.confidence
+      ? `Face ${sample.faceQuality.confidence}%.`
+      : 'Guided signal read.';
+    this.setScanStatus('Live scanning', `${faceCopy} Hydration ${signals.hydration}%, texture ${signals.texture}%, Hawaii humidity load ${signals.humidityStress}%.`);
+
+    if (this.liveScan.samples.length >= 6) {
+      const badge = document.getElementById('scanResultBadge');
+      if (badge) badge.textContent = 'Live ready';
+    }
+  },
+
+  finishLiveSkinScan() {
+    const startBtn = document.getElementById('liveScanStart');
+    const stopBtn = document.getElementById('liveScanStop');
+    window.scanModule?.stopCameraStream?.();
+    startBtn?.classList.remove('hidden');
+    stopBtn?.classList.add('hidden');
+
+    if (!this.liveScan.samples.length) {
+      this.liveScan.active = false;
+      this.setScanStatus('Idle', 'Live scan stopped before enough frames were sampled.');
+      return;
+    }
+
+    const averaged = this.averageSkinSignals(this.liveScan.samples.map((sample) => sample.skinSignals));
+    const faceSamples = this.liveScan.samples.map((sample) => sample.faceQuality).filter(Boolean);
+    const faceQuality = faceSamples.find((sample) => sample.available && sample.detected) || faceSamples[0] || {};
+    const frame = this.liveScan.lastFrame;
+    this.liveScan.active = false;
+    this.handleScanCapture(frame, faceQuality, averaged);
+  },
+
+  averageSkinSignals(samples) {
+    const clean = samples.filter(Boolean);
+    const keys = ['hydration', 'clarity', 'texture', 'tone', 'oil', 'redness', 'humidityStress'];
+    return keys.reduce((acc, key) => {
+      const values = clean.map((sample) => Number(sample[key])).filter(Number.isFinite);
+      acc[key] = values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
+      return acc;
+    }, {});
   },
 
   setMenuOpen(open) {
@@ -589,7 +1056,11 @@ Your coaching style:
     if (pageId === 'booking') this.syncBookingService();
     if (pageId === 'notes') this.renderFavorites();
     if (pageId === 'concierge') this.renderChat();
-    if (pageId === 'scan') this.renderScanSummary();
+    if (pageId === 'agents') this.renderAgentOps();
+    if (pageId === 'scan') {
+      this.renderScanSummary();
+      this.renderForecast();
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
@@ -638,10 +1109,10 @@ Your coaching style:
       previewCTA.setAttribute('data-open-detail', key);
     }
     if (tryOnCTA) {
-      const supportsSelfieTryOn = key === 'brows';
+      const supportsSelfieTryOn = key === 'brows' || key === 'skin' || key === 'makeup';
       tryOnCTA.classList.toggle('hidden', !supportsSelfieTryOn);
       tryOnCTA.setAttribute('data-open-tryon', key);
-      tryOnCTA.textContent = 'Try on from selfie';
+      tryOnCTA.textContent = key === 'brows' ? 'Try on from selfie' : 'Product AR';
     }
     if (detailTitle) detailTitle.textContent = content.detailTitle;
     if (detailSubtitle) detailSubtitle.textContent = content.detailSubtitle;
@@ -696,27 +1167,43 @@ Your coaching style:
     const captureBtn = document.getElementById('tryonCaptureBtn');
     const browControls = document.getElementById('browControls');
     const nailControls = document.getElementById('nailControls');
-    const enabled = key === 'brows' || key === 'nails';
+    const productControls = document.getElementById('productControls');
+    const enabled = key === 'brows' || key === 'nails' || key === 'skin' || key === 'makeup';
 
     studio?.classList.toggle('hidden', !enabled);
     if (!enabled) return;
 
-    this.tryonState.mode = key;
-    if (label) label.textContent = key === 'brows' ? 'Eyebrow try-on' : 'Nail try-on';
-    if (title) title.textContent = key === 'brows' ? 'Compare brow shapes on your face.' : 'Preview color and length on your hand.';
-    if (placeholderTitle) placeholderTitle.textContent = key === 'brows' ? 'Take a selfie for brow mapping.' : 'Take a hand photo for nail preview.';
-    if (placeholderCopy) placeholderCopy.textContent = key === 'brows'
+    const mode = (key === 'skin' || key === 'makeup') ? 'product' : key;
+    this.tryonState.mode = mode;
+    if (label) label.textContent = mode === 'brows' ? 'Eyebrow try-on' : mode === 'nails' ? 'Nail try-on' : 'Product AR try-on';
+    if (title) title.textContent = mode === 'brows'
+      ? 'Compare brow shapes on your face.'
+      : mode === 'nails'
+        ? 'Preview color and length on your hand.'
+        : 'Visualize finish zones before adding a product.';
+    if (placeholderTitle) placeholderTitle.textContent = mode === 'brows'
+      ? 'Take a selfie for brow mapping.'
+      : mode === 'nails'
+        ? 'Take a hand photo for nail preview.'
+        : 'Take a selfie for product visualization.';
+    if (placeholderCopy) placeholderCopy.textContent = mode === 'brows'
       ? 'Center your face in even light. GlowAI places brows where they are easiest to compare.'
-      : 'Place your hand flat in good light. GlowAI overlays the selected manicure set for quick comparison.';
-    if (captureBtn) captureBtn.textContent = this.tryonState.photos[key] ? (key === 'brows' ? 'Retake selfie' : 'Retake hand photo') : 'Use camera';
-    browControls?.classList.toggle('hidden', key !== 'brows');
-    nailControls?.classList.toggle('hidden', key !== 'nails');
+      : mode === 'nails'
+        ? 'Place your hand flat in good light. GlowAI overlays the selected manicure set for quick comparison.'
+        : 'GlowAI overlays SPF tint, brightening, or barrier support zones so the routine feels concrete.';
+    if (captureBtn) {
+      const photo = this.tryonState.photos[mode] || this.latestScan?.photo || '';
+      captureBtn.textContent = photo ? 'Retake photo' : 'Use camera';
+    }
+    browControls?.classList.toggle('hidden', mode !== 'brows');
+    nailControls?.classList.toggle('hidden', mode !== 'nails');
+    productControls?.classList.toggle('hidden', mode !== 'product');
     this.renderTryOn();
   },
 
   async startTryOnCapture() {
     const mode = this.tryonState.mode;
-    const facing = mode === 'brows' ? 'front' : 'rear';
+    const facing = mode === 'nails' ? 'rear' : 'front';
     const button = document.getElementById('tryonCaptureBtn');
     if (button) button.textContent = 'Opening...';
 
@@ -732,7 +1219,7 @@ Your coaching style:
     } catch {
       this.pushAssistantMessage('Camera did not open for try-on. Check camera permission and try again.');
     } finally {
-      if (button) button.textContent = mode === 'brows' ? 'Retake selfie' : 'Retake hand photo';
+      if (button) button.textContent = mode === 'nails' ? 'Retake hand photo' : 'Retake photo';
     }
   },
 
@@ -743,10 +1230,12 @@ Your coaching style:
     const placeholder = document.getElementById('tryonPlaceholder');
     const browOverlay = document.getElementById('browOverlay');
     const nailOverlay = document.getElementById('nailOverlay');
+    const productOverlay = document.getElementById('productOverlay');
 
     stage?.setAttribute('data-tryon-mode', mode);
     stage?.setAttribute('data-brow-style', this.tryonState.browStyle);
     stage?.setAttribute('data-nail-length', this.tryonState.nailLength);
+    stage?.setAttribute('data-product-tryon', this.tryonState.product);
     if (stage) {
       stage.style.setProperty('--nail-color', this.tryonState.nailColor);
       stage.style.setProperty('--brow-drag-x', `${this.tryonState.browOffset.x}px`);
@@ -754,7 +1243,7 @@ Your coaching style:
       stage.style.setProperty('--brow-spread', `${this.tryonState.browSpread}px`);
     }
 
-    const activePhoto = this.tryonState.photos[mode] || '';
+    const activePhoto = this.tryonState.photos[mode] || (mode === 'product' ? this.latestScan?.photo : '') || '';
     const hasPhoto = Boolean(activePhoto);
     if (photo) {
       photo.classList.toggle('hidden', !hasPhoto);
@@ -763,6 +1252,7 @@ Your coaching style:
     placeholder?.classList.toggle('hidden', hasPhoto);
     browOverlay?.classList.toggle('hidden', !hasPhoto || mode !== 'brows');
     nailOverlay?.classList.toggle('hidden', !hasPhoto || mode !== 'nails');
+    productOverlay?.classList.toggle('hidden', !hasPhoto || mode !== 'product');
 
     document.querySelectorAll('[data-brow-style]').forEach((button) => {
       button.classList.toggle('is-active', button.getAttribute('data-brow-style') === this.tryonState.browStyle);
@@ -773,10 +1263,13 @@ Your coaching style:
     document.querySelectorAll('[data-nail-length]').forEach((button) => {
       button.classList.toggle('is-active', button.getAttribute('data-nail-length') === this.tryonState.nailLength);
     });
+    document.querySelectorAll('[data-product-tryon]').forEach((button) => {
+      button.classList.toggle('is-active', button.getAttribute('data-product-tryon') === this.tryonState.product);
+    });
   },
 
-  handleScanCapture(dataUrl) {
-    const analysis = this.generateFaceAnalysis();
+  handleScanCapture(dataUrl, faceQuality = {}, skinSignals = null) {
+    const analysis = this.generateFaceAnalysis(faceQuality, skinSignals);
     const scanRecord = {
       id: Date.now().toString(36),
       createdAt: new Date().toISOString(),
@@ -797,6 +1290,7 @@ Your coaching style:
       confidence: scanRecord.confidence,
       safetyNote: scanRecord.safetyNote,
       handoffs: scanRecord.handoffs,
+      forecast: scanRecord.forecast,
     };
     const scans = this.getStored(this.storageKeys.scans);
     scans.unshift(historyEntry);
@@ -804,9 +1298,13 @@ Your coaching style:
     this.trySetStored(this.storageKeys.scans, scans.slice(0, 6));
     this.renderFocus(analysis.serviceKey);
     this.showPage('scan');
-    this.setScanStatus('Result ready', `GlowAI found a ${analysis.title.toLowerCase()} pattern and mapped your next step.`);
+    const confidenceCopy = faceQuality?.available && faceQuality?.confidence
+      ? ` Face check ${faceQuality.confidence}%.`
+      : '';
+    this.setScanStatus('Result ready', `GlowAI found a ${analysis.title.toLowerCase()} pattern and mapped your next step.${confidenceCopy}`);
     this.renderScanSummary();
     this.renderScanHistory();
+    this.renderForecast();
     this.pushAssistantMessage(`Face scan complete. I’d start with ${analysis.salonLane.toLowerCase()} based on what GlowAI picked up.`);
   },
 
@@ -821,7 +1319,7 @@ Your coaching style:
     this.showPage('scan');
   },
 
-  generateFaceAnalysis() {
+  generateFaceAnalysis(faceQuality = {}, skinSignals = null) {
     const profiles = [
       {
         title: 'Balanced skin with slight dehydration',
@@ -864,7 +1362,117 @@ Your coaching style:
       },
     ];
 
-    return profiles[Math.floor(Math.random() * profiles.length)];
+    const selected = { ...profiles[Math.floor(Math.random() * profiles.length)] };
+    const qualityTags = [];
+
+    if (skinSignals) {
+      const climate = this.getStored(this.storageKeys.climate, { location: 'Pearl City, Hawaii', humidityMode: 'humid' });
+      const hydration = skinSignals.hydration || 70;
+      const clarity = skinSignals.clarity || 72;
+      const texture = skinSignals.texture || 72;
+      const tone = skinSignals.tone || 72;
+      const oil = skinSignals.oil || 62;
+      const balance = Math.round((hydration + clarity + texture + tone + (100 - Math.abs(oil - 58))) / 5);
+      const humidityStress = skinSignals.humidityStress || Math.round((oil + (100 - hydration)) / 2);
+      const humidAdjustment = humidityStress > 58
+        ? 'Use lighter layers for Hawaii humidity: gel moisturizer, water-resistant SPF, and blotting instead of extra powder.'
+        : 'Keep a flexible Hawaii routine: hydration first, SPF daily, and avoid heavy occlusive layers in midday heat.';
+
+      selected.title = hydration < 64
+        ? 'Live scan shows dehydration under humidity stress'
+        : humidityStress > 62
+          ? 'Live scan shows oil-shine risk in humid weather'
+          : 'Live scan shows balanced skin with stable humidity fit';
+      selected.summary = `Live camera signals read hydration ${hydration}%, texture ${texture}%, clarity ${clarity}%, and humidity load ${humidityStress}% for ${climate.location}.`;
+      selected.tags = ['Live video scan', `Hydration ${hydration}%`, `Humidity ${humidityStress}%`];
+      selected.metrics = {
+        balance: `${balance}%`,
+        hydration: `${hydration}%`,
+        clarity: `${clarity}%`,
+        texture: `${texture}%`,
+        tone: `${tone}%`,
+        oil: `${oil}%`,
+      };
+      selected.routine = this.generateRoutineFromSignals(skinSignals);
+      selected.steps = [
+        humidAdjustment,
+        hydration < 66 ? 'Add a humectant serum under moisturizer morning and night.' : 'Keep hydration steady and do not overload layers.',
+        texture < 68 ? 'Use gentle chemical exfoliation only 1-2 nights weekly, never on irritated days.' : 'Maintain texture with a low-friction cleanse and consistent SPF.',
+      ];
+      selected.salonLane = 'Skin Prep';
+      selected.serviceKey = 'skin';
+      selected.safetyNote = humidityStress > 65 ? 'Humidity adjust' : 'Routine';
+      selected.forecast = this.generateGlowForecast(selected.metrics, skinSignals);
+      selected.handoffs = [
+        `Hawaii humidity load: ${humidityStress}%`,
+        'Coach can adjust AM routine for sweat, SPF reapplication, and lighter layers',
+        'Progress tracker projects 7, 14, and 30 day changes',
+      ];
+    }
+
+    if (faceQuality.available && faceQuality.detected !== false) {
+      qualityTags.push('Face detected');
+      if (faceQuality.centered === false) qualityTags.push('Recenter next scan');
+      if (faceQuality.closeEnough === false) qualityTags.push('Move closer');
+      selected.confidence = faceQuality.confidence ? `${faceQuality.confidence}%` : selected.confidence;
+      selected.handoffs = [
+        `Face detector confidence: ${selected.confidence}`,
+        ...(selected.handoffs || []),
+      ];
+    } else if (faceQuality.available && faceQuality.detected === false) {
+      qualityTags.push('Retake recommended');
+      selected.confidence = 'Low';
+      selected.handoffs = [
+        'Face detector did not get a clean face lock; retake in brighter, even light',
+        ...(selected.handoffs || []),
+      ];
+    } else {
+      qualityTags.push('Guided scan');
+      selected.handoffs = [
+        'Face model was unavailable, so GlowAI used the local guided scan flow',
+        ...(selected.handoffs || []),
+      ];
+    }
+
+    selected.tags = [...qualityTags, ...selected.tags].slice(0, 5);
+    selected.forecast = selected.forecast || this.generateGlowForecast(selected.metrics);
+    return selected;
+  },
+
+  generateRoutineFromSignals(signals) {
+    const humidityStress = signals.humidityStress || 50;
+    const hydration = signals.hydration || 70;
+    const texture = signals.texture || 75;
+    const redness = signals.redness || 20;
+    const morning = [
+      'Gentle cleanse',
+      hydration < 66 ? 'hyaluronic or glycerin serum' : 'light antioxidant serum',
+      humidityStress > 58 ? 'gel moisturizer' : 'barrier moisturizer',
+      'water-resistant SPF 30+',
+    ];
+    const night = [
+      'Cleanse',
+      redness > 36 ? 'calming niacinamide' : texture < 68 ? 'PHA or lactic acid 1-2x weekly' : 'peptide or ceramide serum',
+      hydration < 66 ? 'ceramide cream' : 'light moisturizer',
+    ];
+    return {
+      morning: morning.join(', '),
+      night: night.join(', '),
+    };
+  },
+
+  generateGlowForecast(metrics = {}, signals = {}) {
+    const toNumber = (value, fallback) => Number.parseInt(String(value || fallback), 10);
+    const hydration = toNumber(metrics.hydration, signals.hydration || 70);
+    const clarity = toNumber(metrics.clarity, signals.clarity || 70);
+    const texture = toNumber(metrics.texture, signals.texture || 70);
+    const humidityStress = signals.humidityStress || 52;
+    const lift = humidityStress > 62 ? 9 : 13;
+    return [
+      { day: 7, label: 'Barrier steadier', score: Math.min(96, Math.round((hydration + 5 + clarity) / 2)), action: 'Keep SPF, gel moisturizer, and evening barrier support consistent.' },
+      { day: 14, label: 'Texture smoother', score: Math.min(96, texture + Math.round(lift * 0.72)), action: 'Add gentle exfoliation only if redness stays calm.' },
+      { day: 30, label: 'Glow forecast', score: Math.min(98, Math.round((hydration + clarity + texture) / 3) + lift), action: humidityStress > 62 ? 'Expect best results with lighter AM layers and midday SPF/blot routine.' : 'Expect best results by staying consistent with hydration and SPF.' },
+    ];
   },
 
   renderScanSummary() {
@@ -904,6 +1512,7 @@ Your coaching style:
       if (handoffs) handoffs.innerHTML = '';
       this.setScanStatus('Idle', 'Take a scan and GlowAI will surface a skin snapshot, recommended focus, and the care step that should come next.');
       this.renderScanHistory();
+      this.renderForecast();
       return;
     }
 
@@ -950,6 +1559,7 @@ Your coaching style:
     }
 
     this.renderScanHistory();
+    this.renderForecast();
   },
 
   renderScanHistory() {
@@ -974,6 +1584,33 @@ Your coaching style:
           <span class="detail-tag">Tone ${scan.metrics?.tone || '-'}</span>
           <span class="detail-tag">Oil ${scan.metrics?.oil || '-'}</span>
         </div>
+      </article>
+    `).join('');
+  },
+
+  renderForecast() {
+    const latest = this.latestScan || this.getStored(this.storageKeys.scans)[0];
+    const title = document.getElementById('forecastTitle');
+    const badge = document.getElementById('forecastBadge');
+    const grid = document.getElementById('forecastGrid');
+    if (!grid) return;
+
+    if (!latest) {
+      if (title) title.textContent = 'Forecast starts after your first scan.';
+      if (badge) badge.textContent = 'Predictive';
+      grid.innerHTML = '<article class="forecast-card"><p class="card-label">Day 7</p><strong>-</strong><span>Complete a scan to build your routine forecast.</span></article>';
+      return;
+    }
+
+    const forecast = latest.forecast || this.generateGlowForecast(latest.metrics || {});
+    if (title) title.textContent = '30-day routine projection from your latest scan.';
+    if (badge) badge.textContent = latest.safetyNote || 'Routine';
+    grid.innerHTML = forecast.map((item) => `
+      <article class="forecast-card">
+        <p class="card-label">Day ${item.day}</p>
+        <strong>${item.score}%</strong>
+        <h3>${item.label}</h3>
+        <span>${item.action}</span>
       </article>
     `).join('');
   },

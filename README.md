@@ -15,7 +15,8 @@ cd GlowAI
 ```bash
 npm install
 npm run build
-# No web start script is defined; use the Android/Desktop commands below if available.
+npm run dev
+# http://localhost:3000
 ```
 
 ### Android build/open
@@ -79,6 +80,10 @@ Add screenshots here after capture:
 ## Features
 
 - **Skin Scan** — Claude Opus 4.6 vision analyzes a camera photo and returns condition tags, severity, confidence, and care recommendations
+- **Live Video Scan** — browser/mobile camera sampling estimates hydration, texture, clarity, oil, tone, redness, and Hawaii humidity fit
+- **30-Day Glow Forecast** — predicts 7, 14, and 30 day routine progress from scan metrics
+- **Agentic Actions** — booking, Shopify cart building, and TikTok-ready before/after reel generation from the latest scan
+- **B2B White-Label** — salon workspace controls for branded scan apps, calendar handoff, product commerce, and creator workflows
 - **Appointments** — book, view, update, cancel dermatology appointments; auto-suggested from scan results
 - **AI Chatbot** — embedded agentic assistant (Claude Sonnet 4.6) for skincare Q&A
 - **PWA + APK** — installable on any Android device; also works in Brave/Chrome as a standalone app
@@ -128,6 +133,22 @@ glowai/
 
 ## Setup
 
+### Fedora Lynx workstation
+
+```bash
+sudo dnf upgrade --refresh
+sudo dnf install nodejs npm gcc-c++ make python3-pip git tmux zsh
+npm install -g yarn pm2
+```
+
+Optional terminal setup:
+
+```bash
+git clone https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
+echo 'source ~/powerlevel10k/powerlevel10k.zsh-theme' >> ~/.zshrc
+chsh -s zsh
+```
+
 ### Backend
 
 ```bash
@@ -143,11 +164,44 @@ uvicorn backend.main:app --reload --port 8000
 
 ```bash
 npm install
+npm install face-api.js@0.20.0 @tensorflow/tfjs
 npm run build                  # esbuild bundles scan.js
+npm run dev                    # localhost:3000
 npx cap sync android
 cd android && ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
+
+The browser scanner now loads `face-api.js` with TensorFlow.js before analysis. Put Tiny Face Detector model files in `www/models` for a fully local build; if they are absent, the app tries the public face-api model host and falls back to the guided demo scan if models cannot load.
+
+Yarn equivalents:
+
+```bash
+yarn install
+yarn add face-api.js@0.20.0 @tensorflow/tfjs
+yarn dev
+```
+
+### Railway deploy
+
+```bash
+railway login
+railway init
+railway up
+```
+
+### Agentic monetization setup
+
+The **Agents** tab runs in local demo mode by default and writes action payloads to device storage. Add production endpoints in the app to connect:
+
+| Agent | Endpoint |
+|-------|----------|
+| Esthetician booking | Calendar or salon booking webhook |
+| Product commerce | Shopify storefront/cart URL or backend cart endpoint |
+| TikTok reel | Media generation webhook for before/after reel assembly |
+| White-label | Salon workspace configuration saved locally for branded deployments |
+
+Voice commands such as "book my esthetician appointment", "order my routine", "make a TikTok reel", or "run autopilot" route into the agent cockpit.
 
 ### Environment Variables
 

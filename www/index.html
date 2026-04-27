@@ -30,6 +30,7 @@
         <button class="menu-item" type="button" data-page="scan" role="menuitem">Face Scan</button>
         <button class="menu-item is-active" type="button" data-page="home" role="menuitem">Home</button>
         <button class="menu-item" type="button" data-page="services" role="menuitem">Services</button>
+        <button class="menu-item" type="button" data-page="agents" role="menuitem">Agents</button>
         <button class="menu-item" type="button" data-page="journey" role="menuitem">Journey</button>
         <button class="menu-item" type="button" data-page="concierge" role="menuitem">Concierge</button>
         <button class="menu-item" type="button" data-page="notes" role="menuitem">Favorites</button>
@@ -52,6 +53,7 @@
             <button class="page-pill is-active" type="button" data-nav-target="home">Home</button>
             <button class="page-pill" type="button" data-nav-target="scan">Face Scan</button>
             <button class="page-pill" type="button" data-nav-target="services">Services</button>
+            <button class="page-pill" type="button" data-nav-target="agents">Agents</button>
           </div>
         </div>
 
@@ -156,6 +158,29 @@
             <span class="scan-launch-sub">Front camera, skin scores, instant routine direction.</span>
           </button>
 
+          <section class="live-scan-panel" id="liveScanPanel" aria-label="Real-time skin scanner">
+            <div class="live-scan-toolbar">
+              <div>
+                <p class="card-label">Live scan</p>
+                <h3>Real-time camera skin read</h3>
+              </div>
+              <div class="live-scan-actions">
+                <button class="secondary-btn compact-btn" id="liveScanStart" type="button">Live scan</button>
+                <button class="secondary-btn compact-btn hidden" id="liveScanStop" type="button">Finish</button>
+              </div>
+            </div>
+            <div class="live-scan-stage" id="liveScanStage">
+              <video class="live-scan-video" id="liveScanVideo" autoplay playsinline muted></video>
+              <canvas class="live-scan-canvas" id="liveScanCanvas"></canvas>
+              <div class="live-scan-guide" aria-hidden="true"></div>
+            </div>
+            <div class="live-scan-readouts">
+              <article><span>Hydration</span><strong id="liveHydration">-</strong></article>
+              <article><span>Texture</span><strong id="liveTexture">-</strong></article>
+              <article><span>Humidity fit</span><strong id="liveHumidity">-</strong></article>
+            </div>
+          </section>
+
           <article class="scan-status-card" id="scanStatusCard">
             <div class="scan-status-topline">
               <p class="card-label">Scan status</p>
@@ -238,6 +263,23 @@
             <p class="card-label">No history yet</p>
             <h3>Your completed scans will appear here.</h3>
             <p>Take one face scan to start building a visible result trail.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="forecast-panel" aria-label="30-day glow forecast">
+        <div class="scan-result-topline">
+          <div>
+            <p class="card-label">30-day glow forecast</p>
+            <h3 class="scan-history-title" id="forecastTitle">Forecast starts after your first scan.</h3>
+          </div>
+          <span class="scan-result-badge" id="forecastBadge">Predictive</span>
+        </div>
+        <div class="forecast-grid" id="forecastGrid">
+          <article class="forecast-card">
+            <p class="card-label">Day 7</p>
+            <strong>-</strong>
+            <span>Complete a scan to build your routine forecast.</span>
           </article>
         </div>
       </section>
@@ -368,6 +410,12 @@
                 <span class="nail n4"></span>
                 <span class="nail n5"></span>
               </div>
+              <div class="product-overlay hidden" id="productOverlay" aria-hidden="true">
+                <span class="product-glow-zone zone-cheek-left"></span>
+                <span class="product-glow-zone zone-cheek-right"></span>
+                <span class="product-glow-zone zone-forehead"></span>
+                <span class="product-finish" id="productFinish"></span>
+              </div>
             </div>
 
             <div class="tryon-controls">
@@ -396,6 +444,15 @@
                   <button class="tryon-option is-active" type="button" data-nail-length="short">Short</button>
                   <button class="tryon-option" type="button" data-nail-length="medium">Medium</button>
                   <button class="tryon-option" type="button" data-nail-length="long">Long</button>
+                </div>
+              </div>
+
+              <div class="tryon-control-group hidden" id="productControls">
+                <p class="card-label">Product visualization</p>
+                <div class="segmented-control">
+                  <button class="tryon-option is-active" type="button" data-product-tryon="spf">Tinted SPF</button>
+                  <button class="tryon-option" type="button" data-product-tryon="serum">Brightening serum</button>
+                  <button class="tryon-option" type="button" data-product-tryon="barrier">Barrier cream</button>
                 </div>
               </div>
             </div>
@@ -488,6 +545,93 @@
       </article>
     </section>
 
+    <section class="page" id="page-agents" data-page-panel="agents">
+      <section class="page-lead">
+        <p class="section-kicker">Agentic AI + Monetization</p>
+        <h2>Let GlowAI act on the scan.</h2>
+        <p class="section-copy">Approve agent actions for booking, product commerce, social reels, and salon white-label deployment. Demo mode logs actions locally; production mode can point to calendar, Shopify, and media-generation endpoints.</p>
+      </section>
+
+      <section class="agent-dashboard">
+        <article class="agent-card">
+          <div class="agent-card-top">
+            <p class="card-label">Esthetician booking agent</p>
+            <span class="agent-status">Calendar-ready</span>
+          </div>
+          <h3>Book the right service automatically.</h3>
+          <p>Uses latest scan, preferred service, and salon availability to reserve a facial, brow, or prep appointment.</p>
+          <button class="primary-btn primary-btn-full" id="agentBookBtn" type="button">Agent book appointment</button>
+        </article>
+
+        <article class="agent-card">
+          <div class="agent-card-top">
+            <p class="card-label">Shopify product agent</p>
+            <span class="agent-status">Cart-ready</span>
+          </div>
+          <h3>Build a routine cart from scan signals.</h3>
+          <p>Maps hydration, oil, texture, and Hawaii humidity load to cleanser, serum, moisturizer, and SPF product types.</p>
+          <button class="primary-btn primary-btn-full" id="agentOrderBtn" type="button">Agent build Shopify cart</button>
+        </article>
+
+        <article class="agent-card">
+          <div class="agent-card-top">
+            <p class="card-label">TikTok reel agent</p>
+            <span class="agent-status">Creator-ready</span>
+          </div>
+          <h3>Generate before/after reel script.</h3>
+          <p>Creates a TikTok-ready storyboard with hooks, captions, scan metrics, routine steps, and CTA for salon conversion.</p>
+          <button class="primary-btn primary-btn-full" id="agentReelBtn" type="button">Generate reel plan</button>
+        </article>
+      </section>
+
+      <section class="agent-controls">
+        <article class="agent-config">
+          <p class="card-label">Integration endpoints</p>
+          <label class="field-group">
+            <span class="field-label">Calendar webhook</span>
+            <input class="field-input" id="calendarEndpoint" type="url" placeholder="https://salon.example.com/api/bookings" />
+          </label>
+          <label class="field-group">
+            <span class="field-label">Shopify storefront/cart URL</span>
+            <input class="field-input" id="shopifyEndpoint" type="url" placeholder="https://your-salon.myshopify.com/cart" />
+          </label>
+          <label class="field-group">
+            <span class="field-label">Media/reel webhook</span>
+            <input class="field-input" id="reelEndpoint" type="url" placeholder="https://media.example.com/reels" />
+          </label>
+          <button class="secondary-btn secondary-btn-full" id="saveAgentConfigBtn" type="button">Save integrations</button>
+        </article>
+
+        <article class="agent-config">
+          <p class="card-label">B2B white-label for salons</p>
+          <label class="field-group">
+            <span class="field-label">Salon brand</span>
+            <input class="field-input" id="whiteLabelSalon" type="text" placeholder="Pearl City Glow Studio" />
+          </label>
+          <label class="field-group">
+            <span class="field-label">Monthly plan</span>
+            <select class="field-input" id="whiteLabelPlan">
+              <option value="starter">Starter - $299/mo</option>
+              <option value="growth">Growth - $799/mo</option>
+              <option value="enterprise">Enterprise - custom</option>
+            </select>
+          </label>
+          <button class="secondary-btn secondary-btn-full" id="whiteLabelLaunchBtn" type="button">Launch salon workspace</button>
+        </article>
+      </section>
+
+      <section class="agent-log-panel">
+        <div class="scan-result-topline">
+          <div>
+            <p class="card-label">Agent action log</p>
+            <h3 class="scan-history-title">Autonomous actions wait for approval, then execute.</h3>
+          </div>
+          <button class="secondary-btn compact-btn" id="agentAutopilotBtn" type="button">Run full autopilot</button>
+        </div>
+        <div class="agent-log-list" id="agentLogList"></div>
+      </section>
+    </section>
+
     <section class="page" id="page-concierge" data-page-panel="concierge">
       <section class="page-lead">
         <p class="section-kicker">Beauty Coach</p>
@@ -504,6 +648,11 @@
       </div>
 
       <section class="chat-shell">
+        <div class="voice-coach-bar">
+          <button class="secondary-btn compact-btn" id="voiceCoachStart" type="button">Voice coach</button>
+          <button class="secondary-btn compact-btn hidden" id="voiceCoachStop" type="button">Stop</button>
+          <span class="voice-coach-status" id="voiceCoachStatus">Say "scan my skin now" or ask for a Hawaii humidity adjustment.</span>
+        </div>
         <div class="chat-thread" id="chatThread"></div>
         <div class="chat-typing hidden" id="chatTyping">
           <div class="chat-row assistant"><div class="chat-bubble typing-bubble"><span></span><span></span><span></span></div></div>
@@ -538,13 +687,13 @@
         <span class="bottom-nav-icon">◌</span>
         <span class="bottom-nav-label">Salon</span>
       </button>
+      <button class="bottom-nav-item" type="button" data-page="agents">
+        <span class="bottom-nav-icon">✧</span>
+        <span class="bottom-nav-label">Agents</span>
+      </button>
       <button class="bottom-nav-item" type="button" data-page="concierge">
         <span class="bottom-nav-icon">☼</span>
-        <span class="bottom-nav-label">Concierge</span>
-      </button>
-      <button class="bottom-nav-item" type="button" data-page="notes">
-        <span class="bottom-nav-icon">♡</span>
-        <span class="bottom-nav-label">Saved</span>
+        <span class="bottom-nav-label">Coach</span>
       </button>
     </nav>
   </main>

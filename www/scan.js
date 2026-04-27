@@ -3,7 +3,8 @@
 // #ASSUMPTION: @capacitor/camera is installed; esbuild bundles this file.
 // #ASSUMPTION: The app can complete a local demo scan when no backend is configured.
 
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
+import { Camera, CameraDirection, CameraResultType, CameraSource } from '@capacitor/camera';
 import '@tensorflow/tfjs';
 import * as faceapi from 'face-api.js';
 
@@ -239,6 +240,30 @@ async function ensureCameraPermission() {
 }
 
 // ── Resize image before upload (max ~900KB) ───────────────────────────────────
+function normalizeImageFormat(format = 'jpeg') {
+  return format === 'jpg' ? 'jpeg' : format;
+}
+
+function dataUrlToBase64(dataUrl) {
+  const parts = String(dataUrl || '').split(',');
+  return parts.length > 1 ? parts[1] : '';
+}
+
+async function resizeDataUrl(dataUrl, maxBytes = 900_000) {
+  const base64 = dataUrlToBase64(dataUrl);
+  if (!base64) throw new Error('Captured photo was empty');
+  const byteLen = Math.ceil(base64.length * 0.75);
+  if (byteLen <= maxBytes) return dataUrl;
+
+  const img = await imageFromDataUrl(dataUrl);
+  const scale = Math.sqrt(maxBytes / byteLen);
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.floor(img.width * scale));
+  canvas.height = Math.max(1, Math.floor(img.height * scale));
+  canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', 0.82);
+}
+
 async function resizeBase64(b64, maxBytes = 900_000) {
   const byteLen = Math.ceil(b64.length * 0.75);
   if (byteLen <= maxBytes) return b64;
@@ -270,17 +295,31 @@ async function normalizeCameraPhoto(photo) {
   if (!photo) return null;
   if (photo.dataUrl?.startsWith('data:image/')) return photo.dataUrl;
   if (photo.base64String) {
-    const format = photo.format || 'jpeg';
+    const format = normalizeImageFormat(photo.format);
     return `data:image/${format};base64,${photo.base64String}`;
   }
 
-  const uri = photo.webPath || photo.path;
-  if (!uri) return null;
+  const uriCandidates = [
+    photo.webPath,
+    photo.path ? Capacitor.convertFileSrc(photo.path) : '',
+    photo.path,
+  ].filter(Boolean);
 
-  const response = await fetch(uri);
-  if (!response.ok) throw new Error('Captured photo could not be loaded');
-  const blob = await response.blob();
-  return blobToDataUrl(blob);
+  let lastError;
+  for (const uri of uriCandidates) {
+    try {
+      const response = await fetch(uri, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Photo load failed with ${response.status}`);
+      const blob = await response.blob();
+      if (!blob.type.startsWith('image/')) throw new Error('Captured file was not an image');
+      return blobToDataUrl(blob);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (lastError) throw lastError;
+  return null;
 }
 
 async function captureStudioPhoto({ facing = 'rear' } = {}) {
@@ -289,16 +328,30 @@ async function captureStudioPhoto({ facing = 'rear' } = {}) {
     const permitted = await ensureCameraPermission();
     if (!permitted) return null;
 
-    const photo = await Camera.getPhoto({
-      quality: 90,
-      allowEditing: false,
-      resultType: CameraResultType.DataUrl,
-      source: CameraSource.Camera,
-      saveToGallery: false,
-      correctOrientation: true,
-      presentationStyle: 'fullscreen',
-      direction: facing === 'front' ? 'front' : 'rear',
-    });
+    let photo;
+    try {
+      photo = await Camera.getPhoto({
+        quality: 82,
+        width: 1280,
+        height: 1280,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera,
+        saveToGallery: false,
+        correctOrientation: true,
+        presentationStyle: 'fullscreen',
+        direction: facing === 'front' ? CameraDirection.Front : CameraDirection.Rear,
+      });
+    } catch (error) {
+      const msg = String(error?.message || error);
+      if (msg.includes('cancel') || msg.includes('User cancelled')) throw error;
+      app()?.setScanStatus?.('Camera fallback', 'Opening the system photo picker so GlowAI can still use your picture.');
+      const fallback = await capturePhotoWebForFacing(facing);
+      return fallback ? {
+        dataUrl: `data:image/jpeg;base64,${fallback}`,
+        name: `${facing === 'front' ? 'selfie' : 'capture'}-${Date.now()}.jpg`,
+      } : null;
+    }
 
     const dataUrl = await normalizeCameraPhoto(photo);
     if (!dataUrl) return null;
@@ -356,8 +409,7 @@ async function startScan() {
     }
 
     app()?.setScanStatus?.('Finding face', 'Checking that your face is visible and centered before analysis.');
-    const resized = await resizeBase64(capture.dataUrl.split(',')[1]);
-    const resizedDataUrl = `data:image/jpeg;base64,${resized}`;
+    const resizedDataUrl = await resizeDataUrl(capture.dataUrl);
     const faceQuality = await analyzeFacePresence(resizedDataUrl);
 
     if (faceQuality.available && !faceQuality.detected) {

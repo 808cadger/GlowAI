@@ -7,15 +7,20 @@ import { Capacitor } from '@capacitor/core';
 import { Camera, CameraDirection, CameraResultType, CameraSource } from '@capacitor/camera';
 import '@tensorflow/tfjs';
 import * as faceapi from 'face-api.js';
+import * as mpSelfie from '@mediapipe/selfie_segmentation';
 
 const app = () => window.glowaiApp;
 const FACE_MODEL_URLS = ['./models', 'https://justadudewhohacks.github.io/face-api.js/models'];
+const SELFIE_MODEL_URLS = ['./models', 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation'];
 
 let faceModelPromise;
 let faceModelStatus = 'idle';
+let selfieModelPromise;
+let selfieModelStatus = 'idle';
 let liveScanState = {
   stream: null,
   timer: null,
+  processing: false,
 };
 
 function imageFromDataUrl(dataUrl) {
@@ -35,7 +40,10 @@ async function loadFaceModels() {
     let lastError;
     for (const modelUrl of FACE_MODEL_URLS) {
       try {
-        await faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl),
+          faceapi.nets.faceLandmark68TinyNet.loadFromUri(modelUrl),
+        ]);
         faceModelStatus = 'ready';
         return { ready: true, modelUrl };
       } catch (error) {
@@ -47,6 +55,35 @@ async function loadFaceModels() {
   })();
 
   return faceModelPromise;
+}
+
+async function loadSelfieSegmentation() {
+  if (selfieModelPromise) return selfieModelPromise;
+
+  selfieModelPromise = (async () => {
+    selfieModelStatus = 'loading';
+    let lastError;
+    for (const modelUrl of SELFIE_MODEL_URLS) {
+      try {
+        const selfie = new mpSelfie.SelfieSegmentation({
+          locateFile: (file) => `${modelUrl}/${file}`,
+        });
+        selfie.setOptions({
+          modelSelection: 1,
+          selfieMode: true,
+        });
+        await selfie.initialize();
+        selfieModelStatus = 'ready';
+        return { ready: true, modelUrl, selfie };
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    selfieModelStatus = 'unavailable';
+    return { ready: false, error: lastError };
+  })();
+
+  return selfieModelPromise;
 }
 
 async function analyzeFacePresence(dataUrl) {
@@ -65,7 +102,9 @@ async function analyzeFacePresence(dataUrl) {
     inputSize: 416,
     scoreThreshold: 0.35,
   });
-  const detection = await faceapi.detectSingleFace(img, options);
+  const detections = await faceapi.detectAllFaces(img, options).withFaceLandmarks(true);
+  const detection = detections[0]?.detection;
+  const landmarks = detections[0]?.landmarks;
 
   if (!detection) {
     return {
@@ -89,8 +128,35 @@ async function analyzeFacePresence(dataUrl) {
     faceArea,
     centered: centerOffset < 0.28,
     closeEnough: faceArea > 0.08,
+    landmarks: landmarks
+      ? {
+          count: landmarks.positions.length,
+          jaw: landmarks.getJawOutline().length,
+          nose: landmarks.getNose().length,
+          mouth: landmarks.getMouth().length,
+          leftEye: landmarks.getLeftEye().length,
+          rightEye: landmarks.getRightEye().length,
+        }
+      : null,
     message: 'Face detected and ready for skin analysis.',
   };
+}
+
+async function segmentSelfie(input) {
+  const modelState = await loadSelfieSegmentation();
+  if (!modelState.ready) return null;
+
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error('Selfie segmentation timed out')), 2500);
+    modelState.selfie.onResults((results) => {
+      window.clearTimeout(timeout);
+      resolve(results);
+    });
+    modelState.selfie.send({ image: input }).catch((error) => {
+      window.clearTimeout(timeout);
+      reject(error);
+    });
+  });
 }
 
 async function startCameraStream(video, { facing = 'front' } = {}) {
@@ -162,6 +228,108 @@ function sampleCanvas(canvas) {
   };
 }
 
+function analyzeMetrics(segmentationMask, sourceCanvas) {
+  if (!segmentationMask || !sourceCanvas?.width || !sourceCanvas?.height) return null;
+
+  const { width, height } = sourceCanvas;
+  const frameCtx = sourceCanvas.getContext('2d', { willReadFrequently: true });
+  const frame = frameCtx.getImageData(0, 0, width, height).data;
+  const maskCanvas = document.createElement('canvas');
+  maskCanvas.width = width;
+  maskCanvas.height = height;
+  const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+  maskCtx.drawImage(segmentationMask, 0, 0, width, height);
+  const mask = maskCtx.getImageData(0, 0, width, height).data;
+
+  let count = 0;
+  let luminance = 0;
+  let redness = 0;
+  let shine = 0;
+  let texture = 0;
+  let warmth = 0;
+  let coolness = 0;
+  let saturation = 0;
+  let shadow = 0;
+  let highlight = 0;
+  let contrastSum = 0;
+  let centerWeight = 0;
+  let edgeWeight = 0;
+  let greenBalance = 0;
+  let blueBalance = 0;
+
+  for (let y = 1; y < height - 1; y += 2) {
+    for (let x = 1; x < width - 1; x += 2) {
+      const i = (y * width + x) * 4;
+      if (mask[i + 3] < 128 && mask[i] < 128) continue;
+
+      const r = frame[i];
+      const g = frame[i + 1];
+      const b = frame[i + 2];
+      const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const right = ((y * width + x + 1) * 4);
+      const down = (((y + 1) * width + x) * 4);
+      const localContrast = Math.abs(r - frame[right]) + Math.abs(g - frame[right + 1]) + Math.abs(b - frame[right + 2])
+        + Math.abs(r - frame[down]) + Math.abs(g - frame[down + 1]) + Math.abs(b - frame[down + 2]);
+      const dx = Math.abs((x / width) - 0.5);
+      const dy = Math.abs((y / height) - 0.5);
+
+      luminance += lum;
+      redness += Math.max(0, r - ((g + b) / 2));
+      shine += lum > 218 ? 1 : 0;
+      shadow += lum < 72 ? 1 : 0;
+      highlight += lum > 205 ? 1 : 0;
+      texture += localContrast;
+      contrastSum += max - min;
+      warmth += Math.max(0, r - b);
+      coolness += Math.max(0, b - r);
+      saturation += max === 0 ? 0 : (max - min) / max;
+      centerWeight += Math.max(0, 1 - ((dx + dy) * 1.25));
+      edgeWeight += dx + dy > 0.58 ? 1 : 0;
+      greenBalance += g;
+      blueBalance += b;
+      count += 1;
+    }
+  }
+
+  if (!count) return null;
+
+  const avgLum = luminance / count;
+  const avgRedness = redness / count;
+  const shineRatio = shine / count;
+  const shadowRatio = shadow / count;
+  const highlightRatio = highlight / count;
+  const avgTexture = texture / count;
+  const avgContrast = contrastSum / count;
+  const humidityStress = Math.max(0, Math.min(100, Math.round((shineRatio * 62) + shadowRatio * 18 + Math.max(0, avgRedness - 8) * 1.8)));
+
+  return {
+    hydration: Math.max(42, Math.min(96, Math.round(78 + (avgLum - 132) * 0.05 - shineRatio * 26 - humidityStress * 0.08))),
+    clarity: Math.max(38, Math.min(97, Math.round(91 - avgTexture * 0.18 - avgRedness * 0.2 - shadowRatio * 12))),
+    texture: Math.max(34, Math.min(96, Math.round(92 - avgTexture * 0.22 - avgContrast * 0.16))),
+    tone: Math.max(42, Math.min(96, Math.round(88 - avgRedness * 0.24 - Math.abs(warmth - coolness) / count * 0.1))),
+    oil: Math.max(28, Math.min(96, Math.round(55 + shineRatio * 118 + highlightRatio * 34))),
+    redness: Math.max(0, Math.min(100, Math.round(avgRedness * 2.35))),
+    humidityStress,
+    moisture: Math.max(35, Math.min(98, Math.round(82 - shineRatio * 20 - shadowRatio * 15 + (avgLum - 128) * 0.04))),
+    barrier: Math.max(35, Math.min(98, Math.round(89 - avgRedness * 0.32 - avgTexture * 0.12))),
+    poreContrast: Math.max(0, Math.min(100, Math.round(avgContrast * 0.9))),
+    shineIndex: Math.max(0, Math.min(100, Math.round(shineRatio * 100))),
+    shadowIndex: Math.max(0, Math.min(100, Math.round(shadowRatio * 100))),
+    highlightIndex: Math.max(0, Math.min(100, Math.round(highlightRatio * 100))),
+    warmth: Math.max(0, Math.min(100, Math.round((warmth / count) * 0.9))),
+    coolness: Math.max(0, Math.min(100, Math.round((coolness / count) * 0.9))),
+    saturation: Math.max(0, Math.min(100, Math.round((saturation / count) * 100))),
+    evenness: Math.max(0, Math.min(100, Math.round(96 - avgTexture * 0.16 - avgContrast * 0.18))),
+    centerCoverage: Math.max(0, Math.min(100, Math.round((centerWeight / count) * 100))),
+    edgeNoise: Math.max(0, Math.min(100, Math.round((edgeWeight / count) * 100))),
+    greenBalance: Math.max(0, Math.min(255, Math.round(greenBalance / count))),
+    blueBalance: Math.max(0, Math.min(255, Math.round(blueBalance / count))),
+    segmentationCoverage: Math.max(0, Math.min(100, Math.round((count / ((width * height) / 4)) * 100))),
+  };
+}
+
 async function analyzeVideoFrame(video, canvas) {
   if (!video.videoWidth || !video.videoHeight) return null;
 
@@ -172,10 +340,17 @@ async function analyzeVideoFrame(video, canvas) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(video, 0, 0, width, height);
   const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
-  const [skinSignals, faceQuality] = await Promise.all([
+  const [baseSignals, faceQuality, selfieResults] = await Promise.all([
     Promise.resolve(sampleCanvas(canvas)),
     analyzeFacePresence(dataUrl),
+    segmentSelfie(canvas).catch(() => null),
   ]);
+  const segmentedSignals = selfieResults?.segmentationMask
+    ? analyzeMetrics(selfieResults.segmentationMask, canvas)
+    : null;
+  const skinSignals = segmentedSignals
+    ? { ...baseSignals, ...segmentedSignals, segmentation: 'selfie' }
+    : { ...baseSignals, segmentation: 'full-frame' };
 
   const humidityStress = Math.max(0, Math.min(100, Math.round((skinSignals.oil * 0.58) + ((100 - skinSignals.hydration) * 0.42))));
   return {
@@ -192,13 +367,20 @@ async function analyzeVideoFrame(video, canvas) {
 async function startLiveSkinScan({ video, canvas, onSample, onError } = {}) {
   try {
     await startCameraStream(video, { facing: 'front' });
-    await loadFaceModels();
+    await Promise.all([
+      loadFaceModels(),
+      loadSelfieSegmentation(),
+    ]);
     liveScanState.timer = setInterval(async () => {
+      if (liveScanState.processing) return;
+      liveScanState.processing = true;
       try {
         const sample = await analyzeVideoFrame(video, canvas);
         if (sample) onSample?.(sample);
       } catch (error) {
         onError?.(error);
+      } finally {
+        liveScanState.processing = false;
       }
     }, 900);
   } catch (error) {
@@ -438,9 +620,12 @@ window.scanModule = {
   captureStudioPhoto,
   loadFaceModels,
   analyzeFacePresence,
+  loadSelfieSegmentation,
+  analyzeMetrics,
   startCameraStream,
   stopCameraStream,
   analyzeVideoFrame,
   startLiveSkinScan,
   getFaceModelStatus: () => faceModelStatus,
+  getSelfieModelStatus: () => selfieModelStatus,
 };

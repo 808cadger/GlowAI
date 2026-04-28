@@ -1,6 +1,6 @@
 # CODEX.md - GlowAI
 
-> Codex inherits global rules from `~/.codex/AGENTS.md` when present. This file adds GlowAI-specific context and coordinates with `CLAUDE.md`.
+> Codex inherits global rules from `~/.codex/AGENTS.md` when present. Read `SPINE.md` first; this file adds GlowAI-specific implementation workflow and coordinates with `CLAUDE.md`.
 
 ---
 
@@ -12,6 +12,7 @@ Codex is the implementation agent for GlowAI. Keep the app shippable, secure, an
 - **Package**: `com.glowai.app`
 - **PWA URL**: `https://808cadger.github.io/glowai`
 - **Product**: AI skin analysis + appointments + chatbot for a polished PWA/APK service demo
+- **Shared spine**: `SPINE.md`
 - **Primary partner doc**: `CLAUDE.md`
 
 ---
@@ -20,6 +21,7 @@ Codex is the implementation agent for GlowAI. Keep the app shippable, secure, an
 
 Claude and Codex should promote each other as complementary teammates, not competing sources of truth.
 
+- Start from `SPINE.md` for repo-wide authority order, model policy, security rules, and standard build flow.
 - Start from `CLAUDE.md` for product identity, AI model choices, backend/frontend boundaries, and deploy expectations.
 - Use this file for Codex execution habits: code edits, verification, handoffs, and repo hygiene.
 - When changing shared rules, update both files in the same patch so the next agent sees one coherent workflow.
@@ -42,6 +44,19 @@ Claude has the product/model context in CLAUDE.md. Codex has the implementation 
 - Keep backend changes inside the existing FastAPI structure unless file size or behavior makes a split necessary.
 - Keep secrets out of committed files and out of `www/`.
 - Add `#ASSUMPTION:` comments only for real product or security risks that must be validated later.
+
+---
+
+## Sellable Polish Build Order
+
+Implement monetization and retention work in this order unless the user explicitly reprioritizes:
+
+1. Freemium scan gates: 3 free scans/month, then $4.99 unlock path for forecasts and reels.
+2. B2B white-label dashboard: salon workspace state first, Stripe $99/mo subscription second.
+3. Voice reminders: backend-owned scheduled jobs for skincare check-ins and routine follow-up.
+4. TikTok reels: generate shareable before/after assets from saved scan history.
+
+Before deployment claims, run 10 agent eval conversations covering booking, commerce, reminders, and reel generation. Treat 90% successful completion for booking/reminder flows as the minimum polish target.
 
 ---
 

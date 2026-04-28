@@ -1,6 +1,6 @@
 # CLAUDE.md — GlowAI
 
-> Inherits all global rules from `~/CLAUDE.md`. This file adds GlowAI-specific context only.
+> Inherits all global rules from `~/CLAUDE.md`. Read `SPINE.md` first; this file adds GlowAI-specific product and Claude-side context.
 
 ---
 
@@ -8,6 +8,9 @@
 
 Claude and Codex should work as a paired agent team for GlowAI.
 
+- `SPINE.md` is the shared hierarchy and repo-wide source of truth.
+- `.claude/rules/glowai-repo-rules.md` holds Claude-side repo guardrails.
+- `.claude/skills/glowai-build-handoff/SKILL.md` is the reusable build/APK/handoff playbook.
 - **Claude owns product reasoning**: app identity, AI model choices, user-facing behavior, copy, and design direction.
 - **Codex owns implementation execution**: repo edits, tests, build checks, Android/PWA verification, and handoff notes.
 - Read `CODEX.md` before asking Codex to modify files; it contains the implementation workflow and verification expectations.
@@ -37,6 +40,21 @@ Never swap these without explicit approval.
 
 ---
 
+## Sellable Polish Priorities
+
+Prioritize features that make GlowAI easier to sell against lightweight beauty coach apps.
+
+| Priority | Feature | Product action | Business impact |
+|----------|---------|----------------|-----------------|
+| 1 | Freemium Scan | Limit to 3 free scans/month; $4.99 unlocks forecasts and reels | Improve paid conversion and ROAS |
+| 2 | B2B White-Label | Salon dashboard with Stripe $99/mo subscription | Reduce CAC through salon distribution |
+| 3 | Voice Reminders | "Did you wash?" and routine follow-ups through backend scheduled jobs | Improve reliability and retention |
+| 4 | TikTok Reels | Auto-generate before/after clips from scan history | Drive viral user acquisition |
+
+Eval target: run 10 conversation evals for agent actions such as "Book esthetician", "Order my routine", "Remind me tonight", and "Make a reel". Target at least 90% completion for reminders and bookings before promoting the APK to Hawaii spas.
+
+---
+
 ## Backend
 
 - `backend/main.py` — all routes; never split into routers unless file exceeds 600 lines
@@ -44,6 +62,7 @@ Never swap these without explicit approval.
 - `backend/config.py` — Pydantic `Settings`; all secrets via `.env`
 - Auth: single shared bearer token (`API_TOKEN`) — MVP only; JWT when user accounts land
 - DB: async PostgreSQL via `asyncpg`; migrations via raw SQL in `schema.sql`
+- Future sellable polish: scheduled reminders, freemium counters, Stripe subscription state, and salon workspace records should be backend-owned.
 
 ### Env vars required
 
@@ -77,6 +96,8 @@ CORS_ORIGINS=capacitor://localhost,http://localhost,http://localhost:3000
 - [ ] `npm run build` — esbuild clean
 - [ ] `npx cap sync android` — assets copied
 - [ ] `./gradlew assembleRelease` — APK builds
+- [ ] 10 agent eval conversations pass for booking, commerce, reminders, and reels
+- [ ] Railway backend deployment checked before public APK promotion
 - [ ] `adb install -r app-release.apk` — installs on device `51101JEBF11597`
 - [ ] Backend health: `curl http://localhost:8000/health`
 - [ ] Scan flow end-to-end on device

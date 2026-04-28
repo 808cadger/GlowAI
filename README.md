@@ -172,7 +172,7 @@ cd android && ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The browser scanner now loads `face-api.js` with TensorFlow.js before analysis. Put Tiny Face Detector model files in `www/models` for a fully local build; if they are absent, the app tries the public face-api model host and falls back to the guided demo scan if models cannot load.
+The browser scanner now loads `face-api.js` with TensorFlow.js before analysis and uses MediaPipe selfie segmentation for live scan masking when available. Put Tiny Face Detector, 68-point tiny landmark, and MediaPipe selfie segmentation assets in `www/models` for a fully local build; if they are absent, the app tries public model hosts and falls back to the guided demo scan if models cannot load. Workbox caches app shell, model files, WASM, and recommendations so repeat scans can keep working offline.
 
 Yarn equivalents:
 
@@ -212,6 +212,12 @@ Voice commands such as "book my esthetician appointment", "order my routine", "m
 | `API_TOKEN` | bearer token for frontend → backend |
 | `CORS_ORIGINS` | comma-separated allowed origins |
 | `PORT` | server port (default 8000) |
+| `STRIPE_SECRET_KEY` | server-side Stripe Checkout session creation |
+| `STRIPE_PUBLISHABLE_KEY` | browser Stripe.js initialization |
+| `STRIPE_PRICE_FREEMIUM_UNLOCK` | $4.99 forecasts/reels unlock price |
+| `STRIPE_PRICE_SALON_MONTHLY` | $99/mo salon subscription price |
+| `STRIPE_SUCCESS_URL` | Stripe success redirect |
+| `STRIPE_CANCEL_URL` | Stripe cancel redirect |
 
 ---
 
@@ -219,14 +225,40 @@ Voice commands such as "book my esthetician appointment", "order my routine", "m
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/scan` | Analyze skin photo (base64) → JSON result |
-| `GET` | `/appointments` | List all appointments |
-| `POST` | `/appointments` | Create appointment |
-| `PATCH` | `/appointments/{id}` | Update appointment |
-| `DELETE` | `/appointments/{id}` | Cancel appointment |
-| `POST` | `/chat` | Agentic chatbot message |
+| `POST` | `/api/scan` | Analyze skin photo (base64) → JSON result |
+| `GET` | `/api/appointments` | List all appointments |
+| `POST` | `/api/appointments` | Create appointment |
+| `PUT` | `/api/appointments/{id}` | Update appointment |
+| `DELETE` | `/api/appointments/{id}` | Cancel appointment |
+| `GET` | `/api/reminders` | List active reminders |
+| `POST` | `/api/reminders` | Create skincare reminder |
+| `PUT` | `/api/reminders/{id}` | Update reminder |
+| `DELETE` | `/api/reminders/{id}` | Delete reminder |
+| `POST` | `/api/push-token` | Register Capacitor push token for reminders |
+| `POST` | `/api/subscribe` | Create Stripe Checkout session for freemium or salon plan |
+| `POST` | `/api/chat` | Agentic chatbot message |
+| `GET` | `/mcp` | Claude tool manifest for GlowAI agent actions |
+| `POST` | `/mcp/book` | MCP-style booking tool |
+| `POST` | `/mcp/recommend` | MCP-style 15-concern routine + Shopify recommendation tool |
 
-All routes require `Authorization: Bearer <API_TOKEN>`.
+All API routes except `/api/subscribe` require `Authorization: Bearer <API_TOKEN>`. Checkout uses fixed server-side Stripe price IDs and never exposes the secret key.
+
+### Agent evals
+
+```bash
+npm run eval:agents
+npm run benchmark
+```
+
+The eval script runs 20 booking, commerce, reminder, scan, and reel prompts and fails if completion drops below 90%. The benchmark script writes `reports/benchmark.csv` for skin concern matching, routine relevance, safety language, and overlay stability.
+
+For scan safety review prompts:
+
+```bash
+python3 scripts/opus_eval.py
+```
+
+Use this to prepare dermatologist review and Claude Opus critique cases. It is an evidence gate for wellness-safe reports, not a medical validation claim.
 
 ---
 

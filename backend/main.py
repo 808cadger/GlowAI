@@ -2,15 +2,20 @@
 # #ASSUMPTION: Static Bearer token auth; upgrade to JWT when user accounts are added.
 # #ASSUMPTION: Claude claude-opus-4-6 is used for vision per CLAUDE.md.
 
+import asyncio
 import base64
 import json
 import logging
 import re
+import urllib.error
+import urllib.parse
+import urllib.request
 import uuid
 from contextlib import asynccontextmanager
+from typing import Literal
 
 import anthropic
-from fastapi import Depends, FastAPI, HTTPException, Security, status
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
@@ -20,9 +25,11 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .config import settings
 from .database import Base, engine, get_db
-from .models import Appointment, ScanResult
+from .models import Appointment, Reminder, ScanResult
 from .schemas import (
     AppointmentCreate, AppointmentResponse, AppointmentUpdate,
+    PushTokenCreate,
+    ReminderCreate, ReminderResponse, ReminderUpdate,
     ScanRequest, ScanResponse, SuggestedAppointment,
 )
 
@@ -219,7 +226,103 @@ async def delete_appointment(
     await db.commit()
 
 
-# ── POST /api/chat ────────────────────────────────────────────────────────────
+# ── Reminders ────────────────────────────────────────────────────────────────
+async def send_push(reminder: ReminderResponse):
+    # #ASSUMPTION: Push provider is not connected yet; wire this to WebSocket or
+    # @capacitor/push-notifications registration tokens when device auth lands.
+    delay = max(0, (reminder.remind_at - reminder.created_at).total_seconds())
+    if delay > 60:
+        log.info(
+            "reminder scheduled id=%s user_id=%s remind_at=%s; delivery requires scheduler worker",
+            reminder.id,
+            reminder.user_id,
+            reminder.remind_at,
+        )
+        return
+    if delay:
+        await asyncio.sleep(delay)
+    log.info(
+        "reminder due id=%s user_id=%s channel=%s title=%s",
+        reminder.id,
+        reminder.user_id,
+        reminder.channel,
+        reminder.title,
+    )
+
+
+@app.get("/api/reminders", response_model=list[ReminderResponse])
+async def list_reminders(
+    user_id: str = "default",
+    active_only: bool = True,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_token),
+):
+    q = select(Reminder).where(Reminder.user_id == user_id)
+    if active_only:
+        q = q.where(Reminder.is_active.is_(True))
+    q = q.order_by(Reminder.remind_at)
+    result = await db.execute(q)
+    return result.scalars().all()
+
+
+@app.post("/api/reminders", response_model=ReminderResponse, status_code=201)
+async def set_reminder(
+    body: ReminderCreate,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_token),
+):
+    reminder = Reminder(**body.model_dump())
+    db.add(reminder)
+    await db.commit()
+    await db.refresh(reminder)
+    response = ReminderResponse.model_validate(reminder)
+    background_tasks.add_task(send_push, response)
+    log.info("reminder created id=%s user_id=%s remind_at=%s", reminder.id, reminder.user_id, reminder.remind_at)
+    return response
+
+
+@app.put("/api/reminders/{reminder_id}", response_model=ReminderResponse)
+async def update_reminder(
+    reminder_id: uuid.UUID,
+    body: ReminderUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_token),
+):
+    reminder = await db.get(Reminder, reminder_id)
+    if not reminder:
+        raise HTTPException(404, "Reminder not found")
+    for field, val in body.model_dump(exclude_none=True).items():
+        setattr(reminder, field, val)
+    await db.commit()
+    await db.refresh(reminder)
+    return reminder
+
+
+@app.delete("/api/reminders/{reminder_id}", status_code=204)
+async def delete_reminder(
+    reminder_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_token),
+):
+    result = await db.execute(delete(Reminder).where(Reminder.id == reminder_id))
+    if result.rowcount == 0:
+        raise HTTPException(404, "Reminder not found")
+    await db.commit()
+
+
+@app.post("/api/push-token", status_code=202)
+async def register_push_token(
+    body: PushTokenCreate,
+    _: str = Depends(require_token),
+):
+    # #ASSUMPTION: Push tokens are logged until user/device tables land.
+    # Store hashed tokens once real user auth and Firebase/APNs routing are added.
+    log.info("push token registered user_id=%s platform=%s token_len=%s", body.user_id, body.platform, len(body.token))
+    return {"status": "accepted"}
+
+
+# ── Subscriptions and chat ────────────────────────────────────────────────────
 class ChatMessage(BaseModel):
     role: str
     content: str
@@ -228,6 +331,171 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=500)
     history: list[ChatMessage] = []
     user_id: str = Field(default="default", max_length=100)
+
+
+class SubscribeRequest(BaseModel):
+    plan: Literal["freemium_unlock", "salon_monthly"]
+    user_id: str = Field(default="default", max_length=100)
+
+
+class SubscribeResponse(BaseModel):
+    session_id: str
+    publishable_key: str
+    plan: str
+
+
+class RecommendRequest(BaseModel):
+    concerns: list[str] = Field(..., min_length=1, max_length=15)
+    skin_type: str = Field(default="unknown", max_length=100)
+    climate: str = Field(default="humid coastal", max_length=100)
+
+
+SUPPORTED_CONCERNS = {
+    "acne",
+    "redness",
+    "dryness",
+    "oiliness",
+    "dark_spots",
+    "uneven_tone",
+    "texture",
+    "pores",
+    "sensitivity",
+    "dullness",
+    "fine_lines",
+    "sun_damage",
+    "dehydration",
+    "barrier",
+    "ingrown_hairs",
+}
+
+
+def routine_from_concerns(concerns: list[str], climate: str) -> dict:
+    normalized = [c.lower().replace(" ", "_") for c in concerns[:15]]
+    focus = [c for c in normalized if c in SUPPORTED_CONCERNS] or ["dehydration"]
+    humid = "humid" in climate.lower() or "hawaii" in climate.lower()
+    morning = ["gentle cleanser"]
+    night = ["cleanse"]
+    shopify = [{"handle": "gentle-cleanser", "title": "Low-pH gentle cleanser"}]
+
+    if "dehydration" in focus or "dryness" in focus or "barrier" in focus:
+        morning.append("glycerin or hyaluronic serum")
+        night.append("ceramide barrier cream")
+        shopify.append({"handle": "barrier-cream", "title": "Ceramide barrier cream"})
+    if "oiliness" in focus or "pores" in focus:
+        morning.append("light gel moisturizer")
+        shopify.append({"handle": "gel-moisturizer", "title": "Humidity-safe gel moisturizer"})
+    if "dark_spots" in focus or "uneven_tone" in focus or "dullness" in focus:
+        morning.append("vitamin C or niacinamide")
+        shopify.append({"handle": "brightening-serum", "title": "Brightening serum"})
+    if "texture" in focus or "ingrown_hairs" in focus:
+        night.append("PHA exfoliant 1-2 nights weekly")
+        shopify.append({"handle": "pha-exfoliant", "title": "Gentle PHA exfoliant"})
+    if "redness" in focus or "sensitivity" in focus:
+        night.append("calming niacinamide")
+        shopify.append({"handle": "calming-serum", "title": "Calming serum"})
+
+    morning.append("water-resistant SPF 30+")
+    if humid:
+        morning.append("midday blot or SPF reapply")
+    shopify.append({"handle": "water-resistant-spf", "title": "Water-resistant SPF 30+"})
+
+    return {
+        "focus": focus,
+        "morning": ", ".join(morning),
+        "night": ", ".join(night),
+        "shopify": shopify[:6],
+        "safety_note": "Cosmetic wellness guidance only; refer persistent, painful, changing, or suspicious concerns to a dermatologist.",
+    }
+
+
+def stripe_price_for_plan(plan: str) -> tuple[str | None, str]:
+    if plan == "salon_monthly":
+        return settings.STRIPE_PRICE_SALON_MONTHLY, "subscription"
+    return settings.STRIPE_PRICE_FREEMIUM_UNLOCK, "payment"
+
+
+def create_stripe_checkout_session(body: SubscribeRequest) -> dict:
+    price_id, mode = stripe_price_for_plan(body.plan)
+    if not settings.STRIPE_SECRET_KEY or not settings.STRIPE_PUBLISHABLE_KEY or not price_id:
+        raise HTTPException(503, "Stripe checkout is not configured")
+
+    payload = urllib.parse.urlencode({
+        "mode": mode,
+        "line_items[0][price]": price_id,
+        "line_items[0][quantity]": "1",
+        "success_url": settings.STRIPE_SUCCESS_URL,
+        "cancel_url": settings.STRIPE_CANCEL_URL,
+        "client_reference_id": body.user_id,
+        "metadata[user_id]": body.user_id,
+        "metadata[plan]": body.plan,
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.stripe.com/v1/checkout/sessions",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {settings.STRIPE_SECRET_KEY}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as res:
+            return json.loads(res.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8")
+        log.error("stripe checkout failed status=%s body=%s", e.code, detail)
+        raise HTTPException(502, "Stripe checkout request failed")
+    except Exception as e:
+        log.error("stripe checkout unavailable: %s", e)
+        raise HTTPException(502, "Stripe checkout unavailable")
+
+
+@app.post("/api/subscribe", response_model=SubscribeResponse)
+@app.post("/subscribe", response_model=SubscribeResponse)
+async def subscribe(
+    body: SubscribeRequest,
+    _: str = Depends(require_token),
+):
+    checkout = await asyncio.to_thread(create_stripe_checkout_session, body)
+    log.info("stripe checkout created plan=%s user_id=%s session=%s", body.plan, body.user_id, checkout.get("id"))
+    return SubscribeResponse(
+        session_id=checkout["id"],
+        publishable_key=settings.STRIPE_PUBLISHABLE_KEY or "",
+        plan=body.plan,
+    )
+
+
+@app.get("/mcp")
+async def mcp_manifest():
+    return {
+        "name": "glowai-agent",
+        "tools": [
+            {"name": "book", "endpoint": "/mcp/book", "description": "Create an esthetician or salon appointment handoff."},
+            {"name": "recommend", "endpoint": "/mcp/recommend", "description": "Map up to 15 skin concerns to routine and Shopify products."},
+        ],
+    }
+
+
+@app.post("/mcp/book", response_model=AppointmentResponse, status_code=201)
+async def mcp_book(
+    body: AppointmentCreate,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_token),
+):
+    appt = Appointment(**body.model_dump())
+    db.add(appt)
+    await db.commit()
+    await db.refresh(appt)
+    log.info("mcp booking created id=%s user_id=%s", appt.id, appt.user_id)
+    return appt
+
+
+@app.post("/mcp/recommend")
+async def mcp_recommend(
+    body: RecommendRequest,
+    _: str = Depends(require_token),
+):
+    return routine_from_concerns(body.concerns, body.climate)
 
 CHAT_SYSTEM = """You are GlowAI, a proactive, friendly, and reliable AI agent that helps the user build healthy habits and stay on track with daily routines. You speak in warm, concise, human-like English, and you always prioritize action and clarity over being verbose.
 

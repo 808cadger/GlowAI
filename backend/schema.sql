@@ -32,6 +32,21 @@ CREATE TABLE IF NOT EXISTS scan_results (
     created_at                  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS reminders (
+    id          UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id     VARCHAR(100) NOT NULL DEFAULT 'default',
+    title       VARCHAR(200) NOT NULL,
+    message     TEXT         NOT NULL,
+    remind_at   TIMESTAMPTZ  NOT NULL,
+    channel     VARCHAR(40)  NOT NULL DEFAULT 'push'
+                    CHECK (channel IN ('push', 'websocket', 'local')),
+    cadence     VARCHAR(40)  NOT NULL DEFAULT 'once'
+                    CHECK (cadence IN ('once', 'daily', 'weekly')),
+    is_active   BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
 -- Auto-update updated_at
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
@@ -46,6 +61,13 @@ CREATE TRIGGER trg_appointments_updated_at
   BEFORE UPDATE ON appointments
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS trg_reminders_updated_at ON reminders;
+CREATE TRIGGER trg_reminders_updated_at
+  BEFORE UPDATE ON reminders
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
 CREATE INDEX IF NOT EXISTS idx_appointments_user_id ON appointments(user_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_date    ON appointments(date);
 CREATE INDEX IF NOT EXISTS idx_scan_results_user_id ON scan_results(user_id);
+CREATE INDEX IF NOT EXISTS idx_reminders_user_id    ON reminders(user_id);
+CREATE INDEX IF NOT EXISTS idx_reminders_remind_at  ON reminders(remind_at);

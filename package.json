@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "GlowAI — AI skin analysis & appointments",
   "scripts": {
-    "build": "esbuild www/scan.js --bundle --outfile=www/scan.bundle.js --platform=browser --target=es2020 --minify",
-    "build:dev": "esbuild www/scan.js --bundle --outfile=www/scan.bundle.js --platform=browser --target=es2020",
+    "build": "node scripts/build.mjs --minify",
+    "build:dev": "node scripts/build.mjs",
     "dev": "npm run build:dev && python3 -m http.server 3000 -d www",
+    "benchmark": "python3 scripts/benchmark.py",
+    "eval:agents": "python3 scripts/eval.py",
+    "check": "npm run build && npm run benchmark && npm run eval:agents",
+    "test": "npm run check",
     "cap:sync": "npm run build && npx cap sync",
     "cap:android": "npm run cap:sync && cd android && ./gradlew assembleDebug",
     "deploy": "npm run build && npx cap sync android && cd android && ./gradlew assembleRelease"
@@ -15,8 +19,15 @@
     "@capacitor/camera": "^8.1.0",
     "@capacitor/cli": "^8.3.1",
     "@capacitor/core": "^8.3.1",
+    "@capacitor/push-notifications": "^8.0.3",
+    "@mediapipe/selfie_segmentation": "^0.1.1675465747",
+    "@stripe/stripe-js": "^9.3.1",
     "@tensorflow/tfjs": "^4.22.0",
-    "face-api.js": "^0.20.0"
+    "face-api.js": "^0.20.0",
+    "workbox-expiration": "^7.4.0",
+    "workbox-precaching": "^7.4.0",
+    "workbox-routing": "^7.4.0",
+    "workbox-strategies": "^7.4.0"
   },
   "overrides": {
     "node-fetch": "^2.7.0"

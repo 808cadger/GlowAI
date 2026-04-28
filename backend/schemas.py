@@ -55,3 +55,38 @@ class AppointmentResponse(AppointmentCreate):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── Reminders ─────────────────────────────────────────────────────────────
+
+class ReminderCreate(BaseModel):
+    user_id: str = Field(default="default", max_length=100)
+    title: str = Field(..., min_length=1, max_length=200)
+    message: str = Field(..., min_length=1, max_length=500)
+    remind_at: datetime
+    channel: Literal["push", "websocket", "local"] = "push"
+    cadence: Literal["once", "daily", "weekly"] = "once"
+
+class ReminderUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    message: str | None = Field(default=None, min_length=1, max_length=500)
+    remind_at: datetime | None = None
+    channel: Literal["push", "websocket", "local"] | None = None
+    cadence: Literal["once", "daily", "weekly"] | None = None
+    is_active: bool | None = None
+
+class ReminderResponse(ReminderCreate):
+    id: uuid.UUID
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ── Push ──────────────────────────────────────────────────────────────────
+
+class PushTokenCreate(BaseModel):
+    user_id: str = Field(default="default", max_length=100)
+    token: str = Field(..., min_length=10, max_length=500)
+    platform: str = Field(default="android", max_length=40)

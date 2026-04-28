@@ -35,6 +35,7 @@ window.glowaiApp = {
     climate: 'glowai_climate_profile',
     agentConfig: 'glowai_agent_config',
     agentLog: 'glowai_agent_log',
+    subscription: 'glowai_subscription',
     whiteLabel: 'glowai_white_label',
     habits: 'glowai_habit_preferences',
     greeting: 'glowai_greeting_spoken',
@@ -203,6 +204,8 @@ window.glowaiApp = {
     this.bindAgentOps();
     this.bindTryOn();
     this.bindAvatarSkills();
+    this.registerServiceWorker();
+    this.registerPushNotifications();
     this.renderFocus('brows');
     this.renderFavorites();
     this.renderBookings();
@@ -253,6 +256,30 @@ window.glowaiApp = {
       return true;
     } catch {
       return false;
+    }
+  },
+
+  async registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      const registration = await navigator.serviceWorker.register('./sw.js', { type: 'module' });
+      this.logAgentAction('pwa', 'Offline scan cache ready', {
+        scope: registration.scope,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logAgentAction('pwa', 'Service worker registration failed', { error: error.message });
+    }
+  },
+
+  async registerPushNotifications() {
+    try {
+      const result = await window.GlowAIPush?.registerPush?.({ userId: 'local-demo-user' });
+      if (result?.registered) {
+        this.logAgentAction('push', 'Capacitor push registered', { updatedAt: new Date().toISOString() });
+      }
+    } catch (error) {
+      this.logAgentAction('push', 'Capacitor push unavailable', { error: error.message });
     }
   },
 
@@ -546,6 +573,8 @@ ${extraContext}`.trim();
       await this.runAgentAction('reel');
     });
     document.getElementById('whiteLabelLaunchBtn')?.addEventListener('click', () => this.launchWhiteLabelWorkspace());
+    document.getElementById('unlockForecastsBtn')?.addEventListener('click', () => this.startSubscription('freemium_unlock'));
+    document.getElementById('subscribeSalonBtn')?.addEventListener('click', () => this.startSubscription('salon_monthly'));
   },
 
   saveAgentConfig() {
@@ -714,6 +743,24 @@ ${extraContext}`.trim();
     this.logAgentAction('white-label', `Studio workspace launched for ${studio}`, workspace);
     this.pushAssistantMessage(`${studio} white-label workspace launched on the ${plan} plan. The agent cockpit is ready for studio lead capture and scan-to-revenue workflows.`);
     this.renderAgentOps();
+  },
+
+  async startSubscription(plan) {
+    const label = plan === 'salon_monthly' ? 'Salon subscription' : 'Forecast and reel unlock';
+    try {
+      this.pushAssistantMessage(`Opening Stripe Checkout for ${label.toLowerCase()}.`);
+      await window.GlowAIPayments?.subscribe?.({ plan });
+    } catch (error) {
+      this.setStored(this.storageKeys.subscription, {
+        plan,
+        status: 'checkout_unavailable',
+        error: error.message,
+        updatedAt: new Date().toISOString(),
+      });
+      this.logAgentAction('subscription', `${label} checkout unavailable`, { plan, error: error.message });
+      this.pushAssistantMessage(`${label} checkout is not configured yet. Add Stripe keys on the backend, then try again.`);
+      this.renderAgentOps();
+    }
   },
 
   logAgentAction(type, title, detail) {
@@ -1119,7 +1166,10 @@ Skin support:
     const faceCopy = sample.faceQuality?.available && sample.faceQuality?.confidence
       ? `Face ${sample.faceQuality.confidence}%.`
       : 'Guided signal read.';
-    this.setScanStatus('Live scanning', `${faceCopy} Hydration ${signals.hydration}%, texture ${signals.texture}%, coastal humidity load ${signals.humidityStress}%.`);
+    const segmentationCopy = signals.segmentation === 'selfie'
+      ? ` Segmented skin mask ${signals.segmentationCoverage || '-'}%.`
+      : '';
+    this.setScanStatus('Live scanning', `${faceCopy}${segmentationCopy} Hydration ${signals.hydration}%, texture ${signals.texture}%, coastal humidity load ${signals.humidityStress}%.`);
 
     if (this.liveScan.samples.length >= 6) {
       const badge = document.getElementById('scanResultBadge');
@@ -1602,6 +1652,7 @@ Skin support:
       selected.forecast = this.generateGlowForecast(selected.metrics, skinSignals);
       selected.handoffs = [
         `coastal humidity load: ${humidityStress}%`,
+        skinSignals.segmentation === 'selfie' ? `selfie segmentation coverage: ${skinSignals.segmentationCoverage || '-'}%` : 'full-frame scan fallback used',
         'Coach can adjust AM routine for sweat, SPF reapplication, and lighter layers',
         'Progress tracker projects 7, 14, and 30 day changes',
       ];

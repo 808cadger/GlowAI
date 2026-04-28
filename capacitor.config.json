@@ -8,12 +8,6 @@
       "presentationOptions": ["badge", "sound", "alert"]
     }
   },
-  "firebase": {
-    "projectId": "glowai-firebase-project-id",
-    "messagingSenderId": "set-in-firebase-console",
-    "appId": "set-in-firebase-console",
-    "androidGoogleServicesFile": "android/app/google-services.json"
-  },
   "server": {
     "androidScheme": "https"
   }

@@ -8,9 +8,11 @@
 
   const ENDPOINT = 'https://api.anthropic.com/v1/messages'
   const VERSION  = '2023-06-01'
+  const DEBUG = Boolean(root.GLOWAI_DEBUG)
 
   const log = {
     _out (level, msg, ctx) {
+      if (level === 'info' && !DEBUG) return
       const entry = { ts: new Date().toISOString(), level, msg, ...ctx }
       if (level === 'error') console.error(JSON.stringify(entry))
       else if (level === 'warn')  console.warn(JSON.stringify(entry))

@@ -205,7 +205,9 @@ window.glowaiApp = {
     this.bindTryOn();
     this.bindAvatarSkills();
     this.registerServiceWorker();
-    this.registerPushNotifications();
+    if (window.GLOWAI_ENABLE_PUSH === true) {
+      this.registerPushNotifications();
+    }
     this.renderFocus('brows');
     this.renderFavorites();
     this.renderBookings();
@@ -273,6 +275,10 @@ window.glowaiApp = {
   },
 
   async registerPushNotifications() {
+    if (window.GLOWAI_ENABLE_PUSH !== true) {
+      this.logAgentAction('push', 'Push registration skipped', { reason: 'firebase-not-configured' });
+      return;
+    }
     try {
       const result = await window.GlowAIPush?.registerPush?.({ userId: 'local-demo-user' });
       if (result?.registered) {

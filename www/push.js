@@ -4,6 +4,9 @@ import { PushNotifications } from '@capacitor/push-notifications';
 const API_BASE = window.GLOWAI_API_BASE || '';
 
 async function registerPush({ userId = 'local-demo-user' } = {}) {
+  if (window.GLOWAI_ENABLE_PUSH !== true) {
+    return { registered: false, reason: 'push-disabled' };
+  }
   if (!Capacitor.isNativePlatform()) {
     return { registered: false, reason: 'native-only' };
   }

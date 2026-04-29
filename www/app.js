@@ -39,6 +39,20 @@ window.glowaiApp = {
     whiteLabel: 'glowai_white_label',
     habits: 'glowai_habit_preferences',
     greeting: 'glowai_greeting_spoken',
+    intro: 'glowai_intro_seen',
+  },
+
+  avatarIntro: {
+    timers: [],
+    lineIndex: 0,
+    active: false,
+    recognition: null,
+    listening: false,
+    lines: [
+      'Give me a second. I am checking the light and easing you into the scan.',
+      'Hi, I am your GlowAI guide. We can scan your face now, or you can tell me what brought you here.',
+      'If we scan, I will ask permission first and keep this focused on cosmetic skin guidance.',
+    ],
   },
 
   shareConfig: {
@@ -204,6 +218,7 @@ window.glowaiApp = {
     this.bindAgentOps();
     this.bindTryOn();
     this.bindAvatarSkills();
+    this.bindAvatarIntro();
     this.registerServiceWorker();
     if (window.GLOWAI_ENABLE_PUSH === true) {
       this.registerPushNotifications();
@@ -215,8 +230,10 @@ window.glowaiApp = {
     this.renderScanSummary();
     this.renderForecast();
     this.renderAgentOps();
-    window.setTimeout(() => this.greetUserOnce({ forceSpeech: true }), 450);
     this.showPage('home');
+    if (!this.startAvatarIntro()) {
+      window.setTimeout(() => this.greetUserOnce({ forceSpeech: true }), 450);
+    }
   },
 
   ensureSeedData() {
@@ -1876,6 +1893,231 @@ Skin support:
     if (title) title.textContent = titleText;
     if (copy) copy.textContent = copyText;
     if (pill) pill.textContent = titleText;
+  },
+
+  bindAvatarIntro() {
+    const intro = document.getElementById('glowIntro');
+    intro?.addEventListener('click', () => this.startAvatarListening({ fromGesture: true, interruptIntro: true }));
+    intro?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        this.startAvatarListening({ fromGesture: true, interruptIntro: true });
+      }
+    });
+  },
+
+  startAvatarIntro() {
+    const intro = document.getElementById('glowIntro');
+    const line = document.getElementById('glowGuideLine');
+    if (!intro || !line) return false;
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    this.avatarIntro.active = true;
+    intro.classList.remove('hidden');
+    intro.classList.remove('is-closing');
+    intro.classList.add('is-revealing');
+
+    const lines = this.getAvatarIntroLines();
+    this.avatarIntro.lines = lines;
+    this.avatarIntro.lineIndex = 0;
+    this.writeAvatarLine(lines[0]);
+
+    this.speak(lines[0], { force: true });
+
+    if (!reducedMotion) {
+      lines.slice(1).forEach((text, index) => {
+        const timer = window.setTimeout(() => {
+          this.writeAvatarLine(text);
+          this.speak(text, { force: true });
+        }, 2600 + (index * 3300));
+        this.avatarIntro.timers.push(timer);
+      });
+    }
+
+    const listenTimer = window.setTimeout(() => this.startAvatarListening(), reducedMotion ? 350 : 8400);
+    this.avatarIntro.timers.push(listenTimer);
+    intro.focus({ preventScroll: true });
+    return true;
+  },
+
+  getAvatarIntroLines() {
+    const hour = new Date().getHours();
+    const dayPart = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+    const latestScan = this.latestScan || this.getStored(this.storageKeys.scans)[0] || null;
+    const scanContext = latestScan
+      ? `I remember your last read: ${latestScan.title}. We can compare today against that.`
+      : 'No baseline yet, so the first scan will give us your starting point.';
+    const openings = [
+      `Good ${dayPart}. Let me settle the light before we begin.`,
+      `Hi. I am here with you. I will move slowly, then we can decide what you need.`,
+      `Welcome back to GlowAI. I am checking the room and getting the scan path ready.`,
+    ];
+    const opening = openings[Math.floor(Math.random() * openings.length)];
+    return [
+      opening,
+      `${scanContext} Say scan my face when you are ready, or tell me what brought you here.`,
+      'I will not open the camera until you ask for a scan. If something sounds medical, I will keep you pointed toward a professional.',
+    ];
+  },
+
+  startAvatarListening({ fromGesture = false, interruptIntro = false } = {}) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const state = document.getElementById('glowListeningState');
+    const intro = document.getElementById('glowIntro');
+    if (!this.avatarIntro.active || this.avatarIntro.listening) return;
+
+    if (interruptIntro) {
+      this.clearAvatarIntroTimers();
+      window.speechSynthesis?.cancel?.();
+      this.writeAvatarLine('I am listening. Tell me what you need.');
+    }
+
+    if (!SpeechRecognition) {
+      if (state) state.textContent = 'Voice input is not supported here. Opening Coach so you can type.';
+      window.setTimeout(() => {
+        this.finishAvatarIntro();
+        this.showPage('concierge');
+        document.getElementById('chatInput')?.focus();
+      }, 1400);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    this.avatarIntro.recognition = recognition;
+    this.avatarIntro.listening = true;
+    intro?.classList.add('is-listening');
+    if (state) state.textContent = fromGesture ? 'I am listening now.' : 'Listening for your voice...';
+
+    recognition.onresult = async (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0]?.transcript || '')
+        .join(' ')
+        .trim();
+      this.showAvatarTranscript(transcript);
+      const finalResult = Array.from(event.results).some((result) => result.isFinal);
+      if (transcript && finalResult) {
+        this.avatarIntro.listening = false;
+        recognition.stop();
+        await this.handleAvatarVoiceIntent(transcript);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      this.avatarIntro.listening = false;
+      intro?.classList.remove('is-listening');
+      if (state) {
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          state.textContent = fromGesture
+            ? 'Microphone permission was blocked. Opening Coach so you can type.'
+            : 'Tap anywhere on the avatar screen once, then speak.';
+          if (fromGesture) {
+            window.setTimeout(() => {
+              this.finishAvatarIntro();
+              this.showPage('concierge');
+              document.getElementById('chatInput')?.focus();
+            }, 1400);
+          }
+        } else {
+          state.textContent = fromGesture
+            ? 'I could not hear you clearly. Tap the avatar and speak again.'
+            : 'Tap anywhere on the avatar screen once, then speak.';
+        }
+      }
+    };
+
+    recognition.onend = () => {
+      this.avatarIntro.listening = false;
+      intro?.classList.remove('is-listening');
+      if (this.avatarIntro.active && state && !state.textContent.includes('Tap')) {
+        state.textContent = 'Say "scan my face" or tell me what you need.';
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch {
+      this.avatarIntro.listening = false;
+      intro?.classList.remove('is-listening');
+      if (state) state.textContent = 'Tap anywhere on the avatar screen once, then speak.';
+    }
+  },
+
+  showAvatarTranscript(text) {
+    const heard = document.getElementById('glowHeardLine');
+    if (!heard || !text) return;
+    heard.textContent = `I heard: ${text}`;
+    heard.classList.remove('hidden');
+  },
+
+  clearAvatarIntroTimers() {
+    this.avatarIntro.timers.forEach((timer) => window.clearTimeout(timer));
+    this.avatarIntro.timers = [];
+  },
+
+  async handleAvatarVoiceIntent(text) {
+    const normalized = text.toLowerCase();
+    const state = document.getElementById('glowListeningState');
+    const wantsScan = normalized.includes('scan') || normalized.includes('camera') || normalized.includes('face');
+    const wantsExit = /(open|enter|show).*(app|home)|skip|cancel|stop/.test(normalized);
+
+    if (wantsExit) {
+      this.clearAvatarIntroTimers();
+      this.writeAvatarLine('Opening GlowAI. You can call me from Coach when you want help.');
+      this.speak('Opening GlowAI. You can call me from Coach when you want help.', { force: true });
+      window.setTimeout(() => this.finishAvatarIntro(), 900);
+      return;
+    }
+
+    if (wantsScan) {
+      this.clearAvatarIntroTimers();
+      this.writeAvatarLine('Yes. I will open the face scan now. Keep your face centered in even light.');
+      this.speak('Yes. I will open the face scan now. Keep your face centered in even light.', { force: true });
+      window.setTimeout(() => {
+        this.finishAvatarIntro();
+        this.showPage('scan');
+        this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
+        window.scanModule?.startScan?.();
+      }, 1200);
+      return;
+    }
+
+    this.clearAvatarIntroTimers();
+    this.writeAvatarLine('I can help with that. I am opening Coach so we can keep talking.');
+    this.speak('I can help with that. I am opening Coach so we can keep talking.', { force: true });
+    this.pushUserMessage(text);
+    this.pushAssistantMessage('I heard you. Tell me a little more, or ask me to scan your face when you are ready.');
+    if (state) state.textContent = 'Opening Coach...';
+    window.setTimeout(() => {
+      this.finishAvatarIntro();
+      this.showPage('concierge');
+      document.getElementById('chatInput')?.focus();
+    }, 1000);
+  },
+
+  writeAvatarLine(text) {
+    const line = document.getElementById('glowGuideLine');
+    const avatar = document.getElementById('glowAvatarWrap');
+    if (!line || !text) return;
+    line.textContent = text;
+    avatar?.classList.add('is-speaking');
+    window.clearTimeout(this.avatarIntro.speakingTimer);
+    this.avatarIntro.speakingTimer = window.setTimeout(() => avatar?.classList.remove('is-speaking'), 1500);
+  },
+
+  finishAvatarIntro() {
+    const intro = document.getElementById('glowIntro');
+    this.avatarIntro.active = false;
+    this.clearAvatarIntroTimers();
+    window.clearTimeout(this.avatarIntro.speakingTimer);
+    try { this.avatarIntro.recognition?.stop?.(); } catch {}
+    this.avatarIntro.recognition = null;
+    this.avatarIntro.listening = false;
+    intro?.classList.add('is-closing');
+    window.setTimeout(() => intro?.classList.add('hidden'), 260);
   },
 
   bindAvatarSkills() {

@@ -9,6 +9,42 @@
   <link rel="stylesheet" href="./shine.css">
 </head>
 <body>
+  <section class="glow-intro" id="glowIntro" aria-labelledby="glowIntroTitle" aria-modal="true" role="dialog" tabindex="0">
+    <div class="glow-intro-bg" aria-hidden="true">
+      <span class="glow-intro-light light-one"></span>
+      <span class="glow-intro-light light-two"></span>
+      <span class="glow-intro-light light-three"></span>
+      <span class="glow-intro-grid"></span>
+    </div>
+
+    <div class="glow-intro-stage">
+      <div class="glow-avatar-wrap" id="glowAvatarWrap" aria-hidden="true">
+        <div class="glow-avatar-aura"></div>
+        <div class="glow-avatar">
+          <span class="glow-avatar-hair"></span>
+          <span class="glow-avatar-face">
+            <span class="glow-avatar-brow brow-left"></span>
+            <span class="glow-avatar-brow brow-right"></span>
+            <span class="glow-avatar-eye eye-left"></span>
+            <span class="glow-avatar-eye eye-right"></span>
+            <span class="glow-avatar-nose"></span>
+            <span class="glow-avatar-mouth"></span>
+          </span>
+          <span class="glow-avatar-neck"></span>
+          <span class="glow-avatar-shoulders"></span>
+        </div>
+      </div>
+
+      <article class="glow-intro-dialogue">
+        <p class="section-kicker">GlowAI Guide</p>
+        <h2 id="glowIntroTitle">Talk to GlowAI.</h2>
+        <p class="glow-guide-line" id="glowGuideLine" aria-live="polite">I am getting the room ready.</p>
+        <p class="glow-listening-state" id="glowListeningState" aria-live="polite">Listening for your voice...</p>
+        <p class="glow-heard-line hidden" id="glowHeardLine"></p>
+      </article>
+    </div>
+  </section>
+
   <main class="app-shell">
     <header class="app-header">
       <div class="header-brand">

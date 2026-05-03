@@ -12,6 +12,7 @@ import * as mpSelfie from '@mediapipe/selfie_segmentation';
 const app = () => window.glowaiApp;
 const FACE_MODEL_URLS = ['./models', 'https://justadudewhohacks.github.io/face-api.js/models'];
 const SELFIE_MODEL_URLS = ['./models', 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation'];
+const MIN_FACE_AREA_FOR_SCAN = 0.12;
 
 let faceModelPromise;
 let faceModelStatus = 'idle';
@@ -120,14 +121,16 @@ async function analyzeFacePresence(dataUrl) {
   const centerX = box.x + box.width / 2;
   const centerY = box.y + box.height / 2;
   const centerOffset = Math.hypot((centerX / img.width) - 0.5, (centerY / img.height) - 0.5);
+  const closeEnough = faceArea >= MIN_FACE_AREA_FOR_SCAN;
 
   return {
     available: true,
     detected: true,
     confidence: Math.round(score * 100),
     faceArea,
+    minFaceArea: MIN_FACE_AREA_FOR_SCAN,
     centered: centerOffset < 0.28,
-    closeEnough: faceArea > 0.08,
+    closeEnough,
     landmarks: landmarks
       ? {
           count: landmarks.positions.length,
@@ -138,7 +141,9 @@ async function analyzeFacePresence(dataUrl) {
           rightEye: landmarks.getRightEye().length,
         }
       : null,
-    message: 'Face detected and ready for skin analysis.',
+    message: closeEnough
+      ? 'Face detected and ready for skin analysis.'
+      : 'Move closer so your face fills more of the frame, then scan again.',
   };
 }
 
@@ -596,6 +601,12 @@ async function startScan() {
 
     if (faceQuality.available && !faceQuality.detected) {
       app()?.handleScanError?.(faceQuality.message);
+      return;
+    }
+
+    if (faceQuality.available && faceQuality.closeEnough === false) {
+      app()?.setScanStatus?.('Move closer', faceQuality.message);
+      app()?.pushAssistantMessage?.('Move closer to the camera so GlowAI can read your face clearly. Your face should fill more of the frame before the scan will run.');
       return;
     }
 

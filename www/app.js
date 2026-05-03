@@ -317,6 +317,20 @@ window.glowaiApp = {
     }
   },
 
+  getLatestScan() {
+    return this.latestScan || this.getStored(this.storageKeys.scans)[0] || null;
+  },
+
+  getReusableFacePhoto() {
+    return this.tryonState.photos.brows || this.getLatestScan()?.photo || '';
+  },
+
+  getTryOnPhoto(mode = this.tryonState.mode) {
+    return mode === 'nails'
+      ? this.tryonState.photos.nails || ''
+      : this.tryonState.photos[mode] || this.getReusableFacePhoto();
+  },
+
   createDemoScanImage() {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200">
       <defs>
@@ -520,6 +534,10 @@ ${extraContext}`.trim();
         const service = button.getAttribute('data-open-tryon') || 'brows';
         this.renderFocus(service);
         this.showPage('detail');
+        if (this.getTryOnPhoto(this.tryonState.mode)) {
+          this.renderTryOn();
+          return;
+        }
         await this.startTryOnCapture();
       });
     });
@@ -1435,6 +1453,17 @@ Skin support:
 
   handleLiveScanSample(sample) {
     if (!this.liveScan.active) return;
+
+    if (sample.faceQuality?.available && !sample.faceQuality?.detected) {
+      this.setScanStatus('Find face', 'Center your face in the oval before GlowAI starts sampling.');
+      return;
+    }
+
+    if (sample.faceQuality?.available && sample.faceQuality?.detected && sample.faceQuality?.closeEnough === false) {
+      this.setScanStatus('Move closer', 'Bring your face closer to the camera until it fills more of the oval. GlowAI will start sampling when the face is close enough.');
+      return;
+    }
+
     this.liveScan.samples.push(sample);
     this.liveScan.lastFrame = sample.dataUrl;
     if (this.liveScan.samples.length > 12) this.liveScan.samples.shift();
@@ -1672,7 +1701,7 @@ Skin support:
         ? 'Place your hand flat in good light. GlowAI overlays the selected manicure set for quick comparison.'
         : 'GlowAI overlays SPF tint, brightening, or barrier support zones so the routine feels concrete.';
     if (captureBtn) {
-      const photo = this.tryonState.photos[mode] || this.latestScan?.photo || '';
+      const photo = this.getTryOnPhoto(mode);
       captureBtn.textContent = photo ? 'Retake photo' : 'Use camera';
     }
     browControls?.classList.toggle('hidden', mode !== 'brows');
@@ -1733,7 +1762,7 @@ Skin support:
       stage.style.setProperty('--brow-spread', `${this.tryonState.browSpread}px`);
     }
 
-    const activePhoto = this.tryonState.photos[mode] || (mode === 'product' ? this.latestScan?.photo : '') || '';
+    const activePhoto = this.getTryOnPhoto(mode);
     const hasPhoto = Boolean(activePhoto);
     stage?.classList.toggle('has-photo', hasPhoto);
     if (photo) {
@@ -1813,6 +1842,7 @@ Skin support:
     const historyEntry = {
       id: scanRecord.id,
       createdAt: scanRecord.createdAt,
+      photo: scanRecord.photo,
       title: scanRecord.title,
       summary: scanRecord.summary,
       studioLane: scanRecord.studioLane,

@@ -770,6 +770,26 @@ ${extraContext}`.trim();
 
   async startSubscription(plan) {
     const label = plan === 'salon_monthly' ? 'Salon subscription' : 'Forecast and reel unlock';
+    const hasBackend = Boolean(window.GLOWAI_API_BASE);
+
+    if (!hasBackend) {
+      const demoUnlock = {
+        plan,
+        label,
+        status: 'demo_active',
+        checkoutMode: 'local-demo',
+        activatedAt: new Date().toISOString(),
+        benefits: plan === 'salon_monthly'
+          ? ['Salon workspace demo enabled', 'Lead capture workflow active', 'Booking/cart/reel agent logs unlocked']
+          : ['Forecast demo unlocked', 'Reel plan generator active', 'Scan-to-cart recommendations active'],
+      };
+      this.setStored(this.storageKeys.subscription, demoUnlock);
+      this.logAgentAction('subscription', `${label} demo activated`, demoUnlock);
+      this.pushAssistantMessage(`${label} demo activated. In production this button opens Stripe Checkout; for this customer demo the paid workflow is now unlocked locally.`);
+      this.renderAgentOps();
+      return;
+    }
+
     try {
       this.pushAssistantMessage(`Opening Stripe Checkout for ${label.toLowerCase()}.`);
       await window.GlowAIPayments?.subscribe?.({ plan });
@@ -781,7 +801,7 @@ ${extraContext}`.trim();
         updatedAt: new Date().toISOString(),
       });
       this.logAgentAction('subscription', `${label} checkout unavailable`, { plan, error: error.message });
-      this.pushAssistantMessage(`${label} checkout is not configured yet. Add Stripe keys on the backend, then try again.`);
+      this.pushAssistantMessage(`${label} checkout could not open, so I activated demo access locally and logged the handoff for follow-up.`);
       this.renderAgentOps();
     }
   },
@@ -841,7 +861,7 @@ ${extraContext}`.trim();
     const keySaveBtn = document.getElementById('coachApiKeySave');
     const keyInput = document.getElementById('coachApiKeyInput');
 
-    if (!this.getApiKey() && keyBar) keyBar.classList.remove('hidden');
+    if (keyBar) keyBar.classList.add('hidden');
 
     keySaveBtn?.addEventListener('click', () => {
       const k = keyInput?.value.trim();
@@ -861,8 +881,11 @@ ${extraContext}`.trim();
       }
       const apiKey = this.getApiKey();
       if (!apiKey) {
-        if (keyBar) keyBar.classList.remove('hidden');
-        this.pushAssistantMessage('Add your Claude API key above to activate the live beauty coach.');
+        this.pushUserMessage(message);
+        input.value = '';
+        const reply = this.generateLocalCoachReply(message);
+        this.pushAssistantMessage(reply);
+        this.speak(reply);
         return;
       }
       this.pushUserMessage(message);
@@ -924,6 +947,44 @@ ${extraContext}`.trim();
     if (text.includes('charge')) return 'charging your device';
     if (text.includes('routine')) return 'your routine';
     return 'that habit';
+  },
+
+  generateLocalCoachReply(message) {
+    const text = message.toLowerCase();
+    const latest = this.latestScan || this.getStored(this.storageKeys.scans)[0] || null;
+    const climate = this.getStored(this.storageKeys.climate, { location: 'coastal climate', humidityMode: 'humid' });
+    const routine = latest?.routine || {
+      morning: 'Gentle cleanse, hydration serum, moisturizer, SPF 50',
+      night: 'Cleanse, barrier cream, and no harsh scrubs tonight',
+    };
+    const metrics = latest?.metrics || { hydration: '70%', clarity: '72%', texture: '74%', oil: '58%' };
+
+    if (/(scan|camera|analyz)/.test(text)) {
+      return 'I can start a face scan from the Scan tab. Use soft front light, keep your face centered, and I will turn the photo into hydration, clarity, texture, oil, tone, routine, and booking recommendations.';
+    }
+
+    if (/(acne|breakout|pimple|red|irritat)/.test(text)) {
+      return `For a cosmetic breakout-safe routine: AM ${routine.morning}. PM ${routine.night}. Keep actives simple for 48 hours, avoid picking, and refer painful, spreading, or unusual symptoms to a licensed professional. Current scan context: hydration ${metrics.hydration}, clarity ${metrics.clarity}.`;
+    }
+
+    if (/(dry|dehydrat|barrier|flak)/.test(text)) {
+      return `Your best next move is barrier support. AM: gentle cleanse, hydrating serum, moisturizer, SPF. PM: cleanse, ceramide cream, skip exfoliation. In ${climate.location}, reapply SPF and keep the routine light enough for humidity.`;
+    }
+
+    if (/(oil|shine|humid|hawaii|sweat)/.test(text)) {
+      return 'For Hawaii humidity: use a gel moisturizer, water-resistant SPF, blot instead of over-cleansing, and keep exfoliation to 1-2 nights weekly. If shine is high, use niacinamide before moisturizer rather than drying the skin out.';
+    }
+
+    if (/(product|buy|cart|shop|spf|serum|moisturizer)/.test(text)) {
+      const products = this.recommendProductsFromMetrics(metrics).map((item) => item.title).join(', ');
+      return `Based on the current GlowAI profile, I would build the cart with: ${products}. Start with cleanser, moisturizer, and SPF before adding extra actives.`;
+    }
+
+    if (/(book|appointment|esthetician|facial|brow)/.test(text)) {
+      return 'I can prepare a local booking from the Booking tab or the Agents tab. The demo stores the appointment on this device and logs the payload a real calendar webhook would receive.';
+    }
+
+    return `Here is the practical GlowAI plan: AM ${routine.morning}. PM ${routine.night}. Keep it cosmetic, simple, and consistent for 7 days, then scan again to compare hydration, clarity, texture, and tone.`;
   },
 
   bindVoiceCoach() {
@@ -1038,8 +1099,9 @@ ${extraContext}`.trim();
     const apiKey = this.getApiKey();
     this.pushUserMessage(text);
     if (!apiKey) {
-      this.pushAssistantMessage('Add your Claude API key to activate live voice coaching. I saved the coastal humidity preference locally.');
-      this.speak('Add your Claude API key to activate live voice coaching.');
+      const reply = this.generateLocalCoachReply(text);
+      this.pushAssistantMessage(reply);
+      this.speak(reply);
       return;
     }
     await this.callBeautyCoach(apiKey);

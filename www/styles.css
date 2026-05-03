@@ -719,7 +719,7 @@ p {
 .replace-corner {
   position: absolute;
   z-index: 2;
-  display: inline-flex;
+  display: none;
   align-items: center;
   min-height: 1.65rem;
   padding: 0.28rem 0.55rem;
@@ -733,6 +733,18 @@ p {
   text-transform: uppercase;
   box-shadow: 0 10px 22px rgba(82, 60, 54, 0.08);
   backdrop-filter: blur(12px);
+}
+
+.owner-version .replace-corner {
+  display: inline-flex;
+}
+
+.owner-only {
+  display: none;
+}
+
+.owner-version .owner-only {
+  display: grid;
 }
 
 .corner-logo {

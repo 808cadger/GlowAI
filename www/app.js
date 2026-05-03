@@ -229,10 +229,16 @@ window.glowaiApp = {
     },
   },
 
+  isOwnerMode() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('owner') === '1' || params.get('mode') === 'owner' || window.location.pathname.endsWith('/owner.html');
+  },
+
   init() {
     this.ensureSeedData();
     this.seedLocalApiKey();
-    this.applyWhiteLabelWorkspace();
+    document.body.classList.toggle('owner-version', this.isOwnerMode());
+    this.applyWhiteLabelWorkspace(this.isOwnerMode() ? this.getStored(this.storageKeys.whiteLabel, {}) : {});
     this.bindMenu();
     this.bindPageButtons();
     this.bindFocusTabs();
@@ -845,6 +851,7 @@ ${extraContext}`.trim();
   },
 
   async saveWhiteLabelPortrait(event) {
+    if (!this.isOwnerMode()) return;
     const file = event?.target?.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -918,6 +925,10 @@ ${extraContext}`.trim();
   },
 
   launchWhiteLabelWorkspace() {
+    if (!this.isOwnerMode()) {
+      this.pushAssistantMessage('Owner customization is available in the Version 2 owner link. The customer demo stays polished and locked.');
+      return;
+    }
     const studio = document.getElementById('whiteLabelStudio')?.value.trim() || 'Pearl City Glow Studio';
     const headline = document.getElementById('whiteLabelHeadline')?.value.trim() || `${studio}, guided.`;
     const accent = document.getElementById('whiteLabelAccent')?.value || 'blush';
@@ -1011,7 +1022,7 @@ ${extraContext}`.trim();
     if (headline && whiteLabel.headline) headline.value = whiteLabel.headline;
     if (accent && whiteLabel.accent) accent.value = whiteLabel.accent;
     if (plan && whiteLabel.plan) plan.value = whiteLabel.plan;
-    this.applyWhiteLabelWorkspace(whiteLabel);
+    if (this.isOwnerMode()) this.applyWhiteLabelWorkspace(whiteLabel);
 
     const container = document.getElementById('agentLogList');
     if (!container) return;

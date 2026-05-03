@@ -5,6 +5,8 @@
 For someone who just wants GlowAI immediately, use the standalone PWA file:
 
 - Share this customer link from your phone: `https://808cadger.github.io/GlowAI/download.html`
+- Version 1 client demo: `https://808cadger.github.io/GlowAI/`
+- Version 2 owner/customizer demo: `https://808cadger.github.io/GlowAI/owner.html`
 - Direct single-file HTML download: `https://raw.githubusercontent.com/808cadger/GlowAI/main/www/download.html`
 - Download [`www/download.html`](./www/download.html) from GitHub.
 - Open it in Chrome, Edge, Brave, or Safari.

@@ -1935,8 +1935,8 @@ Skin support:
       });
     }
 
-    const listenTimer = window.setTimeout(() => this.startAvatarListening(), reducedMotion ? 350 : 8400);
-    this.avatarIntro.timers.push(listenTimer);
+    const selfieTimer = window.setTimeout(() => this.startAvatarSelfieFlow(), reducedMotion ? 900 : 9300);
+    this.avatarIntro.timers.push(selfieTimer);
     intro.focus({ preventScroll: true });
     return true;
   },
@@ -1956,9 +1956,23 @@ Skin support:
     const opening = openings[Math.floor(Math.random() * openings.length)];
     return [
       opening,
-      `${scanContext} Say scan my face when you are ready, or tell me what brought you here.`,
-      'I will not open the camera until you ask for a scan. If something sounds medical, I will keep you pointed toward a professional.',
+      `${scanContext} I will take you straight into a selfie scan, then we can talk through what I notice.`,
+      'Keep your face centered in soft, even light. If something looks medical, I will keep you pointed toward a professional.',
     ];
+  },
+
+  startAvatarSelfieFlow() {
+    if (!this.avatarIntro.active) return;
+    this.clearAvatarIntroTimers();
+    this.writeAvatarLine('Opening the camera now. Hold steady and let me frame your face.');
+    this.speak('Opening the camera now. Hold steady and let me frame your face.', { force: true });
+
+    window.setTimeout(() => {
+      this.finishAvatarIntro();
+      this.showPage('scan');
+      this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
+      window.scanModule?.startScan?.();
+    }, 1100);
   },
 
   startAvatarListening({ fromGesture = false, interruptIntro = false } = {}) {
@@ -2073,15 +2087,10 @@ Skin support:
     }
 
     if (wantsScan) {
-      this.clearAvatarIntroTimers();
       this.writeAvatarLine('Yes. I will open the face scan now. Keep your face centered in even light.');
       this.speak('Yes. I will open the face scan now. Keep your face centered in even light.', { force: true });
-      window.setTimeout(() => {
-        this.finishAvatarIntro();
-        this.showPage('scan');
-        this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
-        window.scanModule?.startScan?.();
-      }, 1200);
+      this.clearAvatarIntroTimers();
+      window.setTimeout(() => this.startAvatarSelfieFlow(), 1000);
       return;
     }
 

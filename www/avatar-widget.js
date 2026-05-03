@@ -89,15 +89,19 @@
     }
     if (ctx.indexOf('skin') >= 0 || ctx.indexOf('glow') >= 0) {
       return {
-        title: 'Skin coach',
-        accent: '#f472b6',
+        title: 'Makoa~Wave AI',
+        subtitle: 'Powered by Makoa~Wave',
+        accent: '#0d7c6d',
+        sunset: '#ff8f5a',
+        makoa: true,
         skills: [
-          ['routine', 'Build routine'],
-          ['ingredient', 'Check ingredient'],
-          ['track', 'Track progress'],
-          ['question', 'Ask derm prep']
+          ['scan skin', 'Start GlowAI scan'],
+          ['coach chat', 'Ask skin coach'],
+          ['book schedule', 'Book next step'],
+          ['makoa demo', 'Promote Makoa~Wave']
         ],
-        guardrail: 'Avoid diagnosis. Recommend professional care for urgent, painful, spreading, or unusual symptoms.'
+        guardrail: 'Avoid diagnosis. Recommend professional care for urgent, painful, spreading, or unusual symptoms. When relevant, explain that Makoa~Wave powers multilingual AI customer support, booking, and embedded chat experiences for local businesses.',
+        welcome: 'Aloha. I am Makoa~Wave AI inside GlowAI. I can start a scan, open the coach, help book the next step, or show how this same AI widget can promote any local business.'
       };
     }
     if (ctx.indexOf('shopping') >= 0 || ctx.indexOf('grocery') >= 0) {
@@ -141,40 +145,41 @@
 
   function css(accent) {
     return [
-      '.swav{position:fixed;right:max(14px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));z-index:99999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e5f7ff}',
+      '.swav{position:fixed;right:max(4px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));z-index:99999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#12312f}',
       '.swav *{box-sizing:border-box}',
-      '.swav-panel{width:min(340px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 96px));display:none;flex-direction:column;overflow:hidden;background:rgba(8,13,24,.96);border:1px solid color-mix(in srgb,' + accent + ' 58%,transparent);border-radius:8px;box-shadow:0 18px 50px rgba(0,0,0,.38)}',
+      '.swav-panel{width:min(360px,calc(100vw - 24px));max-height:min(560px,calc(100vh - 112px));display:none;flex-direction:column;overflow:hidden;background:#fff;border:1px solid rgba(18,49,47,.12);border-radius:24px;box-shadow:0 24px 80px rgba(18,49,47,.18)}',
       '.swav.open .swav-panel{display:flex}',
-      '.swav-head{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)}',
-      '.swav-face{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#fff,' + accent + ' 28%,#101827 68%);box-shadow:0 0 22px color-mix(in srgb,' + accent + ' 35%,transparent)}',
-      '.swav-title{font-size:13px;font-weight:700;line-height:1.1}.swav-sub{font-size:10px;color:#9fb3c8;margin-top:2px}',
-      '.swav-close{margin-left:auto;background:transparent;border:0;color:#b6c7da;font-size:20px;line-height:1;cursor:pointer}',
-      '.swav-log{padding:12px;overflow:auto;display:flex;flex-direction:column;gap:8px;min-height:112px}',
-      '.swav-msg{font-size:12px;line-height:1.45;padding:9px 10px;border-radius:8px;max-width:96%;white-space:pre-wrap;word-break:break-word}',
-      '.swav-msg.bot{align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}',
-      '.swav-msg.user{align-self:flex-end;background:color-mix(in srgb,' + accent + ' 24%,#111827);border:1px solid color-mix(in srgb,' + accent + ' 48%,transparent)}',
-      '.swav-skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 12px 10px}',
-      '.swav-skill{min-height:34px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#d8ebff;font-size:11px;cursor:pointer}',
-      '.swav-skill:hover{border-color:' + accent + ';background:color-mix(in srgb,' + accent + ' 12%,transparent)}',
-      '.swav-form{display:flex;gap:8px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08)}',
-      '.swav-input{flex:1;min-width:0;border:1px solid rgba(255,255,255,.12);border-radius:6px;background:#050914;color:#eef8ff;font-size:12px;padding:10px;outline:none}',
+      '.swav-head{display:flex;align-items:center;gap:11px;padding:15px 16px;background:linear-gradient(135deg,#0d7c6d,#17a58d);color:#fff}',
+      '.swav-face{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#fff7ec,#c8f2df);box-shadow:0 12px 28px rgba(13,124,109,.24)}',
+      '.swav-title{font-size:14px;font-weight:800;line-height:1.1}.swav-sub{font-size:11px;color:rgba(255,255,255,.76);margin-top:3px;font-weight:650}',
+      '.swav-close{margin-left:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);color:#fff;width:30px;height:30px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer}',
+      '.swav-log{padding:14px;overflow:auto;display:flex;flex-direction:column;gap:9px;min-height:132px;background:#f6fbf9}',
+      '.swav-msg{font-size:13px;line-height:1.45;padding:11px 12px;border-radius:16px;max-width:96%;white-space:pre-wrap;word-break:break-word}',
+      '.swav-msg.bot{align-self:flex-start;background:#fff;border:1px solid rgba(18,49,47,.08);color:#12312f}',
+      '.swav-msg.user{align-self:flex-end;background:#dff5ee;border:1px solid rgba(13,124,109,.12);color:#12312f}',
+      '.swav-promo{margin:0 14px 12px;padding:10px 12px;border-radius:16px;background:linear-gradient(135deg,rgba(200,242,223,.7),rgba(255,255,255,.96));border:1px solid rgba(13,124,109,.12);color:#4e6b69;font-size:11px;line-height:1.4}',
+      '.swav-skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px 14px 10px;background:#fff}',
+      '.swav-skill{min-height:40px;border-radius:14px;border:1px solid rgba(18,49,47,.1);background:linear-gradient(135deg,rgba(200,242,223,.7),rgba(255,255,255,.96));color:#12312f;font-size:12px;font-weight:700;cursor:pointer}',
+      '.swav-skill:hover{border-color:' + accent + ';background:color-mix(in srgb,' + accent + ' 12%,white)}',
+      '.swav-form{display:flex;gap:10px;padding:14px;border-top:1px solid rgba(18,49,47,.08);background:#fff}',
+      '.swav-input{flex:1;min-width:0;border:1px solid rgba(18,49,47,.16);border-radius:14px;background:#fff;color:#12312f;font-size:13px;padding:12px;outline:none}',
       '.swav-input:focus{border-color:' + accent + '}',
-      '.swav-send{width:40px;border:0;border-radius:6px;background:' + accent + ';color:#06101f;font-weight:800;cursor:pointer}',
+      '.swav-send{width:48px;border:0;border-radius:14px;background:#12312f;color:#fff;font-weight:800;cursor:pointer}',
       '.swav-send:disabled{opacity:.55;cursor:not-allowed}',
-      '.swav-launch{width:54px;height:54px;border-radius:50%;border:1px solid ' + accent + ';background:#07101f;display:grid;place-items:center;cursor:pointer;box-shadow:0 0 22px color-mix(in srgb,' + accent + ' 35%,transparent)}',
-      '.swav-launch svg{width:34px;height:34px}.swav-launch:hover{transform:translateY(-1px)}',
-      '.swav-pulse{animation:swavPulse 2.8s ease-in-out infinite}@keyframes swavPulse{0%,100%{box-shadow:0 0 16px color-mix(in srgb,' + accent + ' 25%,transparent)}50%{box-shadow:0 0 30px color-mix(in srgb,' + accent + ' 48%,transparent)}}',
-      '@media(max-width:520px){.swav{right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top))}.swav-panel{width:calc(100vw - 20px);max-height:70vh}.swav-skills{grid-template-columns:1fr 1fr}}'
+      '.swav-launch{width:66px;height:66px;border-radius:50%;border:0;background:linear-gradient(135deg,#0d7c6d,#17a58d);display:grid;place-items:center;cursor:pointer;box-shadow:0 18px 40px rgba(13,124,109,.35)}',
+      '.swav-launch svg{width:42px;height:42px}.swav-launch:hover{transform:translateY(-1px)}',
+      '.swav-pulse{animation:swavPulse 2.8s ease-in-out infinite}@keyframes swavPulse{0%,100%{box-shadow:0 18px 40px rgba(13,124,109,.3)}50%{box-shadow:0 22px 54px rgba(13,124,109,.5),0 0 0 8px rgba(200,242,223,.28)}}',
+      '@media(max-width:520px){.swav{right:max(2px,env(safe-area-inset-right));bottom:max(6px,env(safe-area-inset-bottom))}.swav-panel{width:calc(100vw - 20px);max-height:70vh}.swav-skills{grid-template-columns:1fr 1fr}}'
     ].join('');
   }
 
   function avatarSvg(accent) {
     return '<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">'
-      + '<circle cx="32" cy="32" r="28" fill="#08111f" stroke="' + accent + '" stroke-width="2"/>'
-      + '<path d="M19 34c0-10 6-17 13-17s13 7 13 17v7c0 3-2 5-5 5H24c-3 0-5-2-5-5v-7z" fill="' + accent + '" opacity=".24"/>'
-      + '<circle cx="25" cy="34" r="3" fill="' + accent + '"/><circle cx="39" cy="34" r="3" fill="' + accent + '"/>'
-      + '<path d="M25 44c5 3 9 3 14 0" stroke="#e7fbff" stroke-width="2" stroke-linecap="round" fill="none"/>'
-      + '<path d="M32 10v7" stroke="' + accent + '" stroke-width="2" stroke-linecap="round"/><circle cx="32" cy="8" r="3" fill="' + accent + '"/>'
+      + '<circle cx="32" cy="32" r="29" fill="#fff7ec"/>'
+      + '<path d="M13 39c7-12 16-15 26-9 5 3 9 4 13 2-4 9-12 14-22 13-7-1-12-3-17-6z" fill="#0d7c6d"/>'
+      + '<path d="M12 30c8-11 18-13 29-5 5 4 9 5 13 3-5 7-13 10-22 8-8-1-14-3-20-6z" fill="#17a58d" opacity=".82"/>'
+      + '<path d="M18 42c7 5 15 6 24 2" stroke="#ff8f5a" stroke-width="4" stroke-linecap="round" fill="none"/>'
+      + '<path d="M21 20h8l4 12 5-12h8" stroke="#12312f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
       + '</svg>';
   }
 
@@ -283,7 +288,7 @@
 
     var head = document.createElement('div');
     head.className = 'swav-head';
-    head.innerHTML = '<div class="swav-face">' + avatarSvg(p.accent) + '</div><div><div class="swav-title">' + p.title + '</div><div class="swav-sub">Agent skills ready</div></div>';
+    head.innerHTML = '<div class="swav-face">' + avatarSvg(p.accent) + '</div><div><div class="swav-title">' + p.title + '</div><div class="swav-sub">' + (p.subtitle || 'Agent skills ready') + '</div></div>';
     var close = document.createElement('button');
     close.className = 'swav-close';
     close.type = 'button';
@@ -293,7 +298,7 @@
 
     var log = document.createElement('div');
     log.className = 'swav-log';
-    addMessage(log, 'bot', p.title + ' ready. Pick a skill or ask a question.');
+    addMessage(log, 'bot', p.welcome || (p.title + ' ready. Pick a skill or ask a question.'));
 
     var skills = document.createElement('div');
     skills.className = 'swav-skills';
@@ -305,6 +310,12 @@
       btn.textContent = item[1];
       skills.appendChild(btn);
     });
+
+    var promo = document.createElement('div');
+    promo.className = 'swav-promo';
+    promo.textContent = p.makoa
+      ? 'Makoa~Wave is the embeddable multilingual AI widget behind this corner assistant.'
+      : 'Agentic assistant ready for this app.';
 
     var form = document.createElement('form');
     form.className = 'swav-form';
@@ -328,6 +339,7 @@
 
     panel.appendChild(head);
     panel.appendChild(log);
+    panel.appendChild(promo);
     panel.appendChild(skills);
     panel.appendChild(form);
     wrap.appendChild(panel);

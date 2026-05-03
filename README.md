@@ -11,6 +11,30 @@ For someone who just wants GlowAI immediately, use the standalone PWA file:
 
 The file is self-contained, under 1 MB, and does not require `npm install`, Android Studio, or the backend.
 
+## Deploy for a customer
+
+### Hosted PWA
+
+GlowAI is ready for static hosting from the `www` folder.
+
+- Netlify: connect the GitHub repo. `netlify.toml` builds with `npm ci && npm run build` and publishes `www`.
+- Vercel: import the GitHub repo. `vercel.json` builds with `npm ci && npm run build` and serves `www`.
+- GitHub Pages or Codeberg Pages: run `npm ci && npm run build`, then publish the `www` directory.
+
+### Android APK
+
+Use Java 21 with a full JDK, not a JRE-only Java install.
+
+```bash
+npm ci
+npm run build
+npx cap sync android
+cd android
+./gradlew assembleDebug
+```
+
+The debug APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`.
+
 <!-- INSTALL-START -->
 ## Install and run
 

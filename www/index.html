@@ -20,8 +20,25 @@
     <div class="glow-intro-stage">
       <div class="glow-avatar-wrap" id="glowAvatarWrap" aria-hidden="true">
         <div class="glow-avatar-aura"></div>
+        <img
+          class="glow-avatar-portrait"
+          src="./assets/glow-guide-avatar.png"
+          alt=""
+          decoding="async"
+          onload="this.closest('.glow-avatar-wrap')?.classList.add('has-portrait')"
+          onerror="this.closest('.glow-avatar-wrap')?.classList.remove('has-portrait')"
+        />
         <div class="glow-avatar">
           <span class="glow-avatar-hair"></span>
+          <span class="glow-avatar-hair hair-left"></span>
+          <span class="glow-avatar-hair hair-right"></span>
+          <span class="glow-avatar-flower">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
           <span class="glow-avatar-face">
             <span class="glow-avatar-brow brow-left"></span>
             <span class="glow-avatar-brow brow-right"></span>
@@ -29,7 +46,11 @@
             <span class="glow-avatar-eye eye-right"></span>
             <span class="glow-avatar-nose"></span>
             <span class="glow-avatar-mouth"></span>
+            <span class="glow-avatar-cheek cheek-left"></span>
+            <span class="glow-avatar-cheek cheek-right"></span>
           </span>
+          <span class="glow-avatar-ear ear-left"></span>
+          <span class="glow-avatar-ear ear-right"></span>
           <span class="glow-avatar-neck"></span>
           <span class="glow-avatar-shoulders"></span>
         </div>

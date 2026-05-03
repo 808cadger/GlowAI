@@ -1,0 +1,13 @@
+[build]
+  publish = "www"
+  command = "npm ci && npm run build"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -303,6 +303,25 @@ window.glowaiApp = {
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   },
 
+  createDemoTryOnImage(mode = 'brows') {
+    if (mode !== 'nails') return this.createDemoScanImage();
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200">
+      <defs>
+        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#170c24"/><stop offset=".5" stop-color="#7d2f68"/><stop offset="1" stop-color="#ffd76a"/></linearGradient>
+        <radialGradient id="shine" cx=".5" cy=".2" r=".55"><stop stop-color="#fff7fb" stop-opacity=".62"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="900" height="1200" fill="url(#bg)"/>
+      <circle cx="450" cy="320" r="360" fill="url(#shine)"/>
+      <path d="M238 990c20-124 55-296 83-430 15-71 37-118 78-112 39 6 43 50 35 110l-27 204 32-298c8-72 33-122 78-119 45 4 55 56 48 131l-28 310 48-269c13-72 44-110 85-100 39 10 44 57 29 126l-58 280 35-137c15-58 45-86 80-75 36 11 44 51 28 109l-77 281c-26 93-98 151-194 151H374c-82 0-149-67-136-162z" fill="#d99a86"/>
+      <path d="M352 435c12-34 35-51 65-45 30 6 44 30 40 67M488 338c18-30 42-43 72-34 30 9 43 35 36 75M626 406c21-24 45-33 73-22 29 11 40 38 31 74" fill="none" stroke="#ffd1c6" stroke-width="14" stroke-linecap="round" opacity=".55"/>
+      <ellipse cx="399" cy="421" rx="42" ry="23" fill="#ff6fae"/><ellipse cx="532" cy="330" rx="43" ry="24" fill="#ff6fae"/><ellipse cx="671" cy="399" rx="42" ry="23" fill="#ff6fae"/><ellipse cx="762" cy="603" rx="36" ry="20" fill="#ff6fae"/>
+      <rect x="110" y="110" width="680" height="880" rx="48" fill="none" stroke="#ffd76a" stroke-width="12" stroke-dasharray="38 24"/>
+      <rect x="120" y="90" width="380" height="72" rx="18" fill="#110819" opacity=".72"/>
+      <text x="150" y="137" fill="#fff7fb" font-size="34" font-family="Arial" font-weight="700">GlowAI nail try-on</text>
+    </svg>`;
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  },
+
   createDemoScanRecord() {
     const base = this.generateFaceAnalysis({ available: false, detected: true, confidence: 88 }, {
       hydration: 72,
@@ -1229,11 +1248,11 @@ Skin support:
       this.speak(reply);
       return reply;
     } catch (err) {
+      const lastUserText = apiMessages.slice().reverse().find((m) => m.role === 'user')?.content || 'routine';
+      const fallback = this.generateLocalCoachReply(lastUserText);
       const msg = err.status === 401
-        ? 'Invalid API key — check your key in the bar above.'
-        : err.circuitOpen
-          ? 'Too many errors — wait a minute and try again.'
-          : `Coach error: ${err.message}`;
+        ? `That live Claude key did not authenticate. Demo coach answer: ${fallback}`
+        : `Live coach was unavailable, so I used the local GlowAI coach. ${fallback}`;
       this.pushAssistantMessage(msg);
       this.speak(msg);
       return msg;
@@ -1548,8 +1567,9 @@ Skin support:
     try {
       const capture = await window.scanModule?.captureStudioPhoto?.({ facing });
       if (!capture?.dataUrl) {
-        if (button) button.textContent = 'Use camera';
-        this.pushAssistantMessage('No photo came back from the camera. Try again and confirm the capture instead of backing out.');
+        this.tryonState.photos[mode] = this.createDemoTryOnImage(mode);
+        this.renderTryOn();
+        this.pushAssistantMessage('No camera photo came back, so I loaded a guided try-on image. The overlay controls still work for the customer demo.');
         return;
       }
 
@@ -1559,7 +1579,9 @@ Skin support:
         ? 'Hand photo captured. Pick a color or length to preview the nail overlay.'
         : 'Selfie captured. Pick a brow shape, then drag or widen the overlay until it lines up.');
     } catch (error) {
-      this.pushAssistantMessage(`Camera did not return a usable photo: ${error?.message || 'check permission and try again.'}`);
+      this.tryonState.photos[mode] = this.createDemoTryOnImage(mode);
+      this.renderTryOn();
+      this.pushAssistantMessage('Camera was not available, so I loaded a guided try-on image. You can still show brow, nail, and product overlays in the customer demo.');
     } finally {
       stage?.classList.remove('is-capturing');
       if (button) button.textContent = mode === 'nails' ? 'Retake hand photo' : 'Retake photo';

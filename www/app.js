@@ -58,7 +58,8 @@ window.glowaiApp = {
   shareConfig: {
     title: 'GlowAI',
     url: 'https://808cadger.github.io/GlowAI/download.html',
-    text: 'Try GlowAI. Scan your face for instant skin insights, appointment options, and product suggestions that keep your routine in rhythm.',
+    downloadUrl: 'https://raw.githubusercontent.com/808cadger/GlowAI/main/www/download.html',
+    text: 'Try GlowAI. Open the instant downloadable PWA, scan your face, and share a skin report in seconds.',
   },
 
   focusContent: {
@@ -1650,7 +1651,7 @@ Skin support:
         text: this.shareConfig.text,
         url: this.shareConfig.url,
       };
-      const message = `${payload.text} ${payload.url}`;
+      const message = `${payload.text} ${payload.url}\nSingle-file HTML download: ${this.shareConfig.downloadUrl}`;
 
       try {
         if (navigator.share) {

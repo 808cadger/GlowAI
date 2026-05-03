@@ -42,6 +42,32 @@ window.glowaiApp = {
     intro: 'glowai_intro_seen',
   },
 
+  defaultPortrait: './assets/glow-guide-avatar.png',
+
+  whiteLabelThemes: {
+    blush: {
+      accent: '#b9857d',
+      accentDeep: '#8f5f58',
+      primary: 'linear-gradient(135deg, #9d7068, #b9857d 54%, #c8ae79)',
+      hero: 'linear-gradient(135deg, rgba(255,253,249,0.98), rgba(247,239,233,0.94) 54%, rgba(239,243,238,0.88))',
+      pill: 'linear-gradient(135deg, rgba(234,208,202,0.52), rgba(220,196,146,0.24))',
+    },
+    sage: {
+      accent: '#7e948d',
+      accentDeep: '#526963',
+      primary: 'linear-gradient(135deg, #607a73, #8ea79d 54%, #c8b68f)',
+      hero: 'linear-gradient(135deg, rgba(255,253,249,0.98), rgba(240,244,238,0.94) 54%, rgba(247,239,233,0.88))',
+      pill: 'linear-gradient(135deg, rgba(201,215,201,0.52), rgba(220,196,146,0.2))',
+    },
+    champagne: {
+      accent: '#b6975f',
+      accentDeep: '#80683d',
+      primary: 'linear-gradient(135deg, #9f8150, #c8ae79 54%, #d8aaa5)',
+      hero: 'linear-gradient(135deg, rgba(255,253,249,0.98), rgba(249,242,228,0.94) 54%, rgba(247,234,230,0.88))',
+      pill: 'linear-gradient(135deg, rgba(234,217,185,0.54), rgba(216,170,165,0.2))',
+    },
+  },
+
   avatarIntro: {
     timers: [],
     lineIndex: 0,
@@ -206,6 +232,7 @@ window.glowaiApp = {
   init() {
     this.ensureSeedData();
     this.seedLocalApiKey();
+    this.applyWhiteLabelWorkspace();
     this.bindMenu();
     this.bindPageButtons();
     this.bindFocusTabs();
@@ -664,6 +691,7 @@ ${extraContext}`.trim();
       await this.runAgentAction('reel');
     });
     document.getElementById('whiteLabelLaunchBtn')?.addEventListener('click', () => this.launchWhiteLabelWorkspace());
+    document.getElementById('whiteLabelPortraitInput')?.addEventListener('change', (event) => this.saveWhiteLabelPortrait(event));
     document.getElementById('unlockForecastsBtn')?.addEventListener('click', () => this.startSubscription('freemium_unlock'));
     document.getElementById('subscribeSalonBtn')?.addEventListener('click', () => this.startSubscription('salon_monthly'));
   },
@@ -816,11 +844,90 @@ ${extraContext}`.trim();
     this.renderFavorites();
   },
 
+  async saveWhiteLabelPortrait(event) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.pushAssistantMessage('Use a PNG, JPG, or WebP image for the replaceable studio model photo.');
+      return;
+    }
+    try {
+      const portrait = await this.compressBrandImage(file);
+      const workspace = {
+        ...this.getStored(this.storageKeys.whiteLabel, {}),
+        portrait,
+        portraitName: file.name,
+        updatedAt: new Date().toISOString(),
+      };
+      this.setStored(this.storageKeys.whiteLabel, workspace);
+      this.applyWhiteLabelWorkspace(workspace);
+      this.pushAssistantMessage('Client model photo replaced. This demo now uses the shop image locally on this device.');
+    } catch (error) {
+      this.pushAssistantMessage(`Could not save that image: ${error?.message || 'try a smaller photo.'}`);
+    }
+  },
+
+  compressBrandImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('image could not be read'));
+      reader.onload = () => {
+        const image = new Image();
+        image.onerror = () => reject(new Error('image could not be loaded'));
+        image.onload = () => {
+          const maxSide = 900;
+          const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+          const width = Math.max(1, Math.round(image.width * scale));
+          const height = Math.max(1, Math.round(image.height * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d', { alpha: false });
+          ctx.fillStyle = '#fbf7f1';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(image, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.82));
+        };
+        image.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  },
+
+  applyWhiteLabelWorkspace(workspace = this.getStored(this.storageKeys.whiteLabel, {})) {
+    const studio = workspace.studio || 'GlowAI';
+    const headline = workspace.headline || (workspace.studio ? `${workspace.studio}, guided.` : 'Skin clarity, guided.');
+    const brandName = document.getElementById('appBrandName');
+    const brandHeadline = document.getElementById('appBrandHeadline');
+    const portrait = document.getElementById('whiteLabelPortrait');
+    const theme = this.whiteLabelThemes[workspace.accent || 'blush'] || this.whiteLabelThemes.blush;
+
+    if (brandName) brandName.textContent = studio;
+    if (brandHeadline) brandHeadline.textContent = headline;
+    if (portrait) {
+      portrait.src = workspace.portrait || this.defaultPortrait;
+      portrait.alt = `${studio} replaceable model portrait`;
+    }
+
+    document.body.classList.toggle('is-white-labeled', Boolean(workspace.studio || workspace.portrait));
+    document.documentElement.style.setProperty('--color-accent', theme.accent);
+    document.documentElement.style.setProperty('--color-accent-deep', theme.accentDeep);
+    document.documentElement.style.setProperty('--gradient-primary', theme.primary);
+    document.documentElement.style.setProperty('--gradient-hero', theme.hero);
+    document.documentElement.style.setProperty('--gradient-pill-active', theme.pill);
+  },
+
   launchWhiteLabelWorkspace() {
     const studio = document.getElementById('whiteLabelStudio')?.value.trim() || 'Pearl City Glow Studio';
+    const headline = document.getElementById('whiteLabelHeadline')?.value.trim() || `${studio}, guided.`;
+    const accent = document.getElementById('whiteLabelAccent')?.value || 'blush';
     const plan = document.getElementById('whiteLabelPlan')?.value || 'starter';
+    const existing = this.getStored(this.storageKeys.whiteLabel, {});
     const workspace = {
+      ...existing,
       studio,
+      headline,
+      accent,
       plan,
       monthlyPrice: plan === 'starter' ? 299 : plan === 'growth' ? 799 : 'custom',
       features: plan === 'starter'
@@ -831,8 +938,9 @@ ${extraContext}`.trim();
       launchedAt: new Date().toISOString(),
     };
     this.setStored(this.storageKeys.whiteLabel, workspace);
+    this.applyWhiteLabelWorkspace(workspace);
     this.logAgentAction('white-label', `Studio workspace launched for ${studio}`, workspace);
-    this.pushAssistantMessage(`${studio} white-label workspace launched on the ${plan} plan. The agent cockpit is ready for studio lead capture and scan-to-revenue workflows.`);
+    this.pushAssistantMessage(`${studio} white-label workspace launched on the ${plan} plan. The app now shows replaceable client branding, colors, services, and model imagery for the sales demo.`);
     this.renderAgentOps();
   },
 
@@ -893,12 +1001,17 @@ ${extraContext}`.trim();
     const shopify = document.getElementById('shopifyEndpoint');
     const reel = document.getElementById('reelEndpoint');
     const studio = document.getElementById('whiteLabelStudio');
+    const headline = document.getElementById('whiteLabelHeadline');
+    const accent = document.getElementById('whiteLabelAccent');
     const plan = document.getElementById('whiteLabelPlan');
     if (calendar && config.calendarEndpoint) calendar.value = config.calendarEndpoint;
     if (shopify && config.shopifyEndpoint) shopify.value = config.shopifyEndpoint;
     if (reel && config.reelEndpoint) reel.value = config.reelEndpoint;
     if (studio && whiteLabel.studio) studio.value = whiteLabel.studio;
+    if (headline && whiteLabel.headline) headline.value = whiteLabel.headline;
+    if (accent && whiteLabel.accent) accent.value = whiteLabel.accent;
     if (plan && whiteLabel.plan) plan.value = whiteLabel.plan;
+    this.applyWhiteLabelWorkspace(whiteLabel);
 
     const container = document.getElementById('agentLogList');
     if (!container) return;

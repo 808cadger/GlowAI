@@ -666,6 +666,7 @@ p {
 }
 
 .hero-panel {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.78fr);
   gap: var(--space-lg);
@@ -711,8 +712,54 @@ p {
 }
 
 .hero-actions {
-  grid-template-columns: repeat(3, minmax(0, max-content));
+  grid-template-columns: repeat(4, minmax(0, max-content));
   margin-top: var(--space-2xl);
+}
+
+.replace-corner {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.65rem;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid rgba(92, 70, 65, 0.14);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 253, 249, 0.74);
+  color: var(--color-accent-deep);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 22px rgba(82, 60, 54, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.corner-logo {
+  top: 0.75rem;
+  left: 0.75rem;
+}
+
+.corner-model {
+  top: 0.75rem;
+  right: 0.75rem;
+}
+
+.corner-colors {
+  bottom: 0.75rem;
+  left: 0.75rem;
+}
+
+.corner-services {
+  right: 0.75rem;
+  bottom: 0.75rem;
+}
+
+.white-label-note {
+  margin-bottom: var(--space-lg);
+  color: var(--color-copy);
+  font-size: var(--text-sm);
+  font-weight: 700;
 }
 
 .share-status {
@@ -1914,6 +1961,18 @@ p {
   .focus-points,
   .hero-actions {
     grid-template-columns: 1fr;
+  }
+
+  .replace-corner {
+    position: static;
+    margin: 0 0 var(--space-sm) var(--space-sm);
+    justify-self: start;
+  }
+
+  .corner-model,
+  .corner-colors,
+  .corner-services {
+    display: none;
   }
 
   .service-preview {

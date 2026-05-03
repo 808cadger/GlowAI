@@ -22,8 +22,9 @@
         <div class="glow-avatar-aura"></div>
         <img
           class="glow-avatar-portrait"
+          id="whiteLabelPortrait"
           src="./assets/glow-guide-avatar.png"
-          alt=""
+          alt="Replaceable studio model portrait"
           decoding="async"
           onload="this.closest('.glow-avatar-wrap')?.classList.add('has-portrait')"
           onerror="this.closest('.glow-avatar-wrap')?.classList.remove('has-portrait')"
@@ -69,8 +70,8 @@
   <main class="app-shell">
     <header class="app-header">
       <div class="header-brand">
-        <p class="eyebrow">GlowAI</p>
-        <h1 class="app-title">Skin clarity, guided.</h1>
+        <p class="eyebrow" id="appBrandName">GlowAI</p>
+        <h1 class="app-title" id="appBrandHeadline">Skin clarity, guided.</h1>
       </div>
 
       <div class="header-actions">
@@ -96,6 +97,10 @@
 
     <section class="page is-active" id="page-home" data-page-panel="home">
       <section class="hero-panel tone-home">
+        <span class="replace-corner corner-logo">Your logo</span>
+        <span class="replace-corner corner-model">Your model</span>
+        <span class="replace-corner corner-colors">Your colors</span>
+        <span class="replace-corner corner-services">Your services</span>
         <div class="hero-copy">
           <p class="section-kicker">Daily skin intelligence</p>
           <h2>Scan, adjust, and keep your skin in rhythm.</h2>
@@ -629,9 +634,26 @@
 
         <article class="agent-config">
           <p class="card-label">B2B white-label for studios</p>
+          <p class="white-label-note">Replace every customer-facing corner: logo, headline, colors, services, and the main model photo.</p>
           <label class="field-group">
             <span class="field-label">Studio brand</span>
             <input class="field-input" id="whiteLabelStudio" type="text" placeholder="Pearl City Glow Studio" />
+          </label>
+          <label class="field-group">
+            <span class="field-label">Hero headline</span>
+            <input class="field-input" id="whiteLabelHeadline" type="text" placeholder="Skin clarity, guided." />
+          </label>
+          <label class="field-group">
+            <span class="field-label">Soft brand palette</span>
+            <select class="field-input" id="whiteLabelAccent">
+              <option value="blush">Blush neutral</option>
+              <option value="sage">Sage spa</option>
+              <option value="champagne">Champagne luxe</option>
+            </select>
+          </label>
+          <label class="field-group">
+            <span class="field-label">Replace main model photo</span>
+            <input class="field-input" id="whiteLabelPortraitInput" type="file" accept="image/png,image/jpeg,image/webp" />
           </label>
           <label class="field-group">
             <span class="field-label">Monthly plan</span>

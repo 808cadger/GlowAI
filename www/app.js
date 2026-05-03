@@ -243,6 +243,11 @@ window.glowaiApp = {
       ];
       localStorage.setItem(this.storageKeys.chat, JSON.stringify(seeded));
     }
+    if (!localStorage.getItem(this.storageKeys.scans)) {
+      const scan = this.createDemoScanRecord();
+      localStorage.setItem(this.storageKeys.scans, JSON.stringify([scan]));
+      this.latestScan = scan;
+    }
   },
 
   getStored(key, fallback = []) {
@@ -276,6 +281,46 @@ window.glowaiApp = {
     } catch {
       return false;
     }
+  },
+
+  createDemoScanImage() {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200">
+      <defs>
+        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#28113a"/><stop offset=".52" stop-color="#b74e83"/><stop offset="1" stop-color="#ffd76a"/></linearGradient>
+        <radialGradient id="glow" cx=".5" cy=".35" r=".48"><stop stop-color="#fff7fb" stop-opacity=".72"/><stop offset=".42" stop-color="#ffcfdf" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="900" height="1200" fill="url(#bg)"/>
+      <circle cx="450" cy="410" r="350" fill="url(#glow)"/>
+      <ellipse cx="450" cy="550" rx="215" ry="300" fill="#d99683"/>
+      <path d="M250 330c80-150 315-165 412-12 55 87 54 210 20 289-28-48-46-115-78-165-66-103-222-118-306-19-38 45-55 112-76 180-34-78-27-186 28-273z" fill="#23101f"/>
+      <circle cx="367" cy="520" r="18" fill="#20111b"/><circle cx="533" cy="520" r="18" fill="#20111b"/>
+      <path d="M374 676c49 35 103 35 152 0" fill="none" stroke="#7e3449" stroke-width="18" stroke-linecap="round"/>
+      <ellipse cx="322" cy="605" rx="64" ry="32" fill="#ff7b9c" opacity=".42"/><ellipse cx="578" cy="605" rx="64" ry="32" fill="#ff7b9c" opacity=".42"/>
+      <rect x="110" y="110" width="680" height="880" rx="48" fill="none" stroke="#ffd76a" stroke-width="12" stroke-dasharray="38 24"/>
+      <rect x="120" y="90" width="360" height="72" rx="18" fill="#110819" opacity=".72"/>
+      <text x="150" y="137" fill="#fff7fb" font-size="34" font-family="Arial" font-weight="700">GlowAI demo scan</text>
+    </svg>`;
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  },
+
+  createDemoScanRecord() {
+    const base = this.generateFaceAnalysis({ available: false, detected: true, confidence: 88 }, {
+      hydration: 72,
+      clarity: 78,
+      texture: 74,
+      tone: 80,
+      oil: 58,
+      redness: 18,
+      humidityStress: 46,
+      segmentation: 'guided-demo',
+    });
+    return {
+      id: `demo-${Date.now().toString(36)}`,
+      createdAt: new Date().toISOString(),
+      photo: this.createDemoScanImage(),
+      demo: true,
+      ...base,
+    };
   },
 
   async registerServiceWorker() {
@@ -519,12 +564,14 @@ ${extraContext}`.trim();
     const detailCTA = document.getElementById('detailCTA');
     const form = document.getElementById('bookingForm');
     const dateInput = document.getElementById('bookingDate');
+    const timeInput = document.getElementById('bookingTime');
 
     if (dateInput && !dateInput.value) {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       dateInput.value = tomorrow.toISOString().slice(0, 10);
     }
+    if (timeInput && !timeInput.value) timeInput.value = '10:30';
 
     detailCTA?.addEventListener('click', () => {
       this.syncBookingService();
@@ -553,6 +600,7 @@ ${extraContext}`.trim();
         tomorrow.setDate(tomorrow.getDate() + 1);
         dateInput.value = tomorrow.toISOString().slice(0, 10);
       }
+      if (timeInput) timeInput.value = '10:30';
 
       this.renderBookings();
       this.pushAssistantMessage(`Booked ${booking.serviceTitle} for ${booking.name} on ${booking.date} at ${booking.time || 'your selected time'}.`);
@@ -865,7 +913,10 @@ ${extraContext}`.trim();
 
     keySaveBtn?.addEventListener('click', () => {
       const k = keyInput?.value.trim();
-      if (!k.startsWith('sk-ant-')) { alert('Paste a valid Anthropic key (starts with sk-ant-).'); return; }
+      if (!k.startsWith('sk-ant-')) {
+        this.pushAssistantMessage('That does not look like a Claude key. Demo coach still works locally; paste a key starting with sk-ant- only when you want live Claude responses.');
+        return;
+      }
       localStorage.setItem('glowai_apikey', k);
       if (keyBar) keyBar.classList.add('hidden');
       this.pushAssistantMessage("Key saved! I'm your GlowAI beauty coach. Tell me about your skin — type, concerns, goals — and I'll build a real plan for you.");
@@ -1000,7 +1051,11 @@ ${extraContext}`.trim();
     const start = document.getElementById('voiceCoachStart');
     const stop = document.getElementById('voiceCoachStop');
     if (!SpeechRecognition) {
-      if (status) status.textContent = 'Voice recognition is not supported in this browser.';
+      const reply = 'Voice recognition is not available in this WebView, so I opened typed Coach instead. The same scan, routine, booking, and agent actions work from chat.';
+      if (status) status.textContent = 'Typed coach ready.';
+      this.pushAssistantMessage(reply);
+      this.showPage('concierge');
+      document.getElementById('chatInput')?.focus();
       return;
     }
 
@@ -1644,11 +1699,27 @@ Skin support:
     const summary = document.getElementById('scanResultSummary');
     const title = document.getElementById('scanResultTitle');
     const badge = document.getElementById('scanResultBadge');
-    if (title) title.textContent = 'Camera unavailable';
-    if (summary) summary.textContent = message;
-    if (badge) badge.textContent = 'Error';
-    this.setScanStatus('Camera issue', message);
+    const copy = `${message} I loaded a guided demo scan so the consultation, routine, booking, cart, and reel flows still work.`;
+    if (title) title.textContent = 'Guided demo scan loaded';
+    if (summary) summary.textContent = copy;
+    if (badge) badge.textContent = 'Demo';
+    this.setScanStatus('Guided scan', copy);
     this.showPage('scan');
+    window.setTimeout(() => this.runGuidedDemoScan(message), 400);
+  },
+
+  runGuidedDemoScan(reason = 'Camera was unavailable.') {
+    const scan = this.createDemoScanRecord();
+    scan.summary = `${scan.summary} Guided fallback reason: ${reason}`;
+    const scans = this.getStored(this.storageKeys.scans);
+    scans.unshift(scan);
+    this.latestScan = scan;
+    this.trySetStored(this.storageKeys.scans, scans.slice(0, 6));
+    this.renderFocus(scan.serviceKey);
+    this.renderScanSummary();
+    this.renderScanHistory();
+    this.renderForecast();
+    this.pushAssistantMessage('I loaded a guided demo scan. You can still show the customer the full result, routine, booking, cart, and agent workflow.');
   },
 
   generateFaceAnalysis(faceQuality = {}, skinSignals = null) {

@@ -1,28 +1,1039 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Download GlowAI</title>
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="stylesheet" href="./styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ff4db8">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="GlowAI is an offline-ready AI skincare analysis PWA for selfie-based skin metrics, routines, and shareable reports.">
+  <meta name="keywords" content="GlowAI, AI skincare, skin analysis, esthetician app, Hawaii PWA, beauty technology">
+  <meta property="og:title" content="GlowAI - AI Skin Glow-Up in Seconds">
+  <meta property="og:description" content="Upload a selfie, preview a glow scan, and export a skincare report from a single-file PWA.">
+  <meta property="og:type" content="website">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="GlowAI">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>GlowAI - AI Skin Glow-Up in Seconds</title>
+  <link rel="manifest" id="manifestLink">
+  <style>
+    :root {
+      --bg: #110819;
+      --bg-2: #1d0f2b;
+      --panel: rgba(255, 255, 255, .08);
+      --panel-strong: rgba(255, 255, 255, .13);
+      --text: #fff7fb;
+      --muted: #decbe0;
+      --pink: #ff4db8;
+      --rose: #ff7b9c;
+      --purple: #8f5cff;
+      --gold: #ffd76a;
+      --mint: #71ffd2;
+      --danger: #ff7a8a;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .38);
+      --ring: 0 0 0 3px rgba(255, 215, 106, .35);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 12%, rgba(255, 77, 184, .35), transparent 30rem),
+        radial-gradient(circle at 84% 8%, rgba(255, 215, 106, .24), transparent 26rem),
+        radial-gradient(circle at 55% 92%, rgba(143, 92, 255, .28), transparent 32rem),
+        linear-gradient(135deg, #0b0611 0%, #1b0d28 45%, #2c1030 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .18;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, .12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .12) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, black, transparent 72%);
+    }
+
+    a { color: inherit; }
+    button, input { font: inherit; }
+    button, a.button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 0 28px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: #170616;
+      background: conic-gradient(from 170deg, var(--gold), var(--pink), var(--purple), var(--mint), var(--gold));
+      box-shadow: 0 0 28px rgba(255, 77, 184, .5);
+      animation: pulseGlow 4s ease-in-out infinite;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 16px;
+      color: var(--text);
+      text-decoration: none;
+      background: rgba(255, 255, 255, .1);
+      border: 1px solid rgba(255, 255, 255, .18);
+      backdrop-filter: blur(18px);
+    }
+
+    .primary {
+      color: #220716;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold), var(--rose) 38%, var(--pink));
+      box-shadow: 0 14px 40px rgba(255, 77, 184, .32);
+    }
+
+    .secondary {
+      color: var(--text);
+      font-weight: 800;
+      background: rgba(255, 255, 255, .1);
+      border: 1px solid rgba(255, 255, 255, .2);
+    }
+
+    .hero {
+      min-height: calc(100vh - 122px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.03fr) minmax(320px, .97fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .hero-copy, .scanner, .card, .cta-panel {
+      background: linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.055));
+      border: 1px solid rgba(255, 255, 255, .2);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+    }
+
+    .hero-copy {
+      border-radius: 30px;
+      padding: clamp(28px, 5vw, 58px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-copy::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -80px;
+      top: -80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 215, 106, .42), transparent 65%);
+      filter: blur(2px);
+      pointer-events: none;
+    }
+
+    .kicker {
+      margin: 0 0 12px;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-size: .78rem;
+      font-weight: 900;
+      letter-spacing: .16em;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      margin-bottom: 16px;
+      max-width: 780px;
+      font-size: clamp(3.1rem, 8vw, 7.6rem);
+      line-height: .88;
+      letter-spacing: 0;
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, #fff, var(--gold), var(--pink) 58%, #d6c4ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 42px rgba(255, 77, 184, .18);
+    }
+
+    .tagline {
+      color: #f6dfee;
+      max-width: 680px;
+      font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .hero-actions button, .hero-actions a {
+      padding: 14px 19px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .trust-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 26px;
+    }
+
+    .trust-row span {
+      padding: 14px;
+      border-radius: 18px;
+      color: #fbe9f4;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      font-size: .92rem;
+      line-height: 1.35;
+    }
+
+    .scanner {
+      border-radius: 30px;
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .dropzone {
+      min-height: 330px;
+      border: 2px dashed rgba(255, 215, 106, .55);
+      border-radius: 24px;
+      background:
+        linear-gradient(rgba(255,255,255,.07), rgba(255,255,255,.03)),
+        radial-gradient(circle at 50% 36%, rgba(255,77,184,.22), transparent 45%);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      text-align: center;
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dropzone.is-over {
+      transform: scale(1.01);
+      border-color: var(--mint);
+      background:
+        linear-gradient(rgba(113,255,210,.13), rgba(255,255,255,.04)),
+        radial-gradient(circle at 50% 36%, rgba(255,77,184,.28), transparent 48%);
+    }
+
+    .drop-inner {
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+      max-width: 360px;
+    }
+
+    .scan-orb {
+      width: 116px;
+      height: 116px;
+      border-radius: 36px;
+      background:
+        radial-gradient(circle at 50% 36%, rgba(255,255,255,.96), rgba(255,255,255,.28) 25%, transparent 26%),
+        linear-gradient(135deg, rgba(255,215,106,.95), rgba(255,77,184,.8), rgba(143,92,255,.88));
+      box-shadow: 0 0 50px rgba(255, 77, 184, .45);
+    }
+
+    .dropzone canvas {
+      width: 100%;
+      max-height: 430px;
+      border-radius: 20px;
+      display: none;
+      background: #1b0b1d;
+      object-fit: contain;
+    }
+
+    .dropzone.has-image {
+      padding: 12px;
+      place-items: stretch;
+    }
+
+    .dropzone.has-image .drop-inner { display: none; }
+    .dropzone.has-image canvas { display: block; }
+
+    .file-input { position: absolute; opacity: 0; pointer-events: none; }
+    .status {
+      min-height: 1.4em;
+      margin: 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .error { color: var(--danger); }
+
+    .loader {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      color: #ffe8f5;
+      font-weight: 800;
+    }
+
+    .loader.is-active { display: flex; }
+
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.25);
+      border-top-color: var(--gold);
+      animation: spin .85s linear infinite;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .card, .cta-panel {
+      border-radius: 26px;
+      padding: clamp(18px, 3vw, 26px);
+    }
+
+    .card h2, .cta-panel h2 {
+      font-size: clamp(1.5rem, 4vw, 2.3rem);
+      margin-bottom: 8px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      padding: 13px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.13);
+    }
+
+    .metric strong {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: .92rem;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      margin-top: 10px;
+      background: rgba(255,255,255,.14);
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: var(--w, 70%);
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--pink), var(--gold));
+    }
+
+    .routine {
+      display: grid;
+      gap: 12px;
+      margin: 18px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .routine li {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 13px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .routine b {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: #1a0614;
+      background: linear-gradient(135deg, var(--gold), var(--pink));
+    }
+
+    .routine span { color: var(--muted); line-height: 1.45; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .actions button, .actions a {
+      padding: 12px 16px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .cta-panel {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .share-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    footer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 28px 0 0;
+      color: var(--muted);
+    }
+
+    footer nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    footer a {
+      color: #fff;
+      text-decoration-color: rgba(255,255,255,.35);
+      text-underline-offset: 4px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(120%);
+      width: min(520px, calc(100% - 28px));
+      padding: 14px 16px;
+      border-radius: 18px;
+      color: #1a0714;
+      background: linear-gradient(135deg, var(--gold), #fff4c5);
+      box-shadow: var(--shadow);
+      z-index: 30;
+      transition: transform .25s ease;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulseGlow {
+      0%, 100% { filter: saturate(1); transform: translateY(0); }
+      50% { filter: saturate(1.25); transform: translateY(-2px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .hero, .grid, .cta-panel, footer { grid-template-columns: 1fr; }
+      .hero { min-height: auto; }
+      .share-row, footer nav { justify-content: flex-start; }
+    }
+
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 22px, 1180px); padding-top: 12px; }
+      .topbar { align-items: flex-start; padding-bottom: 14px; }
+      .brand span:last-child { display: none; }
+      .nav-actions { gap: 8px; }
+      .pill { padding: 10px 12px; font-size: .92rem; }
+      .hero-copy, .scanner, .card, .cta-panel { border-radius: 22px; }
+      .hero-copy { padding: 26px 20px; }
+      .scanner { padding: 14px; }
+      .dropzone { min-height: 290px; }
+      .trust-row, .metrics { grid-template-columns: 1fr; }
+      .actions button, .actions a, .hero-actions button, .hero-actions a, .share-row button, .share-row a { width: 100%; }
+      h1 { font-size: clamp(2.75rem, 16vw, 5.4rem); }
+    }
+  </style>
 </head>
 <body>
-  <main class="app-shell">
-    <section class="page is-active">
-      <section class="hero-panel tone-home">
-        <div class="hero-copy">
-          <p class="section-kicker">GlowAI mobile</p>
-          <h1 class="app-title">Scan your face. Keep your routine in rhythm.</h1>
-          <p class="hero-text">Open GlowAI on your phone for instant skin insights, appointment options, and product suggestions.</p>
+  <div class="shell">
+    <header class="topbar" aria-label="GlowAI header">
+      <a class="brand" href="#top" aria-label="GlowAI home">
+        <span class="logo" aria-hidden="true">G</span>
+        <span>GlowAI</span>
+      </a>
+      <nav class="nav-actions" aria-label="Primary actions">
+        <button class="pill secondary" id="installBtn" type="button">Install PWA</button>
+        <a class="pill" href="https://github.com/808cadger/GlowAI" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="heroTitle">
+        <article class="hero-copy">
+          <p class="kicker">Hawaii-built AI beauty PWA</p>
+          <h1 id="heroTitle"><span class="gradient-text">AI Skin Glow-Up in Seconds</span></h1>
+          <p class="tagline">GlowAI turns a selfie into 12 dermatologist-grade cosmetic skin metrics, a clear AM/PM routine, product direction, and a shareable report for estheticians, clients, and tech-forward skincare users.</p>
           <div class="hero-actions">
-            <a class="primary-btn scan-now-cta" href="./index.html">Open web app</a>
-            <a class="secondary-btn" href="https://github.com/808cadger/GlowAI/releases/latest">Download Android APK</a>
+            <button class="primary" id="heroUploadBtn" type="button">Upload Selfie</button>
+            <button class="secondary" id="sampleBtn" type="button">Run Demo Scan</button>
+            <a class="secondary button" href="#analysis">View Results</a>
           </div>
-          <p class="share-status">Android users can install the APK from Releases. iPhone users can open the web app and add it to the home screen.</p>
+          <div class="trust-row" aria-label="GlowAI strengths">
+            <span><b>12 metrics</b><br>pores, hydration, acne, wrinkles, texture, redness, tone, oil, UV stress, firmness, glow, pigmentation</span>
+            <span><b>Offline-ready</b><br>single HTML file with local canvas analysis, export, and PWA install support</span>
+            <span><b>Esthetician flow</b><br>consult-ready reports, client share tools, and routine next steps</span>
+          </div>
+        </article>
+
+        <aside class="scanner" aria-labelledby="scannerTitle">
+          <div>
+            <p class="kicker">Selfie scan</p>
+            <h2 id="scannerTitle">Drop a clear face photo</h2>
+            <p class="status" id="status" role="status" aria-live="polite">Images stay on this device. This demo provides cosmetic wellness guidance, not medical diagnosis.</p>
+          </div>
+
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload or drop a selfie for GlowAI analysis">
+            <canvas id="previewCanvas" width="960" height="960" aria-label="Selfie preview with glow scan overlay"></canvas>
+            <div class="drop-inner">
+              <span class="scan-orb" aria-hidden="true"></span>
+              <strong>Tap, drag, or paste a selfie</strong>
+              <span>JPG, PNG, or WebP under 8 MB works best in soft natural light.</span>
+              <button class="primary" type="button" id="dropUploadBtn">Choose Image</button>
+            </div>
+          </div>
+          <input class="file-input" id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Choose selfie image">
+
+          <div class="loader" id="loader" aria-hidden="true">
+            <span class="spinner"></span>
+            <span>Mapping glow, texture, and tone...</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="grid" id="analysis" aria-labelledby="analysisTitle">
+        <article class="card">
+          <p class="kicker">Analysis demo</p>
+          <h2 id="analysisTitle">Mock AI skin report</h2>
+          <p class="status" id="reportSummary">Run a scan to personalize these scores from canvas color, contrast, and brightness signals.</p>
+          <div class="metrics" id="metricsGrid" aria-label="Skin metrics table"></div>
+          <div class="actions">
+            <button class="primary" id="pdfBtn" type="button">Download PDF</button>
+            <button class="secondary" id="jsonBtn" type="button">Download JSON</button>
+            <button class="secondary" id="imageBtn" type="button">Save Preview</button>
+          </div>
+        </article>
+
+        <article class="card">
+          <p class="kicker">Routine steps</p>
+          <h2>Personalized glow plan</h2>
+          <ol class="routine" id="routineList"></ol>
+          <div class="actions">
+            <button class="secondary" id="copyBtn" type="button">Copy Report Text</button>
+            <button class="secondary" id="shareBtn" type="button">Share Report</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="cta-panel" aria-labelledby="ctaTitle">
+        <div>
+          <p class="kicker">Download GlowAI PWA</p>
+          <h2 id="ctaTitle">Send one file. Open anywhere.</h2>
+          <p class="status">This page is a complete shareable HTML PWA. Install it from Chrome/Android or add it to the iPhone home screen from Safari.</p>
+        </div>
+        <div class="share-row" aria-label="Share GlowAI">
+          <button class="primary" id="downloadHtmlBtn" type="button">Download This HTML</button>
+          <a class="pill" id="twitterShare" target="_blank" rel="noopener">Twitter</a>
+          <a class="pill" id="linkedinShare" target="_blank" rel="noopener">LinkedIn</a>
+          <a class="pill" id="emailShare">Email</a>
         </div>
       </section>
-    </section>
-  </main>
+    </main>
+
+    <footer>
+      <p>GlowAI by Christopher Cadger, Hawaii-based developer. Built for estheticians, skincare clients, and PWA builders.</p>
+      <nav aria-label="Footer links">
+        <a href="https://github.com/808cadger/GlowAI" rel="noopener">GitHub</a>
+        <a href="https://codeberg.org/808cadger/GlowAI" rel="noopener">Codeberg</a>
+        <a href="mailto:808cadger@gmail.com">Contact</a>
+      </nav>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const $ = (id) => document.getElementById(id);
+      const canvas = $("previewCanvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const dropzone = $("dropzone");
+      const fileInput = $("fileInput");
+      const status = $("status");
+      const loader = $("loader");
+      const toast = $("toast");
+      const metricsGrid = $("metricsGrid");
+      const routineList = $("routineList");
+      const reportSummary = $("reportSummary");
+      let deferredPrompt = null;
+      let currentReport = null;
+
+      const baseMetrics = [
+        ["Pores", 7.2], ["Hydration", 8.1], ["Wrinkles", 6.4], ["Texture", 7.6],
+        ["Acne", 8.4], ["Pigmentation", 6.9], ["Redness", 7.7], ["Oil Balance", 7.1],
+        ["Firmness", 7.3], ["Glow", 8.0], ["UV Stress", 6.6], ["Tone Evenness", 7.5]
+      ];
+
+      const routines = [
+        "AM cleanse, vitamin C serum, light moisturizer, and SPF 50 before Hawaii sun exposure.",
+        "Use niacinamide or azelaic acid on visible redness and uneven tone zones.",
+        "Add hyaluronic acid on damp skin when hydration score drops below 8.0.",
+        "PM double cleanse, barrier cream, and a low-frequency retinoid or peptide night.",
+        "Book an esthetician consult for persistent acne, irritation, or pigment changes."
+      ];
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2800);
+      }
+
+      function setStatus(message, isError = false) {
+        status.textContent = message;
+        status.classList.toggle("error", isError);
+      }
+
+      function renderReport(report) {
+        currentReport = report;
+        reportSummary.textContent = report.summary;
+        metricsGrid.innerHTML = "";
+        report.metrics.forEach((metric) => {
+          const tile = document.createElement("div");
+          tile.className = "metric";
+          tile.innerHTML = "<strong><span></span><span></span></strong><div class=\"bar\"><span></span></div>";
+          tile.querySelector("strong span:first-child").textContent = metric.name;
+          tile.querySelector("strong span:last-child").textContent = metric.score.toFixed(1) + "/10";
+          tile.querySelector(".bar span").style.setProperty("--w", Math.max(8, metric.score * 10) + "%");
+          metricsGrid.appendChild(tile);
+        });
+        routineList.innerHTML = "";
+        report.routine.forEach((step, index) => {
+          const li = document.createElement("li");
+          li.innerHTML = "<b></b><span></span>";
+          li.querySelector("b").textContent = String(index + 1);
+          li.querySelector("span").textContent = step;
+          routineList.appendChild(li);
+        });
+      }
+
+      function defaultReport() {
+        return {
+          generatedAt: new Date().toISOString(),
+          mode: "demo",
+          summary: "Demo baseline: balanced glow, mild texture focus, and hydration-forward routine recommended.",
+          metrics: baseMetrics.map(([name, score]) => ({ name, score })),
+          routine: routines,
+          disclaimer: "Cosmetic wellness guidance only. Not a medical diagnosis."
+        };
+      }
+
+      function clampScore(value) {
+        return Math.max(4.8, Math.min(9.6, Number(value.toFixed(1))));
+      }
+
+      function analyzeCanvas() {
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        let r = 0, g = 0, b = 0, bright = 0, warm = 0, contrast = 0, count = 0;
+        const step = 24;
+        for (let i = 0; i < data.length; i += step * 4) {
+          const rr = data[i], gg = data[i + 1], bb = data[i + 2], aa = data[i + 3];
+          if (aa < 30) continue;
+          const lum = .2126 * rr + .7152 * gg + .0722 * bb;
+          r += rr; g += gg; b += bb; bright += lum; warm += rr - bb; count++;
+        }
+        r /= count; g /= count; b /= count; bright /= count; warm /= count;
+        for (let i = 0; i < data.length; i += step * 4) {
+          const lum = .2126 * data[i] + .7152 * data[i + 1] + .0722 * data[i + 2];
+          contrast += Math.abs(lum - bright);
+        }
+        contrast /= count;
+
+        const hydration = clampScore(5.8 + bright / 92 - contrast / 120);
+        const redness = clampScore(8.8 - Math.max(0, r - g) / 38);
+        const pigmentation = clampScore(8.9 - contrast / 28);
+        const glow = clampScore(5.9 + bright / 82 + Math.max(0, warm) / 180);
+        const texture = clampScore(8.9 - contrast / 33);
+        const oil = clampScore(7.2 + (bright - 125) / 80);
+        const scores = {
+          Pores: clampScore(texture - .4),
+          Hydration: hydration,
+          Wrinkles: clampScore(texture - .8 + hydration / 18),
+          Texture: texture,
+          Acne: clampScore(redness - .2),
+          Pigmentation: pigmentation,
+          Redness: redness,
+          "Oil Balance": oil,
+          Firmness: clampScore((texture + hydration) / 2),
+          Glow: glow,
+          "UV Stress": clampScore((pigmentation + hydration) / 2 - .4),
+          "Tone Evenness": clampScore((redness + pigmentation) / 2)
+        };
+        const metrics = baseMetrics.map(([name]) => ({ name, score: scores[name] }));
+        const low = metrics.slice().sort((a, b) => a.score - b.score).slice(0, 3).map((m) => m.name.toLowerCase());
+        return {
+          generatedAt: new Date().toISOString(),
+          mode: "canvas-mock-analysis",
+          summary: "GlowAI scan complete: focus on " + low.join(", ") + " while maintaining SPF, hydration, and barrier support.",
+          metrics,
+          routine: routines,
+          signals: {
+            averageRgb: { r: Math.round(r), g: Math.round(g), b: Math.round(b) },
+            brightness: Math.round(bright),
+            contrast: Math.round(contrast),
+            warmth: Math.round(warm)
+          },
+          disclaimer: "Cosmetic wellness guidance only. Not a medical diagnosis."
+        };
+      }
+
+      function drawGlowOverlay() {
+        const w = canvas.width, h = canvas.height;
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        const grad = ctx.createRadialGradient(w / 2, h * .42, 20, w / 2, h * .42, w * .46);
+        grad.addColorStop(0, "rgba(255,215,106,.28)");
+        grad.addColorStop(.55, "rgba(255,77,184,.15)");
+        grad.addColorStop(1, "rgba(143,92,255,0)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalCompositeOperation = "source-over";
+        ctx.strokeStyle = "rgba(255,215,106,.9)";
+        ctx.lineWidth = Math.max(3, w * .006);
+        ctx.setLineDash([18, 12]);
+        ctx.strokeRect(w * .18, h * .14, w * .64, h * .72);
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(17,8,25,.64)";
+        ctx.fillRect(18, 18, 332, 58);
+        ctx.fillStyle = "#fff7fb";
+        ctx.font = "700 26px system-ui, sans-serif";
+        ctx.fillText("GlowAI scan preview", 36, 55);
+        ctx.restore();
+      }
+
+      function runFile(file) {
+        if (!file) return;
+        if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) {
+          setStatus("Please upload a PNG, JPG, or WebP selfie.", true);
+          return;
+        }
+        if (file.size > 8 * 1024 * 1024) {
+          setStatus("Please choose an image under 8 MB for a fast mobile scan.", true);
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          loader.classList.add("is-active");
+          loader.setAttribute("aria-hidden", "false");
+          setStatus("Selfie loaded. Running local mock AI analysis...");
+          const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+          const dw = img.width * scale;
+          const dh = img.height * scale;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "#16091c";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
+          drawGlowOverlay();
+          dropzone.classList.add("has-image");
+          window.setTimeout(() => {
+            const report = analyzeCanvas();
+            renderReport(report);
+            loader.classList.remove("is-active");
+            loader.setAttribute("aria-hidden", "true");
+            setStatus("Analysis ready. Export or share the report below.");
+            showToast("GlowAI report ready");
+            URL.revokeObjectURL(img.src);
+          }, 700);
+        };
+        img.onerror = () => setStatus("That image could not be read. Try a different selfie.", true);
+        img.src = URL.createObjectURL(file);
+      }
+
+      function runDemo() {
+        const w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        const bg = ctx.createLinearGradient(0, 0, w, h);
+        bg.addColorStop(0, "#341040");
+        bg.addColorStop(.5, "#a34278");
+        bg.addColorStop(1, "#ffd27d");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "#d99882";
+        ctx.beginPath(); ctx.ellipse(w / 2, h * .47, w * .23, h * .31, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#221018";
+        ctx.beginPath(); ctx.arc(w * .42, h * .42, 16, 0, Math.PI * 2); ctx.arc(w * .58, h * .42, 16, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#763145"; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(w / 2, h * .55, 70, .15, Math.PI - .15); ctx.stroke();
+        ctx.fillStyle = "rgba(255,111,166,.55)";
+        ctx.beginPath(); ctx.ellipse(w * .35, h * .52, 54, 28, 0, 0, Math.PI * 2); ctx.ellipse(w * .65, h * .52, 54, 28, 0, 0, Math.PI * 2); ctx.fill();
+        drawGlowOverlay();
+        dropzone.classList.add("has-image");
+        renderReport(defaultReport());
+        setStatus("Demo scan loaded. Upload a selfie for canvas-personalized mock metrics.");
+        showToast("Demo report loaded");
+      }
+
+      function reportText() {
+        const report = currentReport || defaultReport();
+        const lines = [
+          "GlowAI Skin Report",
+          report.summary,
+          "",
+          ...report.metrics.map((m) => m.name + ": " + m.score.toFixed(1) + "/10"),
+          "",
+          "Routine:",
+          ...report.routine.map((step, i) => (i + 1) + ". " + step),
+          "",
+          report.disclaimer
+        ];
+        return lines.join("\n");
+      }
+
+      function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      function escapePdf(text) {
+        return String(text).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+      }
+
+      function downloadPdf() {
+        const lines = reportText().split("\n").slice(0, 46);
+        const body = lines.map((line, i) => "BT /F1 12 Tf 54 " + (760 - i * 15) + " Td (" + escapePdf(line) + ") Tj ET").join("\n");
+        const objects = [
+          "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n",
+          "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n",
+          "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj\n",
+          "4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n",
+          "5 0 obj << /Length " + body.length + " >> stream\n" + body + "\nendstream endobj\n"
+        ];
+        let pdf = "%PDF-1.4\n";
+        const offsets = [0];
+        objects.forEach((obj) => { offsets.push(pdf.length); pdf += obj; });
+        const xref = pdf.length;
+        pdf += "xref\n0 6\n0000000000 65535 f \n" + offsets.slice(1).map((n) => String(n).padStart(10, "0") + " 00000 n ").join("\n") + "\n";
+        pdf += "trailer << /Size 6 /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF";
+        downloadBlob(new Blob([pdf], { type: "application/pdf" }), "glowai-skin-report.pdf");
+        showToast("PDF report downloaded");
+      }
+
+      async function copyReport() {
+        try {
+          await navigator.clipboard.writeText("Check my GlowAI skin report!\n\n" + reportText());
+          showToast("Report copied to clipboard");
+        } catch (err) {
+          showToast("Copy failed. Select and copy the report manually.");
+        }
+      }
+
+      async function shareReport() {
+        const text = "Check my GlowAI skin report!\n\n" + reportText();
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: "GlowAI skin report", text, url: location.href });
+            return;
+          } catch (err) {
+            if (err.name === "AbortError") return;
+          }
+        }
+        await copyReport();
+      }
+
+      function setupManifestAndWorker() {
+        const svgIcon = "<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop stop-color='%23ffd76a'/><stop offset='.48' stop-color='%23ff4db8'/><stop offset='1' stop-color='%238f5cff'/></linearGradient></defs><rect width='512' height='512' rx='128' fill='url(%23g)'/><text x='50%' y='57%' dominant-baseline='middle' text-anchor='middle' font-size='260' font-family='Arial' font-weight='900' fill='%23110819'>G</text></svg>";
+        const manifest = {
+          name: "GlowAI",
+          short_name: "GlowAI",
+          description: "AI Skin Glow-Up in Seconds",
+          start_url: location.href,
+          scope: "./",
+          display: "standalone",
+          background_color: "#110819",
+          theme_color: "#ff4db8",
+          icons: [{ src: "data:image/svg+xml," + svgIcon, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }]
+        };
+        $("manifestLink").href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" }));
+        if ("serviceWorker" in navigator && location.protocol !== "file:") {
+          const sw = "self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open('glowai-single-v1').then(c=>c.addAll([self.registration.scope])))});self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request).then(r=>r||caches.match(self.registration.scope)))));";
+          navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw], { type: "text/javascript" }))).catch(() => {});
+        }
+      }
+
+      function setupShareLinks() {
+        const url = encodeURIComponent(location.href);
+        const text = encodeURIComponent("Check my GlowAI skin report!");
+        $("twitterShare").href = "https://twitter.com/intent/tweet?text=" + text + "&url=" + url;
+        $("linkedinShare").href = "https://www.linkedin.com/sharing/share-offsite/?url=" + url;
+        $("emailShare").href = "mailto:?subject=GlowAI skin report&body=" + text + "%0A" + url;
+      }
+
+      ["dragenter", "dragover"].forEach((eventName) => dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropzone.classList.add("is-over");
+      }));
+      ["dragleave", "drop"].forEach((eventName) => dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        dropzone.classList.remove("is-over");
+      }));
+      dropzone.addEventListener("drop", (event) => runFile(event.dataTransfer.files[0]));
+      dropzone.addEventListener("click", () => fileInput.click());
+      dropzone.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          fileInput.click();
+        }
+      });
+      document.addEventListener("paste", (event) => {
+        const file = [...event.clipboardData.files].find((item) => item.type.startsWith("image/"));
+        if (file) runFile(file);
+      });
+      fileInput.addEventListener("change", () => runFile(fileInput.files[0]));
+      $("heroUploadBtn").addEventListener("click", () => fileInput.click());
+      $("dropUploadBtn").addEventListener("click", (event) => { event.stopPropagation(); fileInput.click(); });
+      $("sampleBtn").addEventListener("click", runDemo);
+      $("jsonBtn").addEventListener("click", () => {
+        const report = currentReport || defaultReport();
+        downloadBlob(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }), "glowai-skin-report.json");
+      });
+      $("pdfBtn").addEventListener("click", downloadPdf);
+      $("imageBtn").addEventListener("click", () => canvas.toBlob((blob) => blob && downloadBlob(blob, "glowai-scan-preview.png"), "image/png"));
+      $("copyBtn").addEventListener("click", copyReport);
+      $("shareBtn").addEventListener("click", shareReport);
+      $("downloadHtmlBtn").addEventListener("click", () => {
+        const html = "<!doctype html>\n" + document.documentElement.outerHTML;
+        downloadBlob(new Blob([html], { type: "text/html" }), "glowai-downloadable-pwa.html");
+      });
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        deferredPrompt = event;
+        $("installBtn").textContent = "Download GlowAI PWA";
+      });
+      $("installBtn").addEventListener("click", async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          await deferredPrompt.userChoice.catch(() => null);
+          deferredPrompt = null;
+        } else {
+          showToast("Use your browser menu to Add to Home Screen or Install App.");
+        }
+      });
+
+      renderReport(defaultReport());
+      setupManifestAndWorker();
+      setupShareLinks();
+    })();
+  </script>
 </body>
 </html>

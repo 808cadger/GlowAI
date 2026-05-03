@@ -1,5 +1,16 @@
 # GlowAI
 
+## Instant single-file download
+
+For someone who just wants GlowAI immediately, use the standalone PWA file:
+
+- Download [`www/download.html`](./www/download.html) from GitHub.
+- Open it in Chrome, Edge, Brave, or Safari.
+- Upload a selfie or run the demo scan, then export PDF/JSON or share the report.
+- On mobile, use the browser menu to install/add it to the home screen.
+
+The file is self-contained, under 1 MB, and does not require `npm install`, Android Studio, or the backend.
+
 <!-- INSTALL-START -->
 ## Install and run
 

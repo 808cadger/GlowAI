@@ -12,7 +12,8 @@ import * as mpSelfie from '@mediapipe/selfie_segmentation';
 const app = () => window.glowaiApp;
 const FACE_MODEL_URLS = ['./models', 'https://justadudewhohacks.github.io/face-api.js/models'];
 const SELFIE_MODEL_URLS = ['./models', 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation'];
-const MIN_FACE_AREA_FOR_SCAN = 0.12;
+const MIN_FACE_AREA_FOR_SCAN = 0.22;
+const MAX_FACE_CENTER_OFFSET = 0.16;
 
 let faceModelPromise;
 let faceModelStatus = 'idle';
@@ -92,9 +93,9 @@ async function analyzeFacePresence(dataUrl) {
   if (!modelState.ready) {
     return {
       available: false,
-      detected: true,
+      detected: false,
       confidence: null,
-      message: 'Face model unavailable; continuing with guided scan.',
+      message: 'Face check is still loading. Try again with your face close inside the circle.',
     };
   }
 
@@ -122,6 +123,12 @@ async function analyzeFacePresence(dataUrl) {
   const centerY = box.y + box.height / 2;
   const centerOffset = Math.hypot((centerX / img.width) - 0.5, (centerY / img.height) - 0.5);
   const closeEnough = faceArea >= MIN_FACE_AREA_FOR_SCAN;
+  const centered = centerOffset <= MAX_FACE_CENTER_OFFSET;
+  const qualityMessage = !closeEnough
+    ? 'Move closer so your face fills the circle, then scan again.'
+    : !centered
+      ? 'Center your face inside the circle, then scan again.'
+      : 'Face is close, centered, and ready for skin analysis.';
 
   return {
     available: true,
@@ -129,7 +136,9 @@ async function analyzeFacePresence(dataUrl) {
     confidence: Math.round(score * 100),
     faceArea,
     minFaceArea: MIN_FACE_AREA_FOR_SCAN,
-    centered: centerOffset < 0.28,
+    centerOffset,
+    maxCenterOffset: MAX_FACE_CENTER_OFFSET,
+    centered,
     closeEnough,
     landmarks: landmarks
       ? {
@@ -141,9 +150,7 @@ async function analyzeFacePresence(dataUrl) {
           rightEye: landmarks.getRightEye().length,
         }
       : null,
-    message: closeEnough
-      ? 'Face detected and ready for skin analysis.'
-      : 'Move closer so your face fills more of the frame, then scan again.',
+    message: qualityMessage,
   };
 }
 
@@ -599,14 +606,27 @@ async function startScan() {
     const resizedDataUrl = await resizeDataUrl(capture.dataUrl);
     const faceQuality = await analyzeFacePresence(resizedDataUrl);
 
-    if (faceQuality.available && !faceQuality.detected) {
-      app()?.handleScanError?.(faceQuality.message);
+    if (!faceQuality.available) {
+      app()?.setScanStatus?.('Face check loading', faceQuality.message);
+      app()?.pushAssistantMessage?.('GlowAI needs the face check before it can scan. Keep your face close inside the circle and try again.');
       return;
     }
 
-    if (faceQuality.available && faceQuality.closeEnough === false) {
+    if (!faceQuality.detected) {
+      app()?.setScanStatus?.('Find face', 'Put your face inside the circle before GlowAI scans.');
+      app()?.pushAssistantMessage?.('I could not see a face clearly. Move into the circle with even light and try again.');
+      return;
+    }
+
+    if (!faceQuality.closeEnough) {
       app()?.setScanStatus?.('Move closer', faceQuality.message);
-      app()?.pushAssistantMessage?.('Move closer to the camera so GlowAI can read your face clearly. Your face should fill more of the frame before the scan will run.');
+      app()?.pushAssistantMessage?.('Move closer to the camera so your face fills the circle. GlowAI will not scan until the picture is close enough to be clear.');
+      return;
+    }
+
+    if (!faceQuality.centered) {
+      app()?.setScanStatus?.('Center face', faceQuality.message);
+      app()?.pushAssistantMessage?.('Keep your face centered inside the circle. GlowAI will not scan until the face is lined up.');
       return;
     }
 

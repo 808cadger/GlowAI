@@ -1454,13 +1454,23 @@ Skin support:
   handleLiveScanSample(sample) {
     if (!this.liveScan.active) return;
 
-    if (sample.faceQuality?.available && !sample.faceQuality?.detected) {
+    if (!sample.faceQuality?.available) {
+      this.setScanStatus('Face check loading', 'GlowAI needs the face check before it can sample. Keep your face close inside the oval.');
+      return;
+    }
+
+    if (!sample.faceQuality?.detected) {
       this.setScanStatus('Find face', 'Center your face in the oval before GlowAI starts sampling.');
       return;
     }
 
-    if (sample.faceQuality?.available && sample.faceQuality?.detected && sample.faceQuality?.closeEnough === false) {
-      this.setScanStatus('Move closer', 'Bring your face closer to the camera until it fills more of the oval. GlowAI will start sampling when the face is close enough.');
+    if (!sample.faceQuality?.closeEnough) {
+      this.setScanStatus('Move closer', 'Bring your face closer until it fills the oval. GlowAI will start sampling when the picture is clear enough.');
+      return;
+    }
+
+    if (!sample.faceQuality?.centered) {
+      this.setScanStatus('Center face', 'Keep your face centered inside the oval. GlowAI will start sampling when it is lined up.');
       return;
     }
 

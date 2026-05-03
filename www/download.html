@@ -248,6 +248,46 @@
       line-height: 1.35;
     }
 
+    .phase-track {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .phase {
+      min-height: 92px;
+      padding: 13px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.075);
+      border: 1px solid rgba(255,255,255,.13);
+      color: var(--muted);
+      transition: border-color .2s ease, background .2s ease, transform .2s ease;
+    }
+
+    .phase b {
+      display: block;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .phase small {
+      display: block;
+      line-height: 1.35;
+    }
+
+    .phase.is-active {
+      color: #fff7fb;
+      border-color: rgba(255, 215, 106, .65);
+      background: rgba(255, 215, 106, .12);
+      transform: translateY(-2px);
+    }
+
+    .phase.is-done {
+      border-color: rgba(113, 255, 210, .45);
+      background: rgba(113, 255, 210, .09);
+    }
+
     .scanner {
       border-radius: 30px;
       padding: 22px;
@@ -428,6 +468,33 @@
 
     .routine span { color: var(--muted); line-height: 1.45; }
 
+    .insight-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .insight {
+      min-height: 112px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .insight b {
+      display: block;
+      margin-bottom: 7px;
+      color: #fff;
+    }
+
+    .insight span {
+      color: var(--muted);
+      line-height: 1.42;
+      font-size: .94rem;
+    }
+
     .actions {
       display: flex;
       flex-wrap: wrap;
@@ -543,7 +610,7 @@
       .hero-copy { padding: 26px 20px; }
       .scanner { padding: 14px; }
       .dropzone { min-height: 290px; }
-      .trust-row, .metrics { grid-template-columns: 1fr; }
+      .trust-row, .metrics, .phase-track, .insight-grid { grid-template-columns: 1fr; }
       .actions button, .actions a, .hero-actions button, .hero-actions a, .share-row button, .share-row a { width: 100%; }
       h1 { font-size: clamp(2.75rem, 16vw, 5.4rem); }
     }
@@ -577,6 +644,20 @@
             <span><b>12 metrics</b><br>pores, hydration, acne, wrinkles, texture, redness, tone, oil, UV stress, firmness, glow, pigmentation</span>
             <span><b>Offline-ready</b><br>single HTML file with local canvas analysis, export, and PWA install support</span>
             <span><b>Esthetician flow</b><br>consult-ready reports, client share tools, and routine next steps</span>
+          </div>
+          <div class="phase-track" aria-label="Three phase GlowAI workflow">
+            <div class="phase is-active" data-phase="capture">
+              <b>1. Capture</b>
+              <small>Upload, drag, or paste a clear selfie.</small>
+            </div>
+            <div class="phase" data-phase="analyze">
+              <b>2. Analyze</b>
+              <small>Canvas reads glow, tone, brightness, and contrast.</small>
+            </div>
+            <div class="phase" data-phase="export">
+              <b>3. Export</b>
+              <small>Download PDF/JSON or share the client report.</small>
+            </div>
           </div>
         </article>
 
@@ -622,6 +703,16 @@
           <p class="kicker">Routine steps</p>
           <h2>Personalized glow plan</h2>
           <ol class="routine" id="routineList"></ol>
+          <div class="insight-grid" aria-label="Product recommendations and simulation">
+            <div class="insight">
+              <b>Product match</b>
+              <span id="productRec">Run a scan to match ingredients and product categories.</span>
+            </div>
+            <div class="insight">
+              <b>30-day glow forecast</b>
+              <span id="forecastRec">Run a scan to preview routine impact and aging-support focus.</span>
+            </div>
+          </div>
           <div class="actions">
             <button class="secondary" id="copyBtn" type="button">Copy Report Text</button>
             <button class="secondary" id="shareBtn" type="button">Share Report</button>
@@ -671,6 +762,9 @@
       const metricsGrid = $("metricsGrid");
       const routineList = $("routineList");
       const reportSummary = $("reportSummary");
+      const productRec = $("productRec");
+      const forecastRec = $("forecastRec");
+      const phaseEls = [...document.querySelectorAll("[data-phase]")];
       let deferredPrompt = null;
       let currentReport = null;
 
@@ -687,6 +781,16 @@
         "PM double cleanse, barrier cream, and a low-frequency retinoid or peptide night.",
         "Book an esthetician consult for persistent acne, irritation, or pigment changes."
       ];
+
+      function setPhase(activePhase) {
+        const order = ["capture", "analyze", "export"];
+        const activeIndex = order.indexOf(activePhase);
+        phaseEls.forEach((el) => {
+          const index = order.indexOf(el.dataset.phase);
+          el.classList.toggle("is-active", index === activeIndex);
+          el.classList.toggle("is-done", activeIndex > index);
+        });
+      }
 
       function showToast(message) {
         toast.textContent = message;
@@ -721,6 +825,8 @@
           li.querySelector("span").textContent = step;
           routineList.appendChild(li);
         });
+        productRec.textContent = report.productRecommendation;
+        forecastRec.textContent = report.forecast;
       }
 
       function defaultReport() {
@@ -730,6 +836,8 @@
           summary: "Demo baseline: balanced glow, mild texture focus, and hydration-forward routine recommended.",
           metrics: baseMetrics.map(([name, score]) => ({ name, score })),
           routine: routines,
+          productRecommendation: "SPF 50 mineral sunscreen, gentle gel cleanser, vitamin C serum, peptide moisturizer, and a barrier repair cream.",
+          forecast: "With steady SPF and hydration, expect brighter glow in 7 days, smoother texture by day 14, and stronger barrier support by day 30.",
           disclaimer: "Cosmetic wellness guidance only. Not a medical diagnosis."
         };
       }
@@ -777,12 +885,20 @@
         };
         const metrics = baseMetrics.map(([name]) => ({ name, score: scores[name] }));
         const low = metrics.slice().sort((a, b) => a.score - b.score).slice(0, 3).map((m) => m.name.toLowerCase());
+        const productRecommendation = low.includes("hydration")
+          ? "Prioritize hyaluronic acid, ceramide moisturizer, and SPF 50. Keep exfoliation light until hydration improves."
+          : low.includes("pigmentation") || low.includes("uv stress")
+            ? "Pair vitamin C or niacinamide with strict SPF 50 and a gentle night repair cream."
+            : "Use a gentle cleanser, niacinamide serum, peptide moisturizer, and sunscreen. Add exfoliation only 1-2 nights weekly.";
+        const forecast = "Aging-support simulation: consistent SPF and night repair may lift glow by " + Math.max(4, Math.round((10 - metrics.find((m) => m.name === "Glow").score) * 2)) + "% in 30 days while reducing visible texture focus.";
         return {
           generatedAt: new Date().toISOString(),
           mode: "canvas-mock-analysis",
           summary: "GlowAI scan complete: focus on " + low.join(", ") + " while maintaining SPF, hydration, and barrier support.",
           metrics,
           routine: routines,
+          productRecommendation,
+          forecast,
           signals: {
             averageRgb: { r: Math.round(r), g: Math.round(g), b: Math.round(b) },
             brightness: Math.round(bright),
@@ -829,6 +945,7 @@
         }
         const img = new Image();
         img.onload = () => {
+          setPhase("analyze");
           loader.classList.add("is-active");
           loader.setAttribute("aria-hidden", "false");
           setStatus("Selfie loaded. Running local mock AI analysis...");
@@ -846,6 +963,7 @@
             renderReport(report);
             loader.classList.remove("is-active");
             loader.setAttribute("aria-hidden", "true");
+            setPhase("export");
             setStatus("Analysis ready. Export or share the report below.");
             showToast("GlowAI report ready");
             URL.revokeObjectURL(img.src);
@@ -857,6 +975,7 @@
 
       function runDemo() {
         const w = canvas.width, h = canvas.height;
+        setPhase("analyze");
         ctx.clearRect(0, 0, w, h);
         const bg = ctx.createLinearGradient(0, 0, w, h);
         bg.addColorStop(0, "#341040");
@@ -874,6 +993,7 @@
         drawGlowOverlay();
         dropzone.classList.add("has-image");
         renderReport(defaultReport());
+        setPhase("export");
         setStatus("Demo scan loaded. Upload a selfie for canvas-personalized mock metrics.");
         showToast("Demo report loaded");
       }
@@ -888,6 +1008,12 @@
           "",
           "Routine:",
           ...report.routine.map((step, i) => (i + 1) + ". " + step),
+          "",
+          "Product match:",
+          report.productRecommendation,
+          "",
+          "30-day glow forecast:",
+          report.forecast,
           "",
           report.disclaimer
         ];
@@ -910,7 +1036,7 @@
       }
 
       function downloadPdf() {
-        const lines = reportText().split("\n").slice(0, 46);
+        const lines = reportText().split("\n").slice(0, 54);
         const body = lines.map((line, i) => "BT /F1 12 Tf 54 " + (760 - i * 15) + " Td (" + escapePdf(line) + ") Tj ET").join("\n");
         const objects = [
           "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n",
@@ -930,11 +1056,21 @@
       }
 
       async function copyReport() {
+        const text = "Check my GlowAI skin report!\n\n" + reportText();
         try {
-          await navigator.clipboard.writeText("Check my GlowAI skin report!\n\n" + reportText());
+          await navigator.clipboard.writeText(text);
           showToast("Report copied to clipboard");
         } catch (err) {
-          showToast("Copy failed. Select and copy the report manually.");
+          const field = document.createElement("textarea");
+          field.value = text;
+          field.setAttribute("readonly", "");
+          field.style.position = "fixed";
+          field.style.left = "-999px";
+          document.body.appendChild(field);
+          field.select();
+          const copied = document.execCommand && document.execCommand("copy");
+          field.remove();
+          showToast(copied ? "Report copied to clipboard" : "Copy failed. Export JSON instead.");
         }
       }
 
@@ -996,7 +1132,7 @@
         }
       });
       document.addEventListener("paste", (event) => {
-        const file = [...event.clipboardData.files].find((item) => item.type.startsWith("image/"));
+        const file = [...(event.clipboardData?.files || [])].find((item) => item.type.startsWith("image/"));
         if (file) runFile(file);
       });
       fileInput.addEventListener("change", () => runFile(fileInput.files[0]));
@@ -1008,7 +1144,13 @@
         downloadBlob(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }), "glowai-skin-report.json");
       });
       $("pdfBtn").addEventListener("click", downloadPdf);
-      $("imageBtn").addEventListener("click", () => canvas.toBlob((blob) => blob && downloadBlob(blob, "glowai-scan-preview.png"), "image/png"));
+      $("imageBtn").addEventListener("click", () => {
+        if (!dropzone.classList.contains("has-image")) {
+          runDemo();
+          showToast("Demo preview created first");
+        }
+        canvas.toBlob((blob) => blob && downloadBlob(blob, "glowai-scan-preview.png"), "image/png");
+      });
       $("copyBtn").addEventListener("click", copyReport);
       $("shareBtn").addEventListener("click", shareReport);
       $("downloadHtmlBtn").addEventListener("click", () => {
@@ -1031,6 +1173,7 @@
       });
 
       renderReport(defaultReport());
+      setPhase("capture");
       setupManifestAndWorker();
       setupShareLinks();
     })();

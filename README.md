@@ -40,47 +40,95 @@ cd android
 The debug APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`.
 
 <!-- INSTALL-START -->
-## Install and run
+## Install
 
-These instructions install and run `GlowAI` from a fresh clone.
+Use these steps for a fresh local install.
 
-### Clone
+### Requirements
+
+- Node.js 22 or newer
+- npm
+- Python 3 for the local static server script
+- Android Studio, Android SDK, and a Java 21 JDK for APK builds
+
+The Android project pins Java 21 in `android/gradle.properties` for this workstation. If your JDK is somewhere else, update `org.gradle.java.home` before running Gradle.
+
+### Clone and install dependencies
+
 ```bash
 git clone https://github.com/808cadger/GlowAI.git
 cd GlowAI
-```
-
-### Web app
-```bash
 npm install
-npm run build
-npm run dev
-# http://localhost:3000
 ```
 
-### Android build/open
+### Build and check
+
 ```bash
-npm run cap:sync
+npm run build
+npm run check
+```
+
+`npm run check` builds the PWA, runs scan/routine benchmarks, runs agent routing evals, and runs backend routine tests.
+
+## Demo
+
+### Hosted demo
+
+- Client app: `https://808cadger.github.io/GlowAI/`
+- Owner/customizer app: `https://808cadger.github.io/GlowAI/owner.html`
+- Shareable standalone PWA: `https://808cadger.github.io/GlowAI/download.html`
+
+### Local web demo
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000` in Chrome, Edge, Brave, or Safari. Use `http://localhost:3000/owner.html` for owner mode.
+
+Demo flow:
+
+1. Start on the client app.
+2. Tap `Scan` on the intro screen, or use `Open app` and then `Scan now`.
+3. Allow camera access when prompted.
+4. If camera/model access is unavailable, GlowAI loads a guided demo scan so the routine, forecast, booking, commerce, and coach flows still work.
+5. Open `Agents` to demo booking, product cart, TikTok reel, and owner workflow actions from the latest scan.
+
+### Android APK demo
+
+```bash
 npm run cap:android
 ```
 
-### Python/API service
+The debug APK is written to:
+
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Install it on a connected Android device:
+
+```bash
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Backend API demo
+
 ```bash
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+uvicorn backend.main:app --reload --port 8000
 ```
 
-### Notes
-- Use Node.js 22 or newer for the current package set.
-- Android builds require Android Studio, a configured SDK, and Java 21 when Gradle is used.
-- Create any required `.env` file from `.env.example` before starting backend services.
+Create `backend/.env` from `backend/.env.example` before starting backend services.
 
 ### AI/API setup
-- If the app has AI features, add the required provider key in the app settings or local `.env` file.
-- Browser-only apps store user-provided API keys on the local device unless a backend endpoint is configured.
+
+- Add provider keys and backend tokens in `backend/.env` for API-backed scans/chat.
+- The browser demo can still run without backend credentials by using local guided scan and demo agent flows.
+- Browser-only API keys are stored on the local device unless a backend endpoint is configured.
 
 ### License
 - Apache License 2.0. See [`LICENSE`](./LICENSE).
@@ -133,7 +181,7 @@ Add screenshots here after capture:
 
 | Layer | Tech |
 |-------|------|
-| Frontend | HTML + Capacitor 6 (PWA + Android) |
+| Frontend | HTML + Capacitor 8 (PWA + Android) |
 | Build | esbuild, Gradle 8, AGP 8.13+ |
 | Backend | Python FastAPI + SQLAlchemy (async) + PostgreSQL |
 | AI | Claude Opus 4.6 (vision/scan), Claude Sonnet 4.6 (chatbot) |
@@ -162,7 +210,7 @@ glowai/
 │   └── Dockerfile
 ├── android/              # Capacitor Android project
 │   └── app/src/main/
-│       ├── java/com/glowai/app/MainActivity.java
+│       ├── java/com/cadger/glowai/MainActivity.java
 │       └── AndroidManifest.xml
 ├── capacitor.config.json
 └── package.json
@@ -203,7 +251,6 @@ uvicorn backend.main:app --reload --port 8000
 
 ```bash
 npm install
-npm install face-api.js@0.20.0 @tensorflow/tfjs
 npm run build                  # esbuild bundles scan.js
 npm run dev                    # localhost:3000
 npx cap sync android

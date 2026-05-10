@@ -1,5 +1,5 @@
 {
-  "appId": "com.glowai.app",
+  "appId": "com.cadger.glowai",
   "appName": "GlowAI",
   "webDir": "www",
   "bundledWebRuntime": false,

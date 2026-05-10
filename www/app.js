@@ -2,6 +2,9 @@
 
 window.glowaiApp = {
   currentPage: 'home',
+  pageHistory: [],
+  lastTopLevelPage: 'home',
+  suppressNextPop: false,
   currentService: 'brows',
   latestScan: null,
   liveScan: {
@@ -37,6 +40,7 @@ window.glowaiApp = {
     agentLog: 'glowai_agent_log',
     subscription: 'glowai_subscription',
     whiteLabel: 'glowai_white_label',
+    appType: 'glowai_app_type',
     habits: 'glowai_habit_preferences',
     greeting: 'glowai_greeting_spoken',
     intro: 'glowai_intro_seen',
@@ -87,6 +91,20 @@ window.glowaiApp = {
     downloadUrl: 'https://raw.githubusercontent.com/808cadger/GlowAI/main/www/download.html',
     text: 'Try GlowAI. Open the instant downloadable PWA, scan your face, and share a skin report in seconds.',
   },
+
+  pageLabels: {
+    home: 'Home',
+    scan: 'Face Scan',
+    services: 'Services',
+    detail: 'Service Detail',
+    booking: 'Booking',
+    journey: 'Journey',
+    agents: 'Agents',
+    concierge: 'Coach',
+    notes: 'Favorites',
+  },
+
+  topLevelPages: ['home', 'scan', 'services', 'journey', 'agents', 'concierge', 'notes'],
 
   focusContent: {
     brows: {
@@ -230,16 +248,36 @@ window.glowaiApp = {
   },
 
   isOwnerMode() {
+    return this.getAppType() === 'owner';
+  },
+
+  getAppType() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('owner') === '1' || params.get('mode') === 'owner' || window.location.pathname.endsWith('/owner.html');
+    const requested = params.get('mode') || params.get('app') || '';
+    const path = window.location.pathname;
+
+    if (params.get('owner') === '1') return 'owner';
+    if (requested === 'owner' || requested === 'client') return requested;
+    if (path.endsWith('/owner.html')) return 'owner';
+    if (path.endsWith('/client.html')) return 'client';
+
+    const stored = localStorage.getItem(this.storageKeys.appType);
+    return stored === 'owner' ? 'owner' : 'client';
   },
 
   init() {
     this.ensureSeedData();
     this.seedLocalApiKey();
-    document.body.classList.toggle('owner-version', this.isOwnerMode());
+    const appType = this.getAppType();
+    localStorage.setItem(this.storageKeys.appType, appType);
+    document.body.dataset.appType = appType;
+    document.body.classList.toggle('owner-version', appType === 'owner');
+    document.body.classList.toggle('client-version', appType === 'client');
+    document.body.classList.toggle('mobile-scan-entry', this.shouldUseSelfieEntry());
     this.applyWhiteLabelWorkspace(this.isOwnerMode() ? this.getStored(this.storageKeys.whiteLabel, {}) : {});
+    this.configureAppTypeUI();
     this.bindMenu();
+    this.bindAppTypeSwitcher();
     this.bindPageButtons();
     this.bindFocusTabs();
     this.bindServiceCards();
@@ -252,7 +290,9 @@ window.glowaiApp = {
     this.bindAgentOps();
     this.bindTryOn();
     this.bindAvatarSkills();
-    this.bindAvatarIntro();
+    if (!this.isOwnerMode()) {
+      this.bindAvatarIntro();
+    }
     this.registerServiceWorker();
     if (window.GLOWAI_ENABLE_PUSH === true) {
       this.registerPushNotifications();
@@ -264,16 +304,26 @@ window.glowaiApp = {
     this.renderScanSummary();
     this.renderForecast();
     this.renderAgentOps();
-    this.showPage('home');
-    if (!this.startAvatarIntro()) {
+    this.bindBackNavigation();
+    this.showPage(this.getPageFromHash() || this.getInitialPage(), { replace: true, source: 'init' });
+    if (!this.isOwnerMode() && !this.startAvatarIntro()) {
       window.setTimeout(() => this.greetUserOnce({ forceSpeech: true }), 450);
     }
+  },
+
+  shouldUseSelfieEntry() {
+    return !this.isOwnerMode() && window.matchMedia?.('(max-width: 640px)').matches;
+  },
+
+  getInitialPage() {
+    if (this.isOwnerMode()) return 'agents';
+    return this.shouldUseSelfieEntry() ? 'scan' : 'home';
   },
 
   ensureSeedData() {
     if (!localStorage.getItem(this.storageKeys.chat)) {
       const seeded = [
-        { role: 'assistant', text: "Welcome to GlowAI. Scan your face to get instant skin insights, appointment options, and product suggestions that keep your routine in rhythm." },
+        { role: 'assistant', text: "Welcome to GlowAI. Scan your face to get instant skincare insights, AM/PM routine direction, and product suggestions that keep your barrier, hydration, and SPF rhythm clear." },
       ];
       localStorage.setItem(this.storageKeys.chat, JSON.stringify(seeded));
     }
@@ -392,6 +442,23 @@ window.glowaiApp = {
 
   async registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
+    if (window.Capacitor?.isNativePlatform?.()) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+        if (window.caches?.keys) {
+          const cacheNames = await window.caches.keys();
+          await Promise.all(cacheNames.map((cacheName) => window.caches.delete(cacheName)));
+        }
+        this.logAgentAction('pwa', 'Native cache cleared', {
+          clearedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        this.logAgentAction('pwa', 'Native cache clear failed', { error: error.message });
+      }
+      return;
+    }
+
     try {
       const registration = await navigator.serviceWorker.register('./sw.js', { type: 'module' });
       this.logAgentAction('pwa', 'Offline scan cache ready', {
@@ -482,6 +549,59 @@ ${extraContext}`.trim();
     backdrop?.addEventListener('click', () => this.setMenuOpen(false));
   },
 
+  bindAppTypeSwitcher() {
+    document.querySelectorAll('[data-app-type]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const appType = button.getAttribute('data-app-type') === 'owner' ? 'owner' : 'client';
+        this.setAppType(appType);
+      });
+    });
+  },
+
+  setAppType(appType) {
+    localStorage.setItem(this.storageKeys.appType, appType);
+    const params = new URLSearchParams(window.location.search);
+    params.set('mode', appType);
+    params.delete('owner');
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+  },
+
+  configureAppTypeUI() {
+    const ownerMode = this.isOwnerMode();
+    const brand = document.getElementById('appBrandName');
+    const headline = document.getElementById('appBrandHeadline');
+    const agentsKicker = document.getElementById('agentsKicker');
+    const agentsTitle = document.getElementById('agentsTitle');
+    const agentsCopy = document.getElementById('agentsCopy');
+
+    document.querySelectorAll('[data-app-type]').forEach((button) => {
+      button.classList.toggle('is-active', button.getAttribute('data-app-type') === (ownerMode ? 'owner' : 'client'));
+    });
+
+    document.querySelectorAll('[data-owner-label][data-client-label]').forEach((node) => {
+      node.textContent = ownerMode ? node.getAttribute('data-owner-label') : node.getAttribute('data-client-label');
+    });
+
+    if (ownerMode) {
+      if (brand) brand.textContent = 'GlowAI Owner';
+      if (headline) headline.textContent = 'Studio controls, clients, and agents.';
+      if (agentsKicker) agentsKicker.textContent = 'Owner app';
+      if (agentsTitle) agentsTitle.textContent = 'Run the studio side of GlowAI.';
+      if (agentsCopy) {
+        agentsCopy.textContent = 'Configure booking, commerce, white-label branding, and agent workflows. The client app stays focused on scanning, coaching, favorites, and booking.';
+      }
+      return;
+    }
+
+    if (brand) brand.textContent = 'GlowAI Client';
+    if (headline) headline.textContent = 'Skin clarity, guided.';
+    if (agentsKicker) agentsKicker.textContent = 'Client actions';
+    if (agentsTitle) agentsTitle.textContent = 'Turn your scan into the next step.';
+    if (agentsCopy) {
+      agentsCopy.textContent = 'Use GlowAI to prepare booking, product, and routine actions from your latest skin read. Owner-only studio setup stays out of the client app.';
+    }
+  },
+
   bindPageButtons() {
     document.querySelectorAll('[data-nav-target]').forEach((button) => {
       button.addEventListener('click', () => {
@@ -494,6 +614,25 @@ ${extraContext}`.trim();
         this.showPage(button.getAttribute('data-page'));
       });
     });
+  },
+
+  bindBackNavigation() {
+    const backButton = document.getElementById('appBackButton');
+    backButton?.addEventListener('click', () => this.goBack());
+
+    window.addEventListener('popstate', (event) => {
+      if (document.body.classList.contains('is-guided-scanning')) {
+        this.cancelCameraScan('Camera closed from browser Back. Start again when you are ready.');
+        return;
+      }
+      const page = event.state?.page || this.getPageFromHash() || this.getInitialPage();
+      this.showPage(page, { replace: true, skipHistory: true, source: 'browser' });
+    });
+  },
+
+  getPageFromHash() {
+    const page = (window.location.hash || '').replace(/^#/, '').trim();
+    return this.pageLabels[page] ? page : '';
   },
 
   bindFocusTabs() {
@@ -810,7 +949,7 @@ ${extraContext}`.trim();
           `Progress forecast: ${latest?.forecast?.[2]?.score || '86'}% glow score by day 30`,
           'After frame with studio CTA and product cart code GLOWAI30',
         ],
-        captions: ['AI skin scan', 'coastal humidity routine', '30-day glow forecast', 'Book + shop from scan'],
+        captions: ['AI skin scan', 'coastal humidity routine', '30-day skin forecast', 'Build routine from scan'],
       },
     };
   },
@@ -1173,7 +1312,7 @@ ${extraContext}`.trim();
     const metrics = latest?.metrics || { hydration: '70%', clarity: '72%', texture: '74%', oil: '58%' };
 
     if (/(scan|camera|analyz)/.test(text)) {
-      return 'I can start a face scan from the Scan tab. Use soft front light, keep your face centered, and I will turn the photo into hydration, clarity, texture, oil, tone, routine, and booking recommendations.';
+      return 'I can start a face scan from the Scan tab. Use soft front light, keep your face centered, and I will turn the photo into hydration, clarity, texture, oil, tone, AM/PM routine steps, and ingredient direction.';
     }
 
     if (/(acne|breakout|pimple|red|irritat)/.test(text)) {
@@ -1340,7 +1479,7 @@ ${extraContext}`.trim();
   },
 
   greetUserOnce({ forceSpeech = false } = {}) {
-    const greeting = 'Welcome to GlowAI. Scan your face to get instant skin insights, appointment options, and product suggestions that keep your routine in rhythm.';
+    const greeting = 'Welcome to GlowAI. Scan your face to get instant skincare insights, AM/PM routine direction, and product suggestions that keep your barrier, hydration, and SPF rhythm clear.';
     const alreadySpoken = localStorage.getItem(this.storageKeys.greeting) === 'true';
     if (!alreadySpoken) {
       const messages = this.getStored(this.storageKeys.chat);
@@ -1408,19 +1547,46 @@ Skin support:
 
   bindScan() {
     document.getElementById('homeStartScan')?.addEventListener('click', () => {
-      this.speak('Welcome to GlowAI. Scan your face to get instant skin insights, appointment options, and product suggestions that keep your routine in rhythm.', { force: true });
-      this.showPage('scan');
-      this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
-      window.scanModule?.startScan?.();
+      this.speak('Welcome to GlowAI. Scan your face to get instant skincare insights, AM/PM routine direction, and product suggestions that keep your barrier, hydration, and SPF rhythm clear.', { force: true });
+      this.beginScanFlow();
     });
 
     document.getElementById('scanLaunch')?.addEventListener('click', () => {
-      this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
-      window.scanModule?.startScan?.();
+      this.beginScanFlow();
     });
 
     document.getElementById('liveScanStart')?.addEventListener('click', () => this.startLiveSkinScan());
-    document.getElementById('liveScanStop')?.addEventListener('click', () => this.finishLiveSkinScan());
+    document.getElementById('liveScanStop')?.addEventListener('click', () => {
+      if (document.body.classList.contains('is-guided-scanning')) {
+        this.cancelCameraScan();
+        return;
+      }
+      this.finishLiveSkinScan();
+    });
+  },
+
+  beginScanFlow() {
+    this.showPage('scan');
+    this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
+    const startScan = window.scanModule?.startScan;
+    if (typeof startScan !== 'function') {
+      this.handleScanError('The camera module did not finish loading.');
+      return;
+    }
+    startScan();
+  },
+
+  cancelCameraScan(message = 'Camera closed. Start again when you are ready.') {
+    window.scanModule?.cancelActiveScan?.(message);
+    this.liveScan.active = false;
+    const startBtn = document.getElementById('liveScanStart');
+    const stopBtn = document.getElementById('liveScanStop');
+    startBtn?.classList.remove('hidden');
+    stopBtn?.classList.add('hidden');
+    if (stopBtn) stopBtn.textContent = 'Finish';
+    document.body.classList.remove('is-guided-scanning');
+    this.setScanStatus('Idle', message);
+    this.showPage('scan', { replace: true, skipHistory: true, source: 'camera-cancel' });
   },
 
   async startLiveSkinScan() {
@@ -1430,14 +1596,18 @@ Skin support:
     const stopBtn = document.getElementById('liveScanStop');
     if (!video || !canvas) return;
 
-    this.liveScan = { active: true, samples: [], lastFrame: '' };
+    this.liveScan = { active: true, samples: [], lastFrame: '', rejectedFrames: 0 };
     startBtn?.classList.add('hidden');
     stopBtn?.classList.remove('hidden');
     this.showPage('scan');
     this.setScanStatus('Live scanning', 'Keep your face in the oval while GlowAI samples texture, tone, oil, and humidity fit.');
 
     try {
-      await window.scanModule?.startLiveSkinScan?.({
+      const startLiveSkinScan = window.scanModule?.startLiveSkinScan;
+      if (typeof startLiveSkinScan !== 'function') {
+        throw new Error('The live scan module did not finish loading.');
+      }
+      await startLiveSkinScan({
         video,
         canvas,
         onSample: (sample) => this.handleLiveScanSample(sample),
@@ -1455,25 +1625,53 @@ Skin support:
     if (!this.liveScan.active) return;
 
     if (!sample.faceQuality?.available) {
+      if (this.captureGuidedLiveSample(sample, 'Face check loading', 'GlowAI is still loading the face check, so this frame will be kept as a guided fallback if needed.')) return;
       this.setScanStatus('Face check loading', 'GlowAI needs the face check before it can sample. Keep your face close inside the oval.');
       return;
     }
 
     if (!sample.faceQuality?.detected) {
+      if (this.captureGuidedLiveSample(sample, 'Find face', 'GlowAI could not verify a face clearly, so this frame will be kept as a guided fallback if needed.')) return;
       this.setScanStatus('Find face', 'Center your face in the oval before GlowAI starts sampling.');
       return;
     }
 
     if (!sample.faceQuality?.closeEnough) {
+      if (this.captureGuidedLiveSample(sample, 'Move closer', 'GlowAI kept this frame as a guided fallback. Move closer next time for stronger confidence.')) return;
       this.setScanStatus('Move closer', 'Bring your face closer until it fills the oval. GlowAI will start sampling when the picture is clear enough.');
       return;
     }
 
     if (!sample.faceQuality?.centered) {
+      if (this.captureGuidedLiveSample(sample, 'Center face', 'GlowAI kept this frame as a guided fallback. Center your face next time for stronger confidence.')) return;
       this.setScanStatus('Center face', 'Keep your face centered inside the oval. GlowAI will start sampling when it is lined up.');
       return;
     }
 
+    this.liveScan.rejectedFrames = 0;
+    this.recordLiveScanSample(sample);
+  },
+
+  captureGuidedLiveSample(sample, title, message) {
+    if (!sample?.dataUrl || !sample?.skinSignals) return false;
+    this.liveScan.rejectedFrames = (this.liveScan.rejectedFrames || 0) + 1;
+    if (this.liveScan.rejectedFrames < 3) return false;
+
+    const guidedSample = {
+      ...sample,
+      faceQuality: {
+        ...(sample.faceQuality || {}),
+        confidence: sample.faceQuality?.confidence || 'Guided',
+        safetyNote: 'Guided',
+      },
+    };
+    this.recordLiveScanSample(guidedSample);
+    if (!this.liveScan.active) return true;
+    this.setScanStatus(title, message);
+    return true;
+  },
+
+  recordLiveScanSample(sample) {
     this.liveScan.samples.push(sample);
     this.liveScan.lastFrame = sample.dataUrl;
     if (this.liveScan.samples.length > 12) this.liveScan.samples.shift();
@@ -1497,6 +1695,7 @@ Skin support:
     if (this.liveScan.samples.length >= 6) {
       const badge = document.getElementById('scanResultBadge');
       if (badge) badge.textContent = 'Live ready';
+      this.finishLiveSkinScan();
     }
   },
 
@@ -1504,6 +1703,7 @@ Skin support:
     const startBtn = document.getElementById('liveScanStart');
     const stopBtn = document.getElementById('liveScanStop');
     window.scanModule?.stopCameraStream?.();
+    document.body.classList.remove('is-guided-scanning');
     startBtn?.classList.remove('hidden');
     stopBtn?.classList.add('hidden');
 
@@ -1541,9 +1741,19 @@ Skin support:
     trigger?.setAttribute('aria-expanded', String(open));
   },
 
-  showPage(pageId) {
+  showPage(pageId, options = {}) {
     if (!pageId) return;
+    if (!this.pageLabels[pageId]) pageId = this.getInitialPage();
+    const previousPage = this.currentPage;
+    const changedPage = previousPage !== pageId;
+
+    if (changedPage && !options.skipHistory && !options.replace && previousPage) {
+      this.pageHistory.push(previousPage);
+      this.pageHistory = this.pageHistory.slice(-20);
+    }
+
     this.currentPage = pageId;
+    if (this.topLevelPages.includes(pageId)) this.lastTopLevelPage = pageId;
 
     document.querySelectorAll('[data-page-panel]').forEach((panel) => {
       panel.classList.toggle('is-active', panel.getAttribute('data-page-panel') === pageId);
@@ -1561,8 +1771,8 @@ Skin support:
     const activeButton = document.querySelector(`[data-page="${pageId}"]`);
     const pills = document.querySelectorAll('.page-pill');
 
-    if (triggerLabel && activeButton) {
-      triggerLabel.textContent = activeButton.textContent.trim();
+    if (triggerLabel) {
+      triggerLabel.textContent = activeButton?.textContent.trim() || this.pageLabels[pageId] || 'Home';
     }
 
     pills.forEach((pill) => {
@@ -1581,7 +1791,53 @@ Skin support:
       this.renderForecast();
     }
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.updateBackButton();
+    this.syncRouteState(pageId, options);
+
+    if (changedPage || options.source === 'init') {
+      window.scrollTo({ top: 0, behavior: options.source === 'browser' ? 'auto' : 'smooth' });
+    }
+  },
+
+  syncRouteState(pageId, options = {}) {
+    if (!window.history?.pushState) return;
+    const url = new URL(window.location.href);
+    url.hash = pageId;
+    const state = { page: pageId };
+
+    if (options.replace || options.source === 'browser') {
+      window.history.replaceState(state, '', url);
+      return;
+    }
+
+    window.history.pushState(state, '', url);
+  },
+
+  updateBackButton() {
+    const button = document.getElementById('appBackButton');
+    if (!button) return;
+    const fallbackPage = this.getBackFallbackPage();
+    const cameraActive = document.body.classList.contains('is-guided-scanning');
+    const hasHistory = cameraActive || this.pageHistory.length > 0 || this.currentPage !== fallbackPage;
+    button.classList.toggle('is-disabled', !hasHistory);
+    button.disabled = !hasHistory;
+    button.setAttribute('aria-label', cameraActive ? 'Exit camera' : hasHistory ? `Go back from ${this.pageLabels[this.currentPage] || 'current page'}` : 'Already at the start');
+  },
+
+  getBackFallbackPage() {
+    if (this.isOwnerMode()) return 'agents';
+    return this.shouldUseSelfieEntry() ? 'scan' : 'home';
+  },
+
+  goBack() {
+    if (document.body.classList.contains('is-guided-scanning')) {
+      this.cancelCameraScan('Camera closed from Back. Start again when you are ready.');
+      return;
+    }
+    const fallbackPage = this.getBackFallbackPage();
+    const destination = this.pageHistory.pop() || (this.currentPage === fallbackPage ? '' : fallbackPage);
+    if (!destination) return;
+    this.showPage(destination, { replace: true, skipHistory: true, source: 'back-button' });
   },
 
   renderFocus(key) {
@@ -1841,7 +2097,31 @@ Skin support:
     });
   },
 
+  showScanPreview(dataUrl) {
+    const preview = document.getElementById('scanPreview');
+    const previewImage = document.getElementById('scanPreviewImage');
+    const badge = document.getElementById('scanResultBadge');
+    if (!preview || !previewImage || !dataUrl) return;
+
+    preview.classList.remove('hidden', 'is-error');
+    preview.classList.add('is-loading');
+    if (badge) badge.textContent = 'Captured';
+
+    previewImage.onload = () => {
+      preview.classList.remove('is-loading', 'is-error');
+      preview.classList.add('has-image');
+    };
+    previewImage.onerror = () => {
+      preview.classList.remove('is-loading');
+      preview.classList.add('is-error');
+      this.setScanStatus('Preview unavailable', 'The selfie was captured, but Android WebView could not display the preview. GlowAI will still return the scan result.');
+    };
+    previewImage.src = '';
+    previewImage.src = dataUrl;
+  },
+
   handleScanCapture(dataUrl, faceQuality = {}, skinSignals = null) {
+    this.showScanPreview(dataUrl);
     const analysis = this.generateFaceAnalysis(faceQuality, skinSignals);
     const scanRecord = {
       id: Date.now().toString(36),
@@ -1875,19 +2155,19 @@ Skin support:
     const confidenceCopy = faceQuality?.available && faceQuality?.confidence
       ? ` Face check ${faceQuality.confidence}%.`
       : '';
-    this.setScanStatus('Result ready', `GlowAI found a ${analysis.title.toLowerCase()} pattern and mapped your next step.${confidenceCopy}`);
+    this.setScanStatus('Skin read ready', `GlowAI found a ${analysis.title.toLowerCase()} pattern and mapped your AM/PM skincare steps.${confidenceCopy}`);
     this.renderScanSummary();
     this.renderScanHistory();
     this.renderForecast();
-    this.pushAssistantMessage(`Face scan complete. I’d start with ${analysis.studioLane.toLowerCase()} based on what GlowAI picked up.`);
+    this.pushAssistantMessage(`Skin scan complete. I’d focus on ${analysis.studioLane.toLowerCase()} based on hydration, texture, oil, tone, and clarity signals.`);
   },
 
   handleScanError(message) {
     const summary = document.getElementById('scanResultSummary');
     const title = document.getElementById('scanResultTitle');
     const badge = document.getElementById('scanResultBadge');
-    const copy = `${message} I loaded a guided demo scan so the consultation, routine, booking, cart, and reel flows still work.`;
-    if (title) title.textContent = 'Guided demo scan loaded';
+    const copy = `${message} I loaded a guided skincare scan so the routine, ingredient guidance, and progress forecast still work.`;
+    if (title) title.textContent = 'Guided skincare scan loaded';
     if (summary) summary.textContent = copy;
     if (badge) badge.textContent = 'Demo';
     this.setScanStatus('Guided scan', copy);
@@ -1906,49 +2186,49 @@ Skin support:
     this.renderScanSummary();
     this.renderScanHistory();
     this.renderForecast();
-    this.pushAssistantMessage('I loaded a guided demo scan. You can still show the customer the full result, routine, booking, cart, and agent workflow.');
+    this.pushAssistantMessage('I loaded a guided skincare scan. You can still review skin signals, AM/PM routine steps, ingredient direction, and the 30-day skin forecast.');
   },
 
   generateFaceAnalysis(faceQuality = {}, skinSignals = null) {
     const profiles = [
       {
         title: 'Balanced skin with slight dehydration',
-        summary: 'Your skin looks generally balanced, with mild dehydration around the cheeks and a good base for soft polish or prep-first services.',
-        tags: ['Hydration', 'Soft texture', 'Prep ready'],
-        steps: ['Start with hydration and barrier support before finish-heavy services', 'Use a gentle humectant serum before moisturizer and SPF', 'Keep exfoliation minimal if the event is close'],
-        studioLane: 'Skin Prep',
+        summary: 'Your skin reads generally balanced, with mild dehydration around the cheeks and a clear need for steady barrier support.',
+        tags: ['Hydration', 'Barrier', 'Balanced'],
+        steps: ['Start with a humectant serum under moisturizer', 'Use SPF every morning and reapply during direct sun', 'Keep exfoliation low until hydration feels stable'],
+        studioLane: 'hydration and barrier support',
         serviceKey: 'skin',
         metrics: { balance: '82%', hydration: '68%', clarity: '79%', texture: '76%', tone: '81%', oil: '72%' },
         routine: { morning: 'Gentle cleanse, hyaluronic serum, moisturizer, SPF 30+', night: 'Cleanse, ceramide cream, no exfoliation tonight' },
         confidence: '84%',
         safetyNote: 'Routine',
-        handoffs: ['Coach builds a barrier-support routine', 'Progress tracker saves this as the baseline', 'Scheduler suggests prep before finish'],
+        handoffs: ['Skin coach builds a barrier-support routine', 'Progress tracker saves this as the baseline', 'Forecast watches hydration and texture changes'],
       },
       {
         title: 'Brightness loss with texture focus',
-        summary: 'GlowAI picked up mild texture and uneven brightness, which makes skin prep the clearest first move before the full studio flow.',
-        tags: ['Texture', 'Brightness', 'Calm prep'],
-        steps: ['Prioritize barrier-friendly brightening before finish-heavy services', 'Use niacinamide or azelaic acid on non-exfoliation nights', 'Save finish and hair after the prep window'],
-        studioLane: 'Skin Prep',
+        summary: 'GlowAI picked up mild texture and uneven brightness, so the routine should focus on calm brightening and low-irritation smoothing.',
+        tags: ['Texture', 'Brightness', 'Calm care'],
+        steps: ['Use niacinamide or azelaic acid on non-exfoliation nights', 'Add gentle chemical exfoliation only 1-2 nights weekly', 'Pair brightening with moisturizer so the barrier does not get stripped'],
+        studioLane: 'texture and brightness care',
         serviceKey: 'skin',
         metrics: { balance: '74%', hydration: '63%', clarity: '66%', texture: '61%', tone: '65%', oil: '70%' },
         routine: { morning: 'Cleanse, niacinamide, moisturizer, SPF 50', night: 'Cleanse, barrier cream, pause harsh scrubs' },
         confidence: '76%',
-        safetyNote: 'Prep first',
-        handoffs: ['Coach avoids aggressive exfoliation', 'Progress tracker watches tone and texture', 'Scheduler puts skin prep before event services'],
+        safetyNote: 'Calm care',
+        handoffs: ['Skin coach avoids aggressive exfoliation', 'Progress tracker watches tone and texture', 'Forecast checks whether brightness improves without irritation'],
       },
       {
-        title: 'Strong frame for brows and polished finish',
-        summary: 'Your features would respond well to clean brow framing and a polished finish, with skin prep as support rather than the headline.',
-        tags: ['Brows', 'Framing', 'Finish ready'],
-        steps: ['Start with brow shaping or cleanup first', 'Use light prep and avoid overloading the skin right before finish', 'Keep SPF and moisturizer steady so finish sits evenly'],
-        studioLane: 'Eyebrow Studio',
-        serviceKey: 'brows',
-        metrics: { balance: '88%', hydration: '72%', clarity: '84%', texture: '80%', tone: '83%', oil: '77%' },
-        routine: { morning: 'Cleanse, lightweight moisturizer, SPF 30+', night: 'Cleanse, calming serum, moisturizer' },
-        confidence: '89%',
-        safetyNote: 'Routine',
-        handoffs: ['Coach keeps care simple before finish', 'Progress tracker monitors hydration', 'Scheduler pairs brows before makeup'],
+        title: 'Oil-shine pattern with stable clarity',
+        summary: 'Your scan reads clear overall, with oil-shine showing up as the main skincare focus. The goal is lighter layers, not stripping.',
+        tags: ['Oil balance', 'Clarity', 'Light layers'],
+        steps: ['Use a gentle gel cleanser instead of harsh stripping cleansers', 'Choose gel moisturizer or light lotion in the morning', 'Use blotting or SPF reapplication rather than heavy powder layers'],
+        studioLane: 'oil balance and light hydration',
+        serviceKey: 'skin',
+        metrics: { balance: '78%', hydration: '72%', clarity: '84%', texture: '80%', tone: '83%', oil: '86%' },
+        routine: { morning: 'Gel cleanse, lightweight moisturizer, SPF 30+', night: 'Cleanse, niacinamide serum, light moisturizer' },
+        confidence: '82%',
+        safetyNote: 'Oil balance',
+        handoffs: ['Skin coach adjusts cleanser and moisturizer weight', 'Progress tracker monitors shine and hydration together', 'Forecast checks whether oil balance improves without dryness'],
       },
     ];
 
@@ -1989,14 +2269,18 @@ Skin support:
         hydration < 66 ? 'Add a humectant serum under moisturizer morning and night.' : 'Keep hydration steady and do not overload layers.',
         texture < 68 ? 'Use gentle chemical exfoliation only 1-2 nights weekly, never on irritated days.' : 'Maintain texture with a low-friction cleanse and consistent SPF.',
       ];
-      selected.studioLane = 'Skin Prep';
+      selected.studioLane = hydration < 64
+        ? 'hydration and barrier support'
+        : humidityStress > 62
+          ? 'oil balance and lighter AM layers'
+          : 'maintenance skincare routine';
       selected.serviceKey = 'skin';
       selected.safetyNote = humidityStress > 65 ? 'Humidity adjust' : 'Routine';
       selected.forecast = this.generateGlowForecast(selected.metrics, skinSignals);
       selected.handoffs = [
         `coastal humidity load: ${humidityStress}%`,
         skinSignals.segmentation === 'selfie' ? `selfie segmentation coverage: ${skinSignals.segmentationCoverage || '-'}%` : 'full-frame scan fallback used',
-        'Coach can adjust AM routine for sweat, SPF reapplication, and lighter layers',
+        'Skin coach can adjust AM routine for sweat, SPF reapplication, and lighter layers',
         'Progress tracker projects 7, 14, and 30 day changes',
       ];
     }
@@ -2005,7 +2289,7 @@ Skin support:
       qualityTags.push('Face detected');
       if (faceQuality.centered === false) qualityTags.push('Recenter next scan');
       if (faceQuality.closeEnough === false) qualityTags.push('Move closer');
-      selected.confidence = faceQuality.confidence ? `${faceQuality.confidence}%` : selected.confidence;
+      selected.confidence = Number.isFinite(Number(faceQuality.confidence)) ? `${faceQuality.confidence}%` : selected.confidence;
       selected.handoffs = [
         `Face detector confidence: ${selected.confidence}`,
         ...(selected.handoffs || []),
@@ -2062,7 +2346,7 @@ Skin support:
     return [
       { day: 7, label: 'Barrier steadier', score: Math.min(96, Math.round((hydration + 5 + clarity) / 2)), action: 'Keep SPF, gel moisturizer, and evening barrier support consistent.' },
       { day: 14, label: 'Texture smoother', score: Math.min(96, texture + Math.round(lift * 0.72)), action: 'Add gentle exfoliation only if redness stays calm.' },
-      { day: 30, label: 'Glow forecast', score: Math.min(98, Math.round((hydration + clarity + texture) / 3) + lift), action: humidityStress > 62 ? 'Expect best results with lighter AM layers and midday SPF/blot routine.' : 'Expect best results by staying consistent with hydration and SPF.' },
+      { day: 30, label: 'Skin forecast', score: Math.min(98, Math.round((hydration + clarity + texture) / 3) + lift), action: humidityStress > 62 ? 'Expect best results with lighter AM layers and midday SPF/blot routine.' : 'Expect best results by staying consistent with hydration and SPF.' },
     ];
   },
 
@@ -2089,7 +2373,7 @@ Skin support:
 
     if (!latest) {
       if (title) title.textContent = 'No scan yet';
-      if (summary) summary.textContent = 'Start a face scan to see your current skin snapshot, focus areas, and a suggested care lane.';
+      if (summary) summary.textContent = 'Start a face scan to see hydration, texture, oil, tone, clarity, and barrier-support steps.';
       if (badge) badge.textContent = 'Waiting';
       if (preview) preview.classList.add('hidden');
       if (previewImage) previewImage.removeAttribute('src');
@@ -2101,7 +2385,7 @@ Skin support:
       if (qualityConfidence) qualityConfidence.textContent = '-';
       if (qualitySafety) qualitySafety.textContent = 'Guide';
       if (handoffs) handoffs.innerHTML = '';
-      this.setScanStatus('Idle', 'Take a scan and GlowAI will surface a skin snapshot, recommended focus, and the care step that should come next.');
+      this.setScanStatus('Idle', 'Take a scan and GlowAI will surface skin signals, routine priorities, and AM/PM care steps.');
       this.renderScanHistory();
       this.renderForecast();
       return;
@@ -2112,7 +2396,10 @@ Skin support:
     if (badge) badge.textContent = 'Ready';
     if (heroTitle) heroTitle.textContent = latest.title;
     if (heroCopy) heroCopy.textContent = latest.summary;
-    if (studioCTA) studioCTA.textContent = `Open ${latest.studioLane}`;
+    if (studioCTA) {
+      studioCTA.textContent = 'Open skin coach';
+      studioCTA.setAttribute('data-nav-target', 'concierge');
+    }
     if (metricBalance) metricBalance.textContent = latest.metrics?.balance || '-';
     if (metricHydration) metricHydration.textContent = latest.metrics?.hydration || '-';
     if (metricClarity) metricClarity.textContent = latest.metrics?.clarity || '-';
@@ -2121,7 +2408,7 @@ Skin support:
     if (qualityConfidence) qualityConfidence.textContent = latest.confidence || 'Guided';
     if (qualitySafety) qualitySafety.textContent = latest.safetyNote || 'Guide';
     if (handoffs) {
-      const items = latest.handoffs || ['Coach builds the routine', 'Stylist aligns the service lane', 'Scheduler keeps timing clear'];
+      const items = latest.handoffs || ['Skin coach builds the routine', 'Progress tracker saves the baseline', 'Forecast watches hydration and texture'];
       handoffs.innerHTML = items.map((item) => `<div class="agent-handoff">${item}</div>`).join('');
     }
 
@@ -2194,7 +2481,7 @@ Skin support:
     }
 
     const forecast = latest.forecast || this.generateGlowForecast(latest.metrics || {});
-    if (title) title.textContent = '30-day routine projection from your latest scan.';
+    if (title) title.textContent = '30-day skincare projection from your latest skin scan.';
     if (badge) badge.textContent = latest.safetyNote || 'Routine';
     grid.innerHTML = forecast.map((item) => `
       <article class="forecast-card">
@@ -2217,12 +2504,33 @@ Skin support:
 
   bindAvatarIntro() {
     const intro = document.getElementById('glowIntro');
-    intro?.addEventListener('click', () => this.startAvatarListening({ fromGesture: true, interruptIntro: true }));
+    const scan = document.getElementById('glowIntroScan');
+    const open = document.getElementById('glowIntroOpen');
+    intro?.addEventListener('click', () => {
+      if (this.shouldUseSelfieEntry()) {
+        this.startAvatarSelfieFlow({ fromGesture: true });
+        return;
+      }
+      this.startAvatarListening({ fromGesture: true, interruptIntro: true });
+    });
     intro?.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
+        if (this.shouldUseSelfieEntry()) {
+          this.startAvatarSelfieFlow({ fromGesture: true });
+          return;
+        }
         this.startAvatarListening({ fromGesture: true, interruptIntro: true });
       }
+    });
+    scan?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      this.startAvatarSelfieFlow({ fromGesture: true });
+    });
+    open?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      this.finishAvatarIntro();
+      this.showPage(this.shouldUseSelfieEntry() ? 'scan' : 'home');
     });
   },
 
@@ -2242,6 +2550,10 @@ Skin support:
     this.avatarIntro.lines = lines;
     this.avatarIntro.lineIndex = 0;
     this.writeAvatarLine(lines[0]);
+    const listeningState = document.getElementById('glowListeningState');
+    if (listeningState && this.shouldUseSelfieEntry()) {
+      listeningState.textContent = 'Tap anywhere to open the selfie camera.';
+    }
 
     this.speak(lines[0], { force: true });
 
@@ -2255,7 +2567,10 @@ Skin support:
       });
     }
 
-    const selfieTimer = window.setTimeout(() => this.startAvatarSelfieFlow(), reducedMotion ? 900 : 9300);
+    const selfieDelay = this.shouldUseSelfieEntry()
+      ? (reducedMotion ? 900 : 4200)
+      : (reducedMotion ? 900 : 9300);
+    const selfieTimer = window.setTimeout(() => this.startAvatarSelfieFlow(), selfieDelay);
     this.avatarIntro.timers.push(selfieTimer);
     intro.focus({ preventScroll: true });
     return true;
@@ -2289,9 +2604,7 @@ Skin support:
 
     window.setTimeout(() => {
       this.finishAvatarIntro();
-      this.showPage('scan');
-      this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
-      window.scanModule?.startScan?.();
+      this.beginScanFlow();
     }, 1100);
   },
 

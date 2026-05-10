@@ -6,7 +6,7 @@
 
 - Keep native changes minimal and compatible with Capacitor.
 - Confirm manifest, permissions, package name, and Gradle changes with an APK build when touched.
-- Do not change app identity from `com.glowai.app` without explicit approval.
+- Do not change app identity from `com.cadger.glowai` without explicit approval.
 
 ## Handoff
 

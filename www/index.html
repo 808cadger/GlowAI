@@ -63,18 +63,31 @@
         <p class="glow-guide-line" id="glowGuideLine" aria-live="polite">I am getting the room ready.</p>
         <p class="glow-listening-state" id="glowListeningState" aria-live="polite">Listening for your voice...</p>
         <p class="glow-heard-line hidden" id="glowHeardLine"></p>
+        <div class="glow-intro-actions" aria-label="GlowAI start actions">
+          <button class="glow-intro-action primary" id="glowIntroScan" type="button">Scan</button>
+          <button class="glow-intro-action" id="glowIntroOpen" type="button">Open app</button>
+        </div>
       </article>
     </div>
   </section>
 
   <main class="app-shell">
     <header class="app-header">
+      <button class="back-button" id="appBackButton" type="button" aria-label="Go back">
+        <span class="back-button-icon" aria-hidden="true">‹</span>
+        <span class="back-button-label">Back</span>
+      </button>
+
       <div class="header-brand">
         <p class="eyebrow" id="appBrandName">GlowAI</p>
         <h1 class="app-title" id="appBrandHeadline">Skin clarity, guided.</h1>
       </div>
 
       <div class="header-actions">
+        <div class="app-type-switcher" aria-label="App type">
+          <button class="app-type-option is-active" type="button" data-app-type="client">Client</button>
+          <button class="app-type-option" type="button" data-app-type="owner">Owner</button>
+        </div>
         <button class="menu-trigger" id="menuTrigger" type="button" aria-expanded="false" aria-controls="pageMenu">
           <span class="menu-trigger-label" id="menuTriggerLabel">Home</span>
           <span class="menu-trigger-icon">▾</span>
@@ -88,7 +101,7 @@
         <button class="menu-item" type="button" data-page="scan" role="menuitem">Face Scan</button>
         <button class="menu-item is-active" type="button" data-page="home" role="menuitem">Home</button>
         <button class="menu-item" type="button" data-page="services" role="menuitem">Services</button>
-        <button class="menu-item" type="button" data-page="agents" role="menuitem">Agents</button>
+        <button class="menu-item" type="button" data-page="agents" role="menuitem" data-owner-label="Owner" data-client-label="Agents">Agents</button>
         <button class="menu-item" type="button" data-page="journey" role="menuitem">Journey</button>
         <button class="menu-item" type="button" data-page="concierge" role="menuitem">Concierge</button>
         <button class="menu-item" type="button" data-page="notes" role="menuitem">Favorites</button>
@@ -208,9 +221,9 @@
 
     <section class="page" id="page-scan" data-page-panel="scan">
       <section class="page-lead">
-        <p class="section-kicker">Skin scan</p>
-        <h2>Start with what your skin is doing today.</h2>
-        <p class="section-copy">Open the camera for a still or live read. GlowAI turns the result into scores, focus areas, routine steps, and a practical next action.</p>
+        <p class="section-kicker">Skincare scan</p>
+        <h2>Read hydration, texture, oil, tone, and barrier signals.</h2>
+        <p class="section-copy">Put your face inside the ring and move close enough for a clean read. GlowAI turns skin signals into AM/PM care, ingredient direction, and progress tracking.</p>
       </section>
 
       <section class="detail-hero booking-layout">
@@ -219,8 +232,8 @@
             <span class="scan-launch-ring"></span>
             <span class="scan-launch-ring scan-launch-ring-two"></span>
             <span class="scan-launch-icon">◉</span>
-            <span class="scan-launch-title">Start still scan</span>
-            <span class="scan-launch-sub">Front camera, skin scores, instant routine direction.</span>
+            <span class="scan-launch-title">Start skincare scan</span>
+            <span class="scan-launch-sub">Face ring, live skin signals, routine direction.</span>
           </button>
 
           <section class="live-scan-panel" id="liveScanPanel" aria-label="Real-time skin scanner">
@@ -252,7 +265,7 @@
               <span class="scan-status-pill" id="scanStatusPill">Idle</span>
             </div>
           <h3 id="scanStatusTitle">Ready for a fresh skin read.</h3>
-            <p id="scanStatusCopy">Take a scan and GlowAI will surface a skin snapshot, recommended focus, and the care step that should come next.</p>
+            <p id="scanStatusCopy">Take a scan and GlowAI will surface hydration, texture, oil balance, tone, clarity, and barrier-support steps.</p>
           </article>
 
           <div class="scan-preview hidden" id="scanPreview">
@@ -262,11 +275,11 @@
 
         <article class="detail-side scan-result-card">
           <div class="scan-result-topline">
-            <p class="card-label">Latest result</p>
+            <p class="card-label">Skin read</p>
             <span class="scan-result-badge" id="scanResultBadge">Waiting</span>
           </div>
           <h3 id="scanResultTitle">No scan yet</h3>
-          <p id="scanResultSummary">Start a scan to see your current skin snapshot, focus areas, and suggested care lane.</p>
+          <p id="scanResultSummary">Start a scan to see your current skin snapshot, focus areas, and suggested skincare routine.</p>
           <div class="detail-tags" id="scanResultTags">
             <span class="detail-tag">Hydration</span>
             <span class="detail-tag">Texture</span>
@@ -274,7 +287,7 @@
           </div>
           <div class="scan-metrics" id="scanMetrics">
             <article class="scan-metric">
-              <p class="card-label">Balance</p>
+              <p class="card-label">Skin balance</p>
               <strong id="scanMetricBalance">-</strong>
             </article>
             <article class="scan-metric">
@@ -302,25 +315,25 @@
               <strong id="scanQualityConfidence">-</strong>
             </article>
             <article class="quality-item">
-              <p class="card-label">Safety note</p>
+              <p class="card-label">Care note</p>
               <strong id="scanQualitySafety">Guide</strong>
             </article>
           </div>
           <div class="agent-handoff-list" id="scanAgentHandoffs"></div>
           <ul class="detail-list" id="scanResultList">
             <li>Use the front camera in even light</li>
-            <li>Keep your full face in frame</li>
-            <li>GlowAI will suggest what to do next</li>
+            <li>Move close until your face fills the ring</li>
+            <li>GlowAI will build AM/PM skincare steps</li>
           </ul>
-          <button class="secondary-btn secondary-btn-full" id="scanStudioCTA" type="button" data-nav-target="services">View matched services</button>
+          <button class="secondary-btn secondary-btn-full" id="scanStudioCTA" type="button" data-nav-target="concierge">Open skin coach</button>
         </article>
       </section>
 
       <section class="scan-history-block">
         <div class="scan-result-topline">
           <div>
-            <p class="card-label">Recent scans</p>
-            <h3 class="scan-history-title">Your latest reads stay close.</h3>
+            <p class="card-label">Skin history</p>
+            <h3 class="scan-history-title">Your latest skincare reads stay close.</h3>
           </div>
         </div>
         <div class="saved-list" id="scanHistoryList">
@@ -332,10 +345,10 @@
         </div>
       </section>
 
-      <section class="forecast-panel" aria-label="30-day glow forecast">
+      <section class="forecast-panel" aria-label="30-day skin forecast">
         <div class="scan-result-topline">
           <div>
-            <p class="card-label">30-day glow forecast</p>
+            <p class="card-label">30-day skin forecast</p>
             <h3 class="scan-history-title" id="forecastTitle">Forecast starts after your first scan.</h3>
           </div>
           <span class="scan-result-badge" id="forecastBadge">Predictive</span>
@@ -359,6 +372,11 @@
 
       <div class="focus-switcher" role="tablist" aria-label="Beauty focus switcher">
         <button class="focus-tab is-active" id="focus-brows" type="button" data-focus="brows">Eyebrows</button>
+        <button class="focus-tab" id="focus-skin" type="button" data-focus="skin">Skin</button>
+        <button class="focus-tab" id="focus-makeup" type="button" data-focus="makeup">Makeup</button>
+        <button class="focus-tab" id="focus-nails" type="button" data-focus="nails">Nails</button>
+        <button class="focus-tab" id="focus-hair" type="button" data-focus="hair">Hair</button>
+        <button class="focus-tab" id="focus-tryon" type="button" data-focus="tryon">Style</button>
       </div>
 
       <article class="focus-card">
@@ -391,6 +409,36 @@
           <h3>Brow design studio</h3>
           <p>Shape mapping, tint guidance, and cleanup timing built around face framing.</p>
           <span class="service-price">Open studio</span>
+        </article>
+        <article class="service-card accent-mint" data-service="skin" tabindex="0">
+          <p class="service-tag">Skin</p>
+          <h3>Skin read and routine</h3>
+          <p>Scan-led prep, product direction, and timing guidance for barrier support.</p>
+          <span class="service-price">Open routine</span>
+        </article>
+        <article class="service-card accent-pink" data-service="makeup" tabindex="0">
+          <p class="service-tag">Makeup</p>
+          <h3>Soft polish planner</h3>
+          <p>Compare finish directions and match the look to the current skin read.</p>
+          <span class="service-price">Plan finish</span>
+        </article>
+        <article class="service-card accent-gold" data-service="nails" tabindex="0">
+          <p class="service-tag">Nails</p>
+          <h3>Manicure mood board</h3>
+          <p>Preview color, length, and finish with a saved rebooking path.</p>
+          <span class="service-price">Try colors</span>
+        </article>
+        <article class="service-card accent-lilac" data-service="hair" tabindex="0">
+          <p class="service-tag">Hair</p>
+          <h3>Style and finish lounge</h3>
+          <p>Coordinate blowouts, curl sets, and finish work with the full plan.</p>
+          <span class="service-price">Book style</span>
+        </article>
+        <article class="service-card accent-rose" data-service="tryon" tabindex="0">
+          <p class="service-tag">Style</p>
+          <h3>Clothes and look try-on</h3>
+          <p>Pair outfit direction with makeup, hair, nails, and prep decisions.</p>
+          <span class="service-price">Save look</span>
         </article>
       </div>
     </section>
@@ -577,9 +625,24 @@
 
     <section class="page" id="page-agents" data-page-panel="agents">
       <section class="page-lead">
-        <p class="section-kicker">Operator mode</p>
-        <h2>Let GlowAI move the plan forward.</h2>
-        <p class="section-copy">Approve actions for booking, product commerce, social content, and studio deployment. Demo mode logs actions locally; production mode can point to calendar, Shopify, and media-generation endpoints.</p>
+        <p class="section-kicker" id="agentsKicker">Operator mode</p>
+        <h2 id="agentsTitle">Let GlowAI move the plan forward.</h2>
+        <p class="section-copy" id="agentsCopy">Approve actions for booking, product commerce, social content, and studio deployment. Demo mode logs actions locally; production mode can point to calendar, Shopify, and media-generation endpoints.</p>
+      </section>
+
+      <section class="owner-command-strip owner-only" aria-label="Owner workspace summary">
+        <article class="owner-command-card">
+          <span class="owner-command-value">2</span>
+          <span class="owner-command-label">App types</span>
+        </article>
+        <article class="owner-command-card">
+          <span class="owner-command-value">3</span>
+          <span class="owner-command-label">Agent actions</span>
+        </article>
+        <article class="owner-command-card">
+          <span class="owner-command-value">Live</span>
+          <span class="owner-command-label">Studio setup</span>
+        </article>
       </section>
 
       <section class="agent-dashboard">
@@ -632,7 +695,7 @@
           <button class="secondary-btn secondary-btn-full" id="saveAgentConfigBtn" type="button">Save integrations</button>
         </article>
 
-        <article class="agent-config">
+        <article class="agent-config owner-only">
           <p class="card-label">B2B white-label for studios</p>
           <p class="white-label-note">Replace every customer-facing corner: logo, headline, colors, services, and the main model photo.</p>
           <label class="field-group">
@@ -744,7 +807,7 @@
       </button>
       <button class="bottom-nav-item" type="button" data-page="agents">
         <span class="bottom-nav-icon">✧</span>
-        <span class="bottom-nav-label">Agents</span>
+        <span class="bottom-nav-label" data-owner-label="Owner" data-client-label="Agents">Agents</span>
       </button>
       <button class="bottom-nav-item" type="button" data-page="concierge">
         <span class="bottom-nav-icon">☼</span>

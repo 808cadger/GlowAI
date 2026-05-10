@@ -1,4 +1,4 @@
-package com.glowai.app;
+package com.cadger.glowai;
 
 import android.content.Intent;
 import android.media.AudioAttributes;

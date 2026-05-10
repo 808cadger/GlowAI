@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.glowai.app"
+    namespace "com.cadger.glowai"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.glowai.app"
+        applicationId "com.cadger.glowai"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

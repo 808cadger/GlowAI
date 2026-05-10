@@ -14,6 +14,9 @@ const FACE_MODEL_URLS = ['./models', 'https://justadudewhohacks.github.io/face-a
 const SELFIE_MODEL_URLS = ['./models', 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation'];
 const MIN_FACE_AREA_FOR_SCAN = 0.22;
 const MAX_FACE_CENTER_OFFSET = 0.16;
+const MODEL_LOAD_TIMEOUT_MS = 2800;
+const FRAME_ANALYSIS_TIMEOUT_MS = 1400;
+const TIMED_OUT = Symbol('timed-out');
 
 let faceModelPromise;
 let faceModelStatus = 'idle';
@@ -24,6 +27,17 @@ let liveScanState = {
   timer: null,
   processing: false,
 };
+let guidedScanCancelled = false;
+
+function withTimeout(promise, timeoutMs, fallbackValue = null) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((resolve) => {
+      timer = window.setTimeout(() => resolve(fallbackValue), timeoutMs);
+    }),
+  ]).finally(() => window.clearTimeout(timer));
+}
 
 function imageFromDataUrl(dataUrl) {
   return new Promise((resolve, reject) => {
@@ -42,10 +56,11 @@ async function loadFaceModels() {
     let lastError;
     for (const modelUrl of FACE_MODEL_URLS) {
       try {
-        await Promise.all([
+        const loaded = await withTimeout(Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl),
           faceapi.nets.faceLandmark68TinyNet.loadFromUri(modelUrl),
-        ]);
+        ]), MODEL_LOAD_TIMEOUT_MS, TIMED_OUT);
+        if (loaded === TIMED_OUT) throw new Error('Face model load timed out');
         faceModelStatus = 'ready';
         return { ready: true, modelUrl };
       } catch (error) {
@@ -74,7 +89,8 @@ async function loadSelfieSegmentation() {
           modelSelection: 1,
           selfieMode: true,
         });
-        await selfie.initialize();
+        const initialized = await withTimeout(selfie.initialize(), MODEL_LOAD_TIMEOUT_MS, TIMED_OUT);
+        if (initialized === TIMED_OUT) throw new Error('Selfie model load timed out');
         selfieModelStatus = 'ready';
         return { ready: true, modelUrl, selfie };
       } catch (error) {
@@ -202,6 +218,19 @@ function stopCameraStream() {
   }
 }
 
+function cancelActiveScan(reason = 'Scan canceled. Start again when you are ready.') {
+  guidedScanCancelled = true;
+  stopCameraStream();
+  document.body?.classList.remove('is-guided-scanning');
+  app()?.updateBackButton?.();
+  const startBtn = document.getElementById('liveScanStart');
+  const stopBtn = document.getElementById('liveScanStop');
+  startBtn?.classList.remove('hidden');
+  stopBtn?.classList.add('hidden');
+  if (stopBtn) stopBtn.textContent = 'Finish';
+  app()?.setScanStatus?.('Idle', reason);
+}
+
 function sampleCanvas(canvas) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const { width, height } = canvas;
@@ -237,6 +266,44 @@ function sampleCanvas(canvas) {
     tone: Math.max(46, Math.min(95, Math.round(86 - avgRedness * 0.22))),
     oil: Math.max(34, Math.min(92, Math.round(62 + shineRatio * 95))),
     redness: Math.max(0, Math.min(100, Math.round(avgRedness * 2.2))),
+  };
+}
+
+function buildGuidedFaceQuality(message = 'Guided skin read completed from the selfie frame.') {
+  return {
+    available: false,
+    detected: true,
+    centered: true,
+    closeEnough: true,
+    confidence: 'Guided',
+    safetyNote: 'Guided',
+    message,
+  };
+}
+
+function captureGuidedFrame(video, canvas) {
+  if (!video?.videoWidth || !video?.videoHeight || !canvas) return null;
+
+  const width = 360;
+  const height = Math.round(width * (video.videoHeight / video.videoWidth));
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(video, 0, 0, width, height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+  const skinSignals = {
+    ...sampleCanvas(canvas),
+    humidityStress: 52,
+    segmentation: 'guided-frame',
+  };
+
+  skinSignals.humidityStress = Math.max(0, Math.min(100, Math.round((skinSignals.oil * 0.58) + ((100 - skinSignals.hydration) * 0.42))));
+
+  return {
+    dataUrl,
+    skinSignals,
+    faceQuality: buildGuidedFaceQuality(),
+    createdAt: new Date().toISOString(),
   };
 }
 
@@ -354,8 +421,12 @@ async function analyzeVideoFrame(video, canvas) {
   const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
   const [baseSignals, faceQuality, selfieResults] = await Promise.all([
     Promise.resolve(sampleCanvas(canvas)),
-    analyzeFacePresence(dataUrl),
-    segmentSelfie(canvas).catch(() => null),
+    withTimeout(
+      analyzeFacePresence(dataUrl).catch(() => buildGuidedFaceQuality('Face guide was unavailable, so GlowAI used the centered selfie frame.')),
+      FRAME_ANALYSIS_TIMEOUT_MS,
+      buildGuidedFaceQuality('Face guide timed out, so GlowAI used the centered selfie frame.'),
+    ),
+    withTimeout(segmentSelfie(canvas).catch(() => null), FRAME_ANALYSIS_TIMEOUT_MS, null),
   ]);
   const segmentedSignals = selfieResults?.segmentationMask
     ? analyzeMetrics(selfieResults.segmentationMask, canvas)
@@ -529,7 +600,7 @@ async function captureStudioPhoto({ facing = 'rear' } = {}) {
         width: 1280,
         height: 1280,
         allowEditing: false,
-        resultType: CameraResultType.Uri,
+        resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
         saveToGallery: false,
         correctOrientation: true,
@@ -547,7 +618,7 @@ async function captureStudioPhoto({ facing = 'rear' } = {}) {
       } : null;
     }
 
-    const dataUrl = await normalizeCameraPhoto(photo);
+    const dataUrl = photo?.dataUrl || await normalizeCameraPhoto(photo);
     if (!dataUrl) return null;
     return {
       dataUrl,
@@ -588,8 +659,133 @@ function capturePhotoWebForFacing(facing = 'rear') {
   });
 }
 
-// ── Main: startScan() ─────────────────────────────────────────────────────────
-async function startScan() {
+function updateGuidedScanStage(sample, attempt = 1) {
+  const stage = document.getElementById('liveScanStage');
+  const hydration = document.getElementById('liveHydration');
+  const texture = document.getElementById('liveTexture');
+  const humidity = document.getElementById('liveHumidity');
+  const signals = sample?.skinSignals || {};
+  const faceQuality = sample?.faceQuality || {};
+
+  if (hydration) hydration.textContent = signals.hydration ? `${signals.hydration}%` : '-';
+  if (texture) texture.textContent = signals.texture ? `${signals.texture}%` : '-';
+  if (humidity) {
+    humidity.textContent = signals.humidityStress > 62
+      ? 'High'
+      : signals.humidityStress > 44
+        ? 'Moderate'
+        : signals.humidityStress ? 'Low' : '-';
+  }
+
+  let quality = 'searching';
+  let message = 'Put your face inside the ring';
+  if (!faceQuality.available) {
+    message = 'Loading face guide';
+  } else if (!faceQuality.detected) {
+    message = 'Find the ring';
+  } else if (!faceQuality.closeEnough) {
+    quality = 'move-closer';
+    message = 'Move closer';
+  } else if (!faceQuality.centered) {
+    quality = 'center';
+    message = 'Center your face';
+  } else {
+    quality = 'ready';
+    message = 'Hold still';
+  }
+
+  stage?.setAttribute('data-scan-quality', quality);
+  stage?.setAttribute('data-scan-message', message);
+  app()?.setScanStatus?.(
+    quality === 'ready' ? 'Reading skin' : message,
+    quality === 'ready'
+      ? `Good position. Reading hydration ${signals.hydration || '-'}%, texture ${signals.texture || '-'}%, and oil balance ${signals.oil || '-'}%.`
+      : `${message}. Keep your face close inside the oval so GlowAI can get a cleaner reading. Sample ${attempt}/12.`,
+  );
+}
+
+async function runGuidedCameraScan() {
+  const video = document.getElementById('liveScanVideo');
+  const canvas = document.getElementById('liveScanCanvas');
+  const stage = document.getElementById('liveScanStage');
+  const startBtn = document.getElementById('liveScanStart');
+  const stopBtn = document.getElementById('liveScanStop');
+  if (!video || !canvas || !navigator.mediaDevices?.getUserMedia) return false;
+
+  guidedScanCancelled = false;
+  app()?.showPage?.('scan');
+  app()?.setScanStatus?.('Opening guided camera', 'Put your face inside the ring. GlowAI will wait for a close, centered frame before reading your skin.');
+  document.body?.classList.add('is-guided-scanning');
+  app()?.updateBackButton?.();
+  stage?.setAttribute('data-scan-quality', 'searching');
+  stage?.setAttribute('data-scan-message', 'Put your face inside the ring');
+  startBtn?.classList.add('hidden');
+  stopBtn?.classList.remove('hidden');
+  if (stopBtn) stopBtn.textContent = 'Exit camera';
+  document.getElementById('liveScanPanel')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+
+  let bestSample = null;
+  let readyCount = 0;
+
+  try {
+    await startCameraStream(video, { facing: 'front' });
+    if (guidedScanCancelled) return true;
+    await withTimeout(Promise.allSettled([
+      loadFaceModels(),
+      loadSelfieSegmentation(),
+    ]), MODEL_LOAD_TIMEOUT_MS + 600, null);
+
+    for (let attempt = 1; attempt <= 6; attempt += 1) {
+      if (guidedScanCancelled) return true;
+      const sample = await withTimeout(analyzeVideoFrame(video, canvas), FRAME_ANALYSIS_TIMEOUT_MS, null)
+        || captureGuidedFrame(video, canvas);
+      if (guidedScanCancelled) return true;
+      if (!sample) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        continue;
+      }
+
+      bestSample = sample;
+      updateGuidedScanStage(sample, attempt);
+
+      const faceQuality = sample.faceQuality || {};
+      if ((!faceQuality.available || faceQuality.detected) && faceQuality.closeEnough !== false && faceQuality.centered !== false) {
+        readyCount += 1;
+        if (readyCount >= 2) break;
+      } else {
+        readyCount = 0;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 400));
+    }
+
+    if (guidedScanCancelled) return true;
+    bestSample ||= captureGuidedFrame(video, canvas);
+    if (!bestSample?.dataUrl) return false;
+    app()?.showScanPreview?.(bestSample.dataUrl);
+    app()?.handleScanCapture?.(bestSample.dataUrl, bestSample.faceQuality || {
+      available: false,
+      detected: false,
+      confidence: 'Guided',
+      safetyNote: 'Guided',
+    }, bestSample.skinSignals || null);
+    return true;
+  } catch (error) {
+    app()?.setScanStatus?.('Guided camera unavailable', 'Opening the fallback camera so GlowAI can still create a scan result.');
+    return false;
+  } finally {
+    stopCameraStream();
+    startBtn?.classList.remove('hidden');
+    stopBtn?.classList.add('hidden');
+    if (stopBtn) stopBtn.textContent = 'Finish';
+    stage?.removeAttribute('data-scan-quality');
+    stage?.removeAttribute('data-scan-message');
+    document.body?.classList.remove('is-guided-scanning');
+    app()?.updateBackButton?.();
+  }
+}
+
+async function runFallbackPhotoScan() {
   try {
     const permitted = await ensureCameraPermission();
     if (!permitted) return;
@@ -604,29 +800,54 @@ async function startScan() {
 
     app()?.setScanStatus?.('Finding face', 'Checking that your face is visible and centered before analysis.');
     const resizedDataUrl = await resizeDataUrl(capture.dataUrl);
-    const faceQuality = await analyzeFacePresence(resizedDataUrl);
+    app()?.showScanPreview?.(resizedDataUrl);
+    const faceQuality = await withTimeout(
+      analyzeFacePresence(resizedDataUrl).catch(() => buildGuidedFaceQuality('Face guide was unavailable, so GlowAI used the captured selfie.')),
+      FRAME_ANALYSIS_TIMEOUT_MS,
+      buildGuidedFaceQuality('Face guide timed out, so GlowAI used the captured selfie.'),
+    );
 
     if (!faceQuality.available) {
       app()?.setScanStatus?.('Face check loading', faceQuality.message);
-      app()?.pushAssistantMessage?.('GlowAI needs the face check before it can scan. Keep your face close inside the circle and try again.');
+      app()?.pushAssistantMessage?.('Face quality checks are still loading, so I will return a guided scan result from the captured photo and mark the confidence as guided.');
+      app()?.handleScanCapture?.(resizedDataUrl, {
+        ...faceQuality,
+        confidence: faceQuality.confidence || 'Guided',
+        safetyNote: 'Guided',
+      });
       return;
     }
 
     if (!faceQuality.detected) {
       app()?.setScanStatus?.('Find face', 'Put your face inside the circle before GlowAI scans.');
-      app()?.pushAssistantMessage?.('I could not see a face clearly. Move into the circle with even light and try again.');
+      app()?.pushAssistantMessage?.('I could not verify a face clearly, so I will return a guided result from this capture. Retake it in even light for stronger confidence.');
+      app()?.handleScanCapture?.(resizedDataUrl, {
+        ...faceQuality,
+        confidence: faceQuality.confidence || 'Guided',
+        safetyNote: 'Guided',
+      });
       return;
     }
 
     if (!faceQuality.closeEnough) {
       app()?.setScanStatus?.('Move closer', faceQuality.message);
-      app()?.pushAssistantMessage?.('Move closer to the camera so your face fills the circle. GlowAI will not scan until the picture is close enough to be clear.');
+      app()?.pushAssistantMessage?.('Your face was a little far from the camera, so this result is guided. Move closer next time for a cleaner read.');
+      app()?.handleScanCapture?.(resizedDataUrl, {
+        ...faceQuality,
+        confidence: faceQuality.confidence || 'Guided',
+        safetyNote: 'Guided',
+      });
       return;
     }
 
     if (!faceQuality.centered) {
       app()?.setScanStatus?.('Center face', faceQuality.message);
-      app()?.pushAssistantMessage?.('Keep your face centered inside the circle. GlowAI will not scan until the face is lined up.');
+      app()?.pushAssistantMessage?.('Your face was off-center, so this result is guided. Center your face next time for stronger confidence.');
+      app()?.handleScanCapture?.(resizedDataUrl, {
+        ...faceQuality,
+        confidence: faceQuality.confidence || 'Guided',
+        safetyNote: 'Guided',
+      });
       return;
     }
 
@@ -646,6 +867,17 @@ async function startScan() {
   }
 }
 
+// ── Main: startScan() ─────────────────────────────────────────────────────────
+async function startScan() {
+  const permitted = await ensureCameraPermission();
+  if (!permitted) return;
+
+  const guidedComplete = await runGuidedCameraScan();
+  if (guidedComplete) return;
+
+  await runFallbackPhotoScan();
+}
+
 window.scanModule = {
   startScan,
   captureStudioPhoto,
@@ -655,6 +887,7 @@ window.scanModule = {
   analyzeMetrics,
   startCameraStream,
   stopCameraStream,
+  cancelActiveScan,
   analyzeVideoFrame,
   startLiveSkinScan,
   getFaceModelStatus: () => faceModelStatus,

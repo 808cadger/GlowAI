@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">GlowAI</string>
     <string name="title_activity_main">GlowAI</string>
-    <string name="package_name">com.glowai.app</string>
-    <string name="custom_url_scheme">com.glowai.app</string>
+    <string name="package_name">com.cadger.glowai</string>
+    <string name="custom_url_scheme">com.cadger.glowai</string>
 </resources>

@@ -243,7 +243,6 @@ function cancelActiveScan(reason = 'Scan canceled. Start again when you are read
   startBtn?.classList.remove('hidden');
   captureBtn?.classList.add('hidden');
   if (captureBtn) {
-    captureBtn.onclick = null;
     captureBtn.disabled = false;
     captureBtn.textContent = 'Take selfie';
   }
@@ -791,6 +790,19 @@ async function runGuidedCameraScan() {
         || captureGuidedFrame(video, canvas);
   };
 
+  const captureFallbackSample = async () => {
+    const capture = await captureStudioPhoto({ facing: 'front' }).catch(() => null);
+    if (!capture?.dataUrl) return null;
+    const resizedDataUrl = await resizeDataUrl(capture.dataUrl).catch(() => capture.dataUrl);
+    const skinSignals = await analyzeStillImage(resizedDataUrl).catch(() => null);
+    return {
+      dataUrl: resizedDataUrl,
+      skinSignals,
+      faceQuality: buildGuidedFaceQuality('Manual selfie captured. GlowAI used local photo metrics for this skincare read.'),
+      createdAt: new Date().toISOString(),
+    };
+  };
+
   const takeSelfie = async () => {
     if (captureRequested || guidedScanCancelled) return;
     captureRequested = true;
@@ -801,6 +813,10 @@ async function runGuidedCameraScan() {
     app()?.setScanStatus?.('Capturing selfie', 'Hold steady. GlowAI is using this frame for your skin read.');
     selectedSample = await readFrame().catch(() => null) || latestSample;
     if (!selectedSample?.dataUrl) {
+      app()?.setScanStatus?.('Opening selfie camera', 'The live frame was not ready, so GlowAI is opening the manual selfie camera.');
+      selectedSample = await captureFallbackSample();
+    }
+    if (!selectedSample?.dataUrl) {
       captureRequested = false;
       if (captureBtn) {
         captureBtn.disabled = false;
@@ -808,6 +824,11 @@ async function runGuidedCameraScan() {
       }
       app()?.setScanStatus?.('Selfie not ready', 'Keep your face in the ring and tap Take selfie again.');
     }
+  };
+
+  const handleStageCaptureTap = (event) => {
+    if (event.target.closest?.('button')) return;
+    takeSelfie();
   };
 
   try {
@@ -824,9 +845,10 @@ async function runGuidedCameraScan() {
 
     if (captureBtn) {
       captureBtn.disabled = false;
-      captureBtn.onclick = takeSelfie;
+      captureBtn.addEventListener('click', takeSelfie);
     }
-    app()?.setScanStatus?.('Selfie camera ready', 'Put your face inside the ring, then tap Take selfie when you are ready.');
+    stage?.addEventListener('click', handleStageCaptureTap);
+    app()?.setScanStatus?.('Selfie camera ready', 'Put your face inside the ring, then tap Take selfie or tap the camera preview.');
 
     while (!selectedSample) {
       if (guidedScanCancelled) return true;
@@ -862,10 +884,11 @@ async function runGuidedCameraScan() {
     startBtn?.classList.remove('hidden');
     captureBtn?.classList.add('hidden');
     if (captureBtn) {
-      captureBtn.onclick = null;
+      captureBtn.removeEventListener('click', takeSelfie);
       captureBtn.disabled = false;
       captureBtn.textContent = 'Take selfie';
     }
+    stage?.removeEventListener('click', handleStageCaptureTap);
     stopBtn?.classList.add('hidden');
     if (stopBtn) stopBtn.textContent = 'Finish';
     stage?.removeAttribute('data-scan-quality');

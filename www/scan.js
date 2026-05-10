@@ -28,6 +28,7 @@ let liveScanState = {
   processing: false,
 };
 let guidedScanCancelled = false;
+let guidedNativeDock = null;
 
 function isNativePlatform() {
   return window.Capacitor?.isNativePlatform?.() ?? false;
@@ -234,6 +235,7 @@ function stopCameraStream() {
 function cancelActiveScan(reason = 'Scan canceled. Start again when you are ready.') {
   guidedScanCancelled = true;
   stopCameraStream();
+  removeGuidedNativeDock();
   document.body?.classList.remove('is-guided-scanning');
   document.getElementById('liveScanStage')?.classList.remove('has-captured-frame');
   app()?.updateBackButton?.();
@@ -249,6 +251,28 @@ function cancelActiveScan(reason = 'Scan canceled. Start again when you are read
   stopBtn?.classList.add('hidden');
   if (stopBtn) stopBtn.textContent = 'Finish';
   app()?.setScanStatus?.('Idle', reason);
+}
+
+function removeGuidedNativeDock() {
+  guidedNativeDock?.remove();
+  guidedNativeDock = null;
+}
+
+function createGuidedNativeDock({ onCapture, onCancel } = {}) {
+  removeGuidedNativeDock();
+  const dock = document.createElement('div');
+  dock.className = 'guided-native-dock';
+  dock.innerHTML = `
+    <button class="primary-btn guided-native-capture" type="button">Take selfie</button>
+    <button class="secondary-btn guided-native-cancel" type="button">Exit</button>
+  `;
+  const capture = dock.querySelector('.guided-native-capture');
+  const cancel = dock.querySelector('.guided-native-cancel');
+  capture?.addEventListener('click', onCapture);
+  cancel?.addEventListener('click', onCancel);
+  document.body.appendChild(dock);
+  guidedNativeDock = dock;
+  return { dock, capture, cancel };
 }
 
 function sampleCanvas(canvas) {
@@ -781,6 +805,7 @@ async function runGuidedCameraScan() {
   let attempt = 0;
   let captureRequested = false;
   let selectedSample = null;
+  let nativeDockControls = null;
 
   const readFrame = async () => {
     attempt += 1;
@@ -810,6 +835,10 @@ async function runGuidedCameraScan() {
       captureBtn.disabled = true;
       captureBtn.textContent = 'Capturing...';
     }
+    if (nativeDockControls?.capture) {
+      nativeDockControls.capture.disabled = true;
+      nativeDockControls.capture.textContent = 'Capturing...';
+    }
     app()?.setScanStatus?.('Capturing selfie', 'Hold steady. GlowAI is using this frame for your skin read.');
     selectedSample = await readFrame().catch(() => null) || latestSample;
     if (!selectedSample?.dataUrl) {
@@ -821,6 +850,10 @@ async function runGuidedCameraScan() {
       if (captureBtn) {
         captureBtn.disabled = false;
         captureBtn.textContent = 'Take selfie';
+      }
+      if (nativeDockControls?.capture) {
+        nativeDockControls.capture.disabled = false;
+        nativeDockControls.capture.textContent = 'Take selfie';
       }
       app()?.setScanStatus?.('Selfie not ready', 'Keep your face in the ring and tap Take selfie again.');
     }
@@ -847,8 +880,20 @@ async function runGuidedCameraScan() {
       captureBtn.disabled = false;
       captureBtn.addEventListener('click', takeSelfie);
     }
-    stage?.addEventListener('click', handleStageCaptureTap);
-    app()?.setScanStatus?.('Selfie camera ready', 'Put your face inside the ring, then tap Take selfie or tap the camera preview.');
+    if (native) {
+      nativeDockControls = createGuidedNativeDock({
+        onCapture: takeSelfie,
+        onCancel: () => cancelActiveScan('Camera closed. Start again when you are ready.'),
+      });
+    } else {
+      stage?.addEventListener('click', handleStageCaptureTap);
+    }
+    app()?.setScanStatus?.(
+      'Selfie camera ready',
+      native
+        ? 'Put your face inside the ring, then tap Take selfie.'
+        : 'Put your face inside the ring, then tap Take selfie or tap the camera preview.',
+    );
 
     while (!selectedSample) {
       if (guidedScanCancelled) return true;
@@ -888,6 +933,7 @@ async function runGuidedCameraScan() {
       captureBtn.disabled = false;
       captureBtn.textContent = 'Take selfie';
     }
+    removeGuidedNativeDock();
     stage?.removeEventListener('click', handleStageCaptureTap);
     stopBtn?.classList.add('hidden');
     if (stopBtn) stopBtn.textContent = 'Finish';

@@ -29,6 +29,10 @@ let liveScanState = {
 };
 let guidedScanCancelled = false;
 
+function isNativePlatform() {
+  return window.Capacitor?.isNativePlatform?.() ?? false;
+}
+
 function withTimeout(promise, timeoutMs, fallbackValue = null) {
   let timer;
   return Promise.race([
@@ -75,6 +79,14 @@ async function loadFaceModels() {
 }
 
 async function loadSelfieSegmentation() {
+  if (isNativePlatform()) {
+    selfieModelStatus = 'unavailable';
+    return {
+      ready: false,
+      error: new Error('Selfie segmentation is disabled in Android WebView scans.'),
+    };
+  }
+
   if (selfieModelPromise) return selfieModelPromise;
 
   selfieModelPromise = (async () => {
@@ -196,8 +208,9 @@ async function startCameraStream(video, { facing = 'front' } = {}) {
   const stream = await navigator.mediaDevices.getUserMedia({
     video: {
       facingMode: facing === 'front' ? 'user' : 'environment',
-      width: { ideal: 960 },
-      height: { ideal: 1280 },
+      width: { ideal: 640, max: 960 },
+      height: { ideal: 854, max: 1280 },
+      frameRate: { ideal: 15, max: 24 },
     },
     audio: false,
   });
@@ -279,6 +292,23 @@ function buildGuidedFaceQuality(message = 'Guided skin read completed from the s
     safetyNote: 'Guided',
     message,
   };
+}
+
+async function analyzeStillImage(dataUrl) {
+  const img = await imageFromDataUrl(dataUrl);
+  const width = 360;
+  const height = Math.max(1, Math.round(width * (img.height / img.width)));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, 0, width, height);
+  const skinSignals = {
+    ...sampleCanvas(canvas),
+    segmentation: 'captured-photo',
+  };
+
+  skinSignals.humidityStress = Math.max(0, Math.min(100, Math.round((skinSignals.oil * 0.58) + ((100 - skinSignals.hydration) * 0.42))));
+  return skinSignals;
 }
 
 function captureGuidedFrame(video, canvas) {
@@ -588,7 +618,7 @@ async function normalizeCameraPhoto(photo) {
 }
 
 async function captureStudioPhoto({ facing = 'rear' } = {}) {
-  const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
+  const isNative = isNativePlatform();
   if (isNative) {
     const permitted = await ensureCameraPermission();
     if (!permitted) return null;
@@ -801,6 +831,16 @@ async function runFallbackPhotoScan() {
     app()?.setScanStatus?.('Finding face', 'Checking that your face is visible and centered before analysis.');
     const resizedDataUrl = await resizeDataUrl(capture.dataUrl);
     app()?.showScanPreview?.(resizedDataUrl);
+    const stillSignals = await analyzeStillImage(resizedDataUrl).catch(() => null);
+
+    if (isNativePlatform()) {
+      const faceQuality = buildGuidedFaceQuality('Android camera photo captured. GlowAI used local photo metrics for this skincare read.');
+      app()?.setScanStatus?.('Analyzing scan', 'Reading hydration, tone, texture, clarity, and routine fit from the captured photo.');
+      await new Promise(resolve => setTimeout(resolve, 450));
+      app()?.handleScanCapture?.(resizedDataUrl, faceQuality, stillSignals);
+      return;
+    }
+
     const faceQuality = await withTimeout(
       analyzeFacePresence(resizedDataUrl).catch(() => buildGuidedFaceQuality('Face guide was unavailable, so GlowAI used the captured selfie.')),
       FRAME_ANALYSIS_TIMEOUT_MS,
@@ -814,7 +854,7 @@ async function runFallbackPhotoScan() {
         ...faceQuality,
         confidence: faceQuality.confidence || 'Guided',
         safetyNote: 'Guided',
-      });
+      }, stillSignals);
       return;
     }
 
@@ -825,7 +865,7 @@ async function runFallbackPhotoScan() {
         ...faceQuality,
         confidence: faceQuality.confidence || 'Guided',
         safetyNote: 'Guided',
-      });
+      }, stillSignals);
       return;
     }
 
@@ -836,7 +876,7 @@ async function runFallbackPhotoScan() {
         ...faceQuality,
         confidence: faceQuality.confidence || 'Guided',
         safetyNote: 'Guided',
-      });
+      }, stillSignals);
       return;
     }
 
@@ -847,7 +887,7 @@ async function runFallbackPhotoScan() {
         ...faceQuality,
         confidence: faceQuality.confidence || 'Guided',
         safetyNote: 'Guided',
-      });
+      }, stillSignals);
       return;
     }
 
@@ -856,7 +896,7 @@ async function runFallbackPhotoScan() {
       : 'Reading hydration, tone, texture, clarity, and routine fit with the local guide.';
     app()?.setScanStatus?.('Analyzing scan', qualityHint);
     await new Promise(resolve => setTimeout(resolve, 700));
-    app()?.handleScanCapture?.(resizedDataUrl, faceQuality);
+    app()?.handleScanCapture?.(resizedDataUrl, faceQuality, stillSignals);
   } catch (err) {
     const msg = String(err?.message || err);
     if (msg.includes('cancel') || msg.includes('No image') || msg.includes('User cancelled')) {
@@ -871,6 +911,11 @@ async function runFallbackPhotoScan() {
 async function startScan() {
   const permitted = await ensureCameraPermission();
   if (!permitted) return;
+
+  if (isNativePlatform()) {
+    await runFallbackPhotoScan();
+    return;
+  }
 
   const guidedComplete = await runGuidedCameraScan();
   if (guidedComplete) return;

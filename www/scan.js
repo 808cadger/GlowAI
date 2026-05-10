@@ -1042,9 +1042,8 @@ async function startScan() {
   if (!permitted) return;
 
   if (isNativePlatform()) {
-    const guidedComplete = await runGuidedCameraScan();
-    if (guidedComplete) return;
-    app()?.setScanStatus?.('Selfie camera unavailable', 'Opening the system camera as a fallback. Switch to the front camera if your device does not honor the selfie request.');
+    app()?.showPage?.('scan');
+    app()?.setScanStatus?.('Opening selfie camera', 'Use the phone camera shutter, then confirm the selfie to see your GlowAI skin result.');
     await runFallbackPhotoScan();
     return;
   }

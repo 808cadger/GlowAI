@@ -2691,6 +2691,10 @@ p {
   pointer-events: none;
 }
 
+.live-scan-stage.has-captured-frame .live-scan-canvas {
+  opacity: 1;
+}
+
 .live-scan-guide {
   position: absolute;
   left: 17%;

@@ -235,6 +235,7 @@ function cancelActiveScan(reason = 'Scan canceled. Start again when you are read
   guidedScanCancelled = true;
   stopCameraStream();
   document.body?.classList.remove('is-guided-scanning');
+  document.getElementById('liveScanStage')?.classList.remove('has-captured-frame');
   app()?.updateBackButton?.();
   const startBtn = document.getElementById('liveScanStart');
   const stopBtn = document.getElementById('liveScanStop');
@@ -709,7 +710,10 @@ function updateGuidedScanStage(sample, attempt = 1) {
 
   let quality = 'searching';
   let message = 'Put your face inside the ring';
-  if (!faceQuality.available) {
+  if (!faceQuality.available && faceQuality.detected) {
+    quality = 'ready';
+    message = 'Hold still';
+  } else if (!faceQuality.available) {
     message = 'Loading face guide';
   } else if (!faceQuality.detected) {
     message = 'Find the ring';
@@ -741,12 +745,19 @@ async function runGuidedCameraScan() {
   const startBtn = document.getElementById('liveScanStart');
   const stopBtn = document.getElementById('liveScanStop');
   if (!video || !canvas || !navigator.mediaDevices?.getUserMedia) return false;
+  const native = isNativePlatform();
 
   guidedScanCancelled = false;
   app()?.showPage?.('scan');
-  app()?.setScanStatus?.('Opening guided camera', 'Put your face inside the ring. GlowAI will wait for a close, centered frame before reading your skin.');
+  app()?.setScanStatus?.(
+    'Opening selfie camera',
+    native
+      ? 'Put your face inside the ring. GlowAI will read a guided selfie frame without leaving the app.'
+      : 'Put your face inside the ring. GlowAI will wait for a close, centered frame before reading your skin.',
+  );
   document.body?.classList.add('is-guided-scanning');
   app()?.updateBackButton?.();
+  stage?.classList.remove('has-captured-frame');
   stage?.setAttribute('data-scan-quality', 'searching');
   stage?.setAttribute('data-scan-message', 'Put your face inside the ring');
   startBtn?.classList.add('hidden');
@@ -760,15 +771,21 @@ async function runGuidedCameraScan() {
   try {
     await startCameraStream(video, { facing: 'front' });
     if (guidedScanCancelled) return true;
-    await withTimeout(Promise.allSettled([
-      loadFaceModels(),
-      loadSelfieSegmentation(),
-    ]), MODEL_LOAD_TIMEOUT_MS + 600, null);
+    if (native) {
+      await new Promise(resolve => setTimeout(resolve, 650));
+    } else {
+      await withTimeout(Promise.allSettled([
+        loadFaceModels(),
+        loadSelfieSegmentation(),
+      ]), MODEL_LOAD_TIMEOUT_MS + 600, null);
+    }
 
     for (let attempt = 1; attempt <= 6; attempt += 1) {
       if (guidedScanCancelled) return true;
-      const sample = await withTimeout(analyzeVideoFrame(video, canvas), FRAME_ANALYSIS_TIMEOUT_MS, null)
-        || captureGuidedFrame(video, canvas);
+      const sample = native
+        ? captureGuidedFrame(video, canvas)
+        : await withTimeout(analyzeVideoFrame(video, canvas), FRAME_ANALYSIS_TIMEOUT_MS, null)
+          || captureGuidedFrame(video, canvas);
       if (guidedScanCancelled) return true;
       if (!sample) {
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -792,6 +809,7 @@ async function runGuidedCameraScan() {
     if (guidedScanCancelled) return true;
     bestSample ||= captureGuidedFrame(video, canvas);
     if (!bestSample?.dataUrl) return false;
+    stage?.classList.add('has-captured-frame');
     app()?.showScanPreview?.(bestSample.dataUrl);
     app()?.handleScanCapture?.(bestSample.dataUrl, bestSample.faceQuality || {
       available: false,
@@ -913,6 +931,9 @@ async function startScan() {
   if (!permitted) return;
 
   if (isNativePlatform()) {
+    const guidedComplete = await runGuidedCameraScan();
+    if (guidedComplete) return;
+    app()?.setScanStatus?.('Selfie camera unavailable', 'Opening the system camera as a fallback. Switch to the front camera if your device does not honor the selfie request.');
     await runFallbackPhotoScan();
     return;
   }

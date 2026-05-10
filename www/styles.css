@@ -1971,15 +1971,16 @@ p {
   --nav-padding: 0.42rem;
   --nav-gap: 0.28rem;
   position: fixed;
-  left: 50%;
+  left: max(0.75rem, calc((100vw - var(--bottom-nav-max-width)) / 2));
+  right: max(0.75rem, calc((100vw - var(--bottom-nav-max-width)) / 2));
   bottom: max(3.8rem, calc(env(safe-area-inset-bottom) + 3.2rem));
   z-index: 18;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--nav-gap);
-  width: min(calc(100% - var(--size-bottom-nav-gutter)), var(--bottom-nav-max-width));
+  width: auto;
   padding: var(--nav-padding);
-  transform: translateX(-50%);
+  transform: none;
   border: 1px solid var(--border-nav-glass);
   border-radius: var(--radius-pill);
   background: var(--surface-white-58);
@@ -2145,8 +2146,13 @@ p {
   }
 
   .bottom-nav {
-    width: calc(100% - 1rem);
+    left: 0.75rem;
+    right: auto;
+    width: calc((100vw - 1.5rem) / 0.82);
+    max-width: none;
     bottom: max(4.25rem, calc(env(safe-area-inset-bottom) + 3.7rem));
+    transform: scale(0.82);
+    transform-origin: bottom left;
   }
 
   .chat-form {
@@ -2343,9 +2349,13 @@ p {
     grid-template-columns: repeat(5, 1fr);
     --nav-padding: 0.22rem;
     --nav-gap: 0.1rem;
-    width: min(100%, calc(100vw - 2rem));
-    max-width: calc(100vw - 2rem);
+    left: 0.65rem;
+    right: auto;
+    width: calc((100vw - 1.3rem) / 0.82);
+    max-width: none;
     padding: var(--nav-padding);
+    transform: scale(0.82);
+    transform-origin: bottom left;
   }
 
   .bottom-nav-item {

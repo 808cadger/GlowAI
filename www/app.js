@@ -1580,8 +1580,10 @@ Skin support:
     window.scanModule?.cancelActiveScan?.(message);
     this.liveScan.active = false;
     const startBtn = document.getElementById('liveScanStart');
+    const captureBtn = document.getElementById('liveScanCapture');
     const stopBtn = document.getElementById('liveScanStop');
     startBtn?.classList.remove('hidden');
+    captureBtn?.classList.add('hidden');
     stopBtn?.classList.add('hidden');
     if (stopBtn) stopBtn.textContent = 'Finish';
     document.body.classList.remove('is-guided-scanning');
@@ -1593,11 +1595,13 @@ Skin support:
     const video = document.getElementById('liveScanVideo');
     const canvas = document.getElementById('liveScanCanvas');
     const startBtn = document.getElementById('liveScanStart');
+    const captureBtn = document.getElementById('liveScanCapture');
     const stopBtn = document.getElementById('liveScanStop');
     if (!video || !canvas) return;
 
     this.liveScan = { active: true, samples: [], lastFrame: '', rejectedFrames: 0 };
     startBtn?.classList.add('hidden');
+    captureBtn?.classList.add('hidden');
     stopBtn?.classList.remove('hidden');
     this.showPage('scan');
     this.setScanStatus('Live scanning', 'Keep your face in the oval while GlowAI samples texture, tone, oil, and humidity fit.');
@@ -1701,10 +1705,12 @@ Skin support:
 
   finishLiveSkinScan() {
     const startBtn = document.getElementById('liveScanStart');
+    const captureBtn = document.getElementById('liveScanCapture');
     const stopBtn = document.getElementById('liveScanStop');
     window.scanModule?.stopCameraStream?.();
     document.body.classList.remove('is-guided-scanning');
     startBtn?.classList.remove('hidden');
+    captureBtn?.classList.add('hidden');
     stopBtn?.classList.add('hidden');
 
     if (!this.liveScan.samples.length) {

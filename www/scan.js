@@ -238,8 +238,15 @@ function cancelActiveScan(reason = 'Scan canceled. Start again when you are read
   document.getElementById('liveScanStage')?.classList.remove('has-captured-frame');
   app()?.updateBackButton?.();
   const startBtn = document.getElementById('liveScanStart');
+  const captureBtn = document.getElementById('liveScanCapture');
   const stopBtn = document.getElementById('liveScanStop');
   startBtn?.classList.remove('hidden');
+  captureBtn?.classList.add('hidden');
+  if (captureBtn) {
+    captureBtn.onclick = null;
+    captureBtn.disabled = false;
+    captureBtn.textContent = 'Take selfie';
+  }
   stopBtn?.classList.add('hidden');
   if (stopBtn) stopBtn.textContent = 'Finish';
   app()?.setScanStatus?.('Idle', reason);
@@ -743,6 +750,7 @@ async function runGuidedCameraScan() {
   const canvas = document.getElementById('liveScanCanvas');
   const stage = document.getElementById('liveScanStage');
   const startBtn = document.getElementById('liveScanStart');
+  const captureBtn = document.getElementById('liveScanCapture');
   const stopBtn = document.getElementById('liveScanStop');
   if (!video || !canvas || !navigator.mediaDevices?.getUserMedia) return false;
   const native = isNativePlatform();
@@ -761,12 +769,46 @@ async function runGuidedCameraScan() {
   stage?.setAttribute('data-scan-quality', 'searching');
   stage?.setAttribute('data-scan-message', 'Put your face inside the ring');
   startBtn?.classList.add('hidden');
+  captureBtn?.classList.remove('hidden');
+  if (captureBtn) {
+    captureBtn.textContent = 'Take selfie';
+    captureBtn.disabled = true;
+  }
   stopBtn?.classList.remove('hidden');
   if (stopBtn) stopBtn.textContent = 'Exit camera';
   document.getElementById('liveScanPanel')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
 
-  let bestSample = null;
-  let readyCount = 0;
+  let latestSample = null;
+  let attempt = 0;
+  let captureRequested = false;
+  let selectedSample = null;
+
+  const readFrame = async () => {
+    attempt += 1;
+    return native
+      ? captureGuidedFrame(video, canvas)
+      : await withTimeout(analyzeVideoFrame(video, canvas), FRAME_ANALYSIS_TIMEOUT_MS, null)
+        || captureGuidedFrame(video, canvas);
+  };
+
+  const takeSelfie = async () => {
+    if (captureRequested || guidedScanCancelled) return;
+    captureRequested = true;
+    if (captureBtn) {
+      captureBtn.disabled = true;
+      captureBtn.textContent = 'Capturing...';
+    }
+    app()?.setScanStatus?.('Capturing selfie', 'Hold steady. GlowAI is using this frame for your skin read.');
+    selectedSample = await readFrame().catch(() => null) || latestSample;
+    if (!selectedSample?.dataUrl) {
+      captureRequested = false;
+      if (captureBtn) {
+        captureBtn.disabled = false;
+        captureBtn.textContent = 'Take selfie';
+      }
+      app()?.setScanStatus?.('Selfie not ready', 'Keep your face in the ring and tap Take selfie again.');
+    }
+  };
 
   try {
     await startCameraStream(video, { facing: 'front' });
@@ -780,43 +822,37 @@ async function runGuidedCameraScan() {
       ]), MODEL_LOAD_TIMEOUT_MS + 600, null);
     }
 
-    for (let attempt = 1; attempt <= 6; attempt += 1) {
+    if (captureBtn) {
+      captureBtn.disabled = false;
+      captureBtn.onclick = takeSelfie;
+    }
+    app()?.setScanStatus?.('Selfie camera ready', 'Put your face inside the ring, then tap Take selfie when you are ready.');
+
+    while (!selectedSample) {
       if (guidedScanCancelled) return true;
-      const sample = native
-        ? captureGuidedFrame(video, canvas)
-        : await withTimeout(analyzeVideoFrame(video, canvas), FRAME_ANALYSIS_TIMEOUT_MS, null)
-          || captureGuidedFrame(video, canvas);
+      const sample = await readFrame();
       if (guidedScanCancelled) return true;
       if (!sample) {
         await new Promise(resolve => setTimeout(resolve, 300));
         continue;
       }
 
-      bestSample = sample;
+      latestSample = sample;
       updateGuidedScanStage(sample, attempt);
-
-      const faceQuality = sample.faceQuality || {};
-      if ((!faceQuality.available || faceQuality.detected) && faceQuality.closeEnough !== false && faceQuality.centered !== false) {
-        readyCount += 1;
-        if (readyCount >= 2) break;
-      } else {
-        readyCount = 0;
-      }
 
       await new Promise(resolve => setTimeout(resolve, 400));
     }
 
     if (guidedScanCancelled) return true;
-    bestSample ||= captureGuidedFrame(video, canvas);
-    if (!bestSample?.dataUrl) return false;
+    if (!selectedSample?.dataUrl) return false;
     stage?.classList.add('has-captured-frame');
-    app()?.showScanPreview?.(bestSample.dataUrl);
-    app()?.handleScanCapture?.(bestSample.dataUrl, bestSample.faceQuality || {
+    app()?.showScanPreview?.(selectedSample.dataUrl);
+    app()?.handleScanCapture?.(selectedSample.dataUrl, selectedSample.faceQuality || {
       available: false,
       detected: false,
       confidence: 'Guided',
       safetyNote: 'Guided',
-    }, bestSample.skinSignals || null);
+    }, selectedSample.skinSignals || null);
     return true;
   } catch (error) {
     app()?.setScanStatus?.('Guided camera unavailable', 'Opening the fallback camera so GlowAI can still create a scan result.');
@@ -824,6 +860,12 @@ async function runGuidedCameraScan() {
   } finally {
     stopCameraStream();
     startBtn?.classList.remove('hidden');
+    captureBtn?.classList.add('hidden');
+    if (captureBtn) {
+      captureBtn.onclick = null;
+      captureBtn.disabled = false;
+      captureBtn.textContent = 'Take selfie';
+    }
     stopBtn?.classList.add('hidden');
     if (stopBtn) stopBtn.textContent = 'Finish';
     stage?.removeAttribute('data-scan-quality');

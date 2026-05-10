@@ -1968,8 +1968,8 @@ p {
 
 .bottom-nav {
   --active-index: 0;
-  --nav-padding: var(--space-sm);
-  --nav-gap: var(--space-xs);
+  --nav-padding: 0.42rem;
+  --nav-gap: 0.28rem;
   position: fixed;
   left: 50%;
   bottom: max(3.8rem, calc(env(safe-area-inset-bottom) + 3.2rem));
@@ -2008,18 +2008,20 @@ p {
 .bottom-nav-item {
   position: relative;
   z-index: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2xs);
-  min-height: var(--size-touch-min);
-  padding: var(--space-sm) var(--space-xs);
+  gap: 0.12rem;
+  min-height: 42px;
+  padding: 0.38rem 0.2rem;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--muted);
   font: inherit;
+  overflow: hidden;
   transition: background-color var(--duration-hover) var(--ease-standard), color var(--duration-hover) var(--ease-standard), transform var(--duration-hover) var(--ease-standard);
 }
 
@@ -2040,12 +2042,18 @@ p {
 .bottom-nav:has(.bottom-nav-item:nth-child(5).is-active) { --active-index: 4; }
 
 .bottom-nav-icon {
-  font-size: var(--text-xl);
+  font-size: clamp(0.92rem, 0.84rem + 0.35vw, 1.08rem);
+  line-height: 1;
 }
 
 .bottom-nav-label {
-  font-size: var(--text-xs);
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(0.58rem, 0.54rem + 0.22vw, 0.7rem);
   font-weight: 800;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .accent-coral { background: var(--gradient-card-rose); }
@@ -2332,12 +2340,26 @@ p {
   }
 
   .bottom-nav {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    padding: var(--space-xs);
+    grid-template-columns: repeat(5, 1fr);
+    --nav-padding: 0.22rem;
+    --nav-gap: 0.1rem;
+    width: min(100%, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+    padding: var(--nav-padding);
+  }
+
+  .bottom-nav-item {
+    box-sizing: border-box;
+    min-height: 34px;
+    padding: 0.24rem 0.04rem;
+  }
+
+  .bottom-nav-icon {
+    font-size: 0.76rem;
   }
 
   .bottom-nav-label {
-    font-size: var(--text-2xs);
+    font-size: 0.48rem;
   }
 
   .mobile-scan-entry.client-version #page-scan .page-lead {

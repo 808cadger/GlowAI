@@ -2518,19 +2518,6 @@ p {
   }
 
   .is-guided-scanning.mobile-scan-entry.client-version #page-scan .live-scan-toolbar {
-    position: fixed;
-    left: var(--space-sm);
-    right: var(--space-sm);
-    top: max(0.75rem, calc(env(safe-area-inset-top) + 0.45rem));
-    z-index: 6;
-    display: block;
-    padding: 0;
-    border-radius: 0;
-    background: transparent;
-    color: var(--color-white);
-  }
-
-  .is-guided-scanning.mobile-scan-entry.client-version #page-scan .live-scan-toolbar > div:first-child {
     display: none;
   }
 
@@ -2549,6 +2536,18 @@ p {
     background: rgba(16, 19, 25, 0.76);
     box-shadow: 0 18px 52px rgba(0, 0, 0, 0.28);
     backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  .is-guided-scanning.mobile-scan-entry.client-version #liveScanStart {
+    display: none !important;
+  }
+
+  .is-guided-scanning.mobile-scan-entry.client-version #liveScanCapture,
+  .is-guided-scanning.mobile-scan-entry.client-version #liveScanStop {
+    display: block !important;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
   }
 
   .is-guided-scanning.mobile-scan-entry.client-version #page-scan .live-scan-actions > * {
@@ -2699,6 +2698,46 @@ p {
 .live-scan-actions {
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.live-scan-stage .live-scan-actions {
+  position: absolute;
+  left: var(--space-md);
+  right: var(--space-md);
+  bottom: var(--space-md);
+  z-index: 5;
+}
+
+.is-guided-scanning #page-scan .live-scan-actions {
+  position: fixed !important;
+  left: 0.75rem !important;
+  right: 0.75rem !important;
+  bottom: max(1rem, calc(env(safe-area-inset-bottom) + 1rem)) !important;
+  z-index: 2147483647 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
+  gap: 0.5rem;
+  padding: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  background: rgba(16, 19, 25, 0.82);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+.is-guided-scanning #liveScanStart {
+  display: none !important;
+}
+
+.is-guided-scanning #liveScanCapture,
+.is-guided-scanning #liveScanStop {
+  display: block !important;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
 }
 
 .live-scan-toolbar h3 {

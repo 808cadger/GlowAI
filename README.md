@@ -1,10 +1,35 @@
 # GlowAI
 
+[![Release](https://img.shields.io/github/v/release/808cadger/GlowAI?include_prereleases&label=release)](https://github.com/808cadger/GlowAI/releases)
+[![Last commit](https://img.shields.io/github/last-commit/808cadger/GlowAI)](https://github.com/808cadger/GlowAI/commits)
+[![License](https://img.shields.io/github/license/808cadger/GlowAI)](https://github.com/808cadger/GlowAI/blob/HEAD/LICENSE)
+![Platforms](https://img.shields.io/badge/platform-Web%2FPWA%2C%20Android%2C%20iOS%2C%20API%20service-2563eb)
+
+AI skincare analysis, appointment flow, routine planning, and agentic beauty-commerce actions.
+
+## Project Snapshot
+
+| Area | Details |
+|------|---------|
+| Primary use case | AI skincare analysis, appointment flow, routine planning, and agentic beauty-commerce actions. |
+| Platforms | Web/PWA, Android, iOS, API service |
+| Core stack | JavaScript, Capacitor, Android, iOS, FastAPI, Claude AI |
+| Review first | `www/index.html`, `backend`, `android`, `ios`, `capacitor.config.json`, `package.json` |
+
 ## Download Links
 
-- **iOS / iPhone:** Open the PWA in Safari: [GlowAI iOS install](https://808cadger.github.io/GlowAI/) and choose **Share -> Add to Home Screen**.
-- **Android:** Download the latest APK from GitHub Releases: [GlowAI Android releases](https://github.com/808cadger/GlowAI/releases/latest).
-- **Source download:** [Download the GitHub source ZIP](https://github.com/808cadger/GlowAI/archive/refs/heads/main.zip).
+| Platform | Link |
+|----------|------|
+| iOS / iPhone | [Open the PWA in Safari](https://808cadger.github.io/GlowAI/) and choose **Share -> Add to Home Screen** |
+| Android | [Download the latest APK from GitHub Releases](https://github.com/808cadger/GlowAI/releases/latest) |
+| Source | [Download the GitHub source ZIP](https://github.com/808cadger/GlowAI/archive/refs/heads/main.zip) |
+| Repository | [View on GitHub](https://github.com/808cadger/GlowAI) |
+
+## Why This Repo Is Worth Reviewing
+
+- Camera and upload flows turn skin scans into routine and forecast outputs.
+- Includes Android and iOS Capacitor projects plus a standalone downloadable PWA.
+- Agent workflows connect scan results to booking, commerce, reminders, and content.
 
 
 ## Instant single-file download

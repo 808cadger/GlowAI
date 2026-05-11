@@ -1,5 +1,12 @@
 # GlowAI
 
+## Download Links
+
+- **iOS / iPhone:** Open the PWA in Safari: [GlowAI iOS install](https://808cadger.github.io/GlowAI/) and choose **Share -> Add to Home Screen**.
+- **Android:** Download the latest APK from GitHub Releases: [GlowAI Android releases](https://github.com/808cadger/GlowAI/releases/latest).
+- **Source download:** [Download the GitHub source ZIP](https://github.com/808cadger/GlowAI/archive/refs/heads/main.zip).
+
+
 ## Instant single-file download
 
 For someone who just wants GlowAI immediately, use the standalone PWA file:

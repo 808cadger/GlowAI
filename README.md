@@ -4,6 +4,7 @@
 
 For someone who just wants GlowAI immediately, use the standalone PWA file:
 
+- **Download GlowAI from GitHub:** <https://github.com/808cadger/GlowAI/releases>
 - Share this customer link from your phone: `https://808cadger.github.io/GlowAI/download.html`
 - Version 1 client demo: `https://808cadger.github.io/GlowAI/`
 - Version 2 owner/customizer demo: `https://808cadger.github.io/GlowAI/owner.html`
@@ -38,6 +39,18 @@ cd android
 ```
 
 The debug APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+### iOS app
+
+The Capacitor iOS project is checked in under `ios/` so GlowAI can be opened and signed from Xcode on macOS.
+
+```bash
+npm ci
+npm run cap:ios
+npx cap open ios
+```
+
+The iOS target includes the camera and photo-library permission strings required for selfie scan import/capture.
 
 <!-- INSTALL-START -->
 ## Install
@@ -135,7 +148,7 @@ Create `backend/.env` from `backend/.env.example` before starting backend servic
 <!-- INSTALL-END -->
 
 
-AI-powered skin analysis, appointment booking, and personal skincare chatbot — built as a hybrid PWA + Android APK from Pearl City, Hawaii.
+AI-powered skin analysis, appointment booking, and personal skincare chatbot — built as a hybrid PWA + Android APK + iOS Capacitor app from Pearl City, Hawaii.
 
 ---
 
@@ -173,7 +186,7 @@ Add screenshots here after capture:
 - **B2B White-Label** — salon workspace controls for branded scan apps, calendar handoff, product commerce, and creator workflows
 - **Appointments** — book, view, update, cancel dermatology appointments; auto-suggested from scan results
 - **AI Chatbot** — embedded agentic assistant (Claude Sonnet 4.6) for skincare Q&A
-- **PWA + APK** — installable on any Android device; also works in Brave/Chrome as a standalone app
+- **PWA + APK + iOS** — installable on Android, works in Brave/Chrome/Safari, and includes a Capacitor iOS project for Xcode builds
 
 ---
 
@@ -181,11 +194,11 @@ Add screenshots here after capture:
 
 | Layer | Tech |
 |-------|------|
-| Frontend | HTML + Capacitor 8 (PWA + Android) |
+| Frontend | HTML + Capacitor 8 (PWA + Android + iOS) |
 | Build | esbuild, Gradle 8, AGP 8.13+ |
 | Backend | Python FastAPI + SQLAlchemy (async) + PostgreSQL |
 | AI | Claude Opus 4.6 (vision/scan), Claude Sonnet 4.6 (chatbot) |
-| Packaging | Capacitor `@capacitor/camera`, `@capacitor/android` |
+| Packaging | Capacitor `@capacitor/camera`, `@capacitor/android`, `@capacitor/ios` |
 | CI/CD | Forgejo Actions → APK release + Codeberg Pages |
 
 ---
@@ -212,6 +225,10 @@ glowai/
 │   └── app/src/main/
 │       ├── java/com/cadger/glowai/MainActivity.java
 │       └── AndroidManifest.xml
+├── ios/                  # Capacitor iOS project for Xcode signing/builds
+│   └── App/App/
+│       ├── AppDelegate.swift
+│       └── Info.plist
 ├── capacitor.config.json
 └── package.json
 ```
@@ -247,7 +264,7 @@ pip install -r requirements.txt
 uvicorn backend.main:app --reload --port 8000
 ```
 
-### Frontend + Android APK
+### Frontend + Android APK + iOS
 
 ```bash
 npm install
@@ -256,6 +273,7 @@ npm run dev                    # localhost:3000
 npx cap sync android
 cd android && ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
+npm run cap:ios                   # sync iOS project, then open on macOS with Xcode
 ```
 
 The browser scanner now loads `face-api.js` with TensorFlow.js before analysis and uses MediaPipe selfie segmentation for live scan masking when available. Put Tiny Face Detector, 68-point tiny landmark, and MediaPipe selfie segmentation assets in `www/models` for a fully local build; if they are absent, the app tries public model hosts and falls back to the guided demo scan if models cannot load. Workbox caches app shell, model files, WASM, and recommendations so repeat scans can keep working offline.

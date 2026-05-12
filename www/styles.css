@@ -1679,9 +1679,11 @@ p {
 }
 
 .scan-preview {
+  position: relative;
   padding: var(--space-md);
   border-color: var(--border-card);
   background: var(--gradient-card-modern);
+  overflow: hidden;
 }
 
 .scan-preview.is-loading {
@@ -1700,6 +1702,112 @@ p {
   object-fit: cover;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.62);
+}
+
+.scan-overlay-map {
+  position: absolute;
+  inset: var(--space-md);
+  pointer-events: none;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.scan-overlay-zone {
+  position: absolute;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 999px;
+  opacity: var(--overlay-alpha, 0.45);
+  mix-blend-mode: screen;
+  box-shadow: 0 0 20px currentColor, inset 0 0 18px currentColor;
+}
+
+.scan-overlay-legend {
+  position: absolute;
+  left: calc(var(--space-md) + 0.45rem);
+  right: calc(var(--space-md) + 0.45rem);
+  bottom: calc(var(--space-md) + 0.45rem);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.overlay-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.45rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-radius: var(--radius-pill);
+  background: rgba(16, 19, 25, 0.62);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  backdrop-filter: blur(10px);
+}
+
+.overlay-legend-item i {
+  width: 0.52rem;
+  height: 0.52rem;
+  border-radius: var(--radius-round);
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.overlay-redness {
+  color: rgba(255, 92, 108, 0.84);
+  background: rgba(255, 92, 108, 0.38);
+}
+
+.overlay-shine {
+  color: rgba(255, 216, 91, 0.9);
+  background: rgba(255, 216, 91, 0.34);
+}
+
+.overlay-texture {
+  color: rgba(199, 166, 255, 0.86);
+  background: rgba(199, 166, 255, 0.32);
+}
+
+.overlay-dehydration {
+  color: rgba(74, 168, 255, 0.82);
+  background: rgba(74, 168, 255, 0.3);
+}
+
+.overlay-tone {
+  color: rgba(119, 220, 202, 0.78);
+  background: rgba(119, 220, 202, 0.24);
+}
+
+.overlay-legend-item.overlay-redness,
+.overlay-legend-item.overlay-shine,
+.overlay-legend-item.overlay-texture,
+.overlay-legend-item.overlay-dehydration,
+.overlay-legend-item.overlay-tone {
+  background: rgba(16, 19, 25, 0.68);
+  color: #fff;
+}
+
+.overlay-legend-item.overlay-redness i {
+  background: rgba(255, 92, 108, 0.9);
+}
+
+.overlay-legend-item.overlay-shine i {
+  background: rgba(255, 216, 91, 0.95);
+}
+
+.overlay-legend-item.overlay-texture i {
+  background: rgba(199, 166, 255, 0.95);
+}
+
+.overlay-legend-item.overlay-dehydration i {
+  background: rgba(74, 168, 255, 0.92);
+}
+
+.overlay-legend-item.overlay-tone i {
+  background: rgba(119, 220, 202, 0.92);
 }
 
 .scan-result-card {
@@ -1814,6 +1922,233 @@ p {
   color: var(--color-ink-strong);
   font-size: var(--text-lg);
   line-height: var(--line-body);
+}
+
+.scan-priority-card {
+  margin-top: var(--space-md);
+  padding: var(--space-touch-x);
+  border: 1px solid rgba(0, 107, 98, 0.12);
+  border-radius: var(--radius-card-sm);
+  background: linear-gradient(135deg, rgba(119, 220, 202, 0.18), rgba(255, 216, 91, 0.16)), var(--surface-card-strong);
+}
+
+.scan-priority-card h3 {
+  margin: 0.2rem 0 0.3rem;
+  color: var(--color-ink-strong);
+  font-size: 1.05rem;
+}
+
+.scan-priority-card p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: var(--line-body);
+}
+
+.scan-progress-panel {
+  display: grid;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  padding: var(--space-touch-x);
+  border: 1px solid rgba(36, 18, 38, 0.1);
+  border-radius: var(--radius-card-sm);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.scan-progress-panel h3 {
+  margin: 0.2rem 0 0.25rem;
+  color: var(--color-ink-strong);
+  font-size: 1rem;
+}
+
+.scan-progress-panel p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: var(--line-body);
+}
+
+.progress-delta-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-xs);
+}
+
+.progress-delta {
+  min-width: 0;
+  padding: var(--space-xs);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.progress-delta span,
+.progress-delta strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.progress-delta span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.progress-delta strong {
+  color: var(--color-ink-strong);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1.05;
+}
+
+.progress-improved {
+  border-color: rgba(0, 107, 98, 0.2);
+  background: rgba(236, 251, 246, 0.9);
+}
+
+.progress-watch {
+  border-color: rgba(212, 109, 95, 0.24);
+  background: rgba(255, 239, 232, 0.86);
+}
+
+.progress-steady {
+  border-color: rgba(74, 168, 255, 0.18);
+  background: rgba(234, 244, 255, 0.82);
+}
+
+.adherence-panel {
+  display: grid;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  margin-top: var(--space-xl);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(236, 251, 246, 0.78));
+}
+
+.adherence-grid,
+.owner-dashboard-grid,
+.eval-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-md);
+}
+
+.adherence-day,
+.owner-dashboard-grid article,
+.eval-stats-grid article {
+  min-width: 0;
+  padding: var(--space-md);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card-sm);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.adherence-day span,
+.adherence-day small,
+.owner-dashboard-grid span,
+.eval-stats-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.adherence-day strong,
+.owner-dashboard-grid strong,
+.eval-stats-grid strong {
+  display: block;
+  color: var(--color-ink-strong);
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+}
+
+.adherence-day.is-started {
+  background: rgba(255, 248, 219, 0.82);
+}
+
+.adherence-day.is-complete {
+  background: rgba(236, 251, 246, 0.92);
+}
+
+.adherence-actions,
+.eval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.owner-conversion-panel {
+  display: none;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+  border: 1px solid rgba(0, 107, 98, 0.12);
+  border-radius: var(--radius-card);
+  background: linear-gradient(135deg, rgba(236, 251, 246, 0.92), rgba(255, 248, 219, 0.76));
+}
+
+.owner-version .owner-conversion-panel {
+  display: grid;
+}
+
+.concern-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.concern-card {
+  min-width: 0;
+  min-height: 78px;
+  padding: var(--space-sm);
+  border: 1px solid rgba(23, 35, 38, 0.08);
+  border-radius: var(--radius-card-sm);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.concern-card span,
+.concern-card small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.concern-card span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.concern-card strong {
+  display: block;
+  margin: 0.14rem 0;
+  color: var(--color-ink-strong);
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  line-height: 1;
+}
+
+.concern-card small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.concern-high {
+  border-color: rgba(212, 109, 95, 0.28);
+  background: rgba(255, 239, 232, 0.86);
+}
+
+.concern-watch {
+  border-color: rgba(198, 164, 70, 0.28);
+  background: rgba(255, 248, 219, 0.82);
+}
+
+.concern-low {
+  border-color: rgba(0, 107, 98, 0.14);
+  background: rgba(241, 250, 247, 0.82);
 }
 
 .scan-history-block {
@@ -3098,6 +3433,11 @@ p {
   }
 
   .live-scan-readouts,
+  .concern-grid,
+  .progress-delta-grid,
+  .adherence-grid,
+  .owner-dashboard-grid,
+  .eval-stats-grid,
   .forecast-grid,
   .agent-dashboard,
   .agent-controls {

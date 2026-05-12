@@ -61,7 +61,7 @@
         <p class="section-kicker">GlowAI Guide</p>
         <h2 id="glowIntroTitle">Talk to GlowAI.</h2>
         <p class="glow-guide-line" id="glowGuideLine" aria-live="polite">I am getting the room ready.</p>
-        <p class="glow-listening-state" id="glowListeningState" aria-live="polite">Listening for your voice...</p>
+        <p class="glow-listening-state" id="glowListeningState" aria-live="polite">Tap Scan to open the selfie camera.</p>
         <p class="glow-heard-line hidden" id="glowHeardLine"></p>
         <div class="glow-intro-actions" aria-label="GlowAI start actions">
           <button class="glow-intro-action primary" id="glowIntroScan" type="button">Scan</button>
@@ -271,6 +271,8 @@
 
           <div class="scan-preview hidden" id="scanPreview">
             <img class="scan-preview-image" id="scanPreviewImage" alt="Face scan preview" />
+            <div class="scan-overlay-map" id="scanOverlayMap" aria-label="Face-region concern overlays"></div>
+            <div class="scan-overlay-legend" id="scanOverlayLegend" aria-label="Overlay legend"></div>
           </div>
         </article>
 
@@ -310,6 +312,23 @@
               <strong id="scanRoutineNight">Barrier support</strong>
             </article>
           </div>
+          <article class="scan-priority-card" id="scanPriorityCard">
+            <p class="card-label">Next best action</p>
+            <h3 id="scanPriorityTitle">Build a baseline first</h3>
+            <p id="scanPriorityCopy">Complete one scan and GlowAI will rank the most useful skincare move for today.</p>
+          </article>
+          <div class="scan-progress-panel" id="scanProgressPanel" aria-label="Progress since previous scan">
+            <div>
+              <p class="card-label">Progress delta</p>
+              <h3 id="scanProgressTitle">Baseline mode</h3>
+              <p id="scanProgressCopy">Your next scan will compare hydration, clarity, texture, tone, and oil balance against this result.</p>
+            </div>
+            <div class="progress-delta-grid" id="scanProgressDeltas"></div>
+          </div>
+          <div class="concern-grid" id="scanConcernGrid" aria-label="15 concern cosmetic skin read"></div>
+          <button class="secondary-btn secondary-btn-full" id="copyScanReportBtn" type="button">Copy consultation report</button>
+          <button class="secondary-btn secondary-btn-full" id="exportScanReportBtn" type="button">Export branded report</button>
+          <p class="share-status" id="copyScanReportStatus" aria-live="polite"></p>
           <div class="scan-quality-panel" aria-label="Scan quality review">
             <article class="quality-item">
               <p class="card-label">Confidence</p>
@@ -360,6 +379,23 @@
             <strong>-</strong>
             <span>Complete a scan to build your routine forecast.</span>
           </article>
+        </div>
+      </section>
+
+      <section class="adherence-panel" aria-label="7-day routine adherence">
+        <div class="scan-result-topline">
+          <div>
+            <p class="card-label">7-day adherence loop</p>
+            <h3 class="scan-history-title" id="adherenceTitle">Stay with the plan after the scan.</h3>
+          </div>
+          <span class="scan-result-badge" id="adherenceBadge">Day 1</span>
+        </div>
+        <div class="adherence-grid" id="adherenceGrid"></div>
+        <div class="adherence-actions">
+          <button class="secondary-btn compact-btn" type="button" data-adherence-action="am">AM done</button>
+          <button class="secondary-btn compact-btn" type="button" data-adherence-action="spf">SPF reapplied</button>
+          <button class="secondary-btn compact-btn" type="button" data-adherence-action="pm">PM done</button>
+          <button class="primary-btn compact-btn" type="button" data-adherence-action="rescan">Plan next scan</button>
         </div>
       </section>
     </section>
@@ -633,17 +669,33 @@
 
       <section class="owner-command-strip owner-only" aria-label="Owner workspace summary">
         <article class="owner-command-card">
-          <span class="owner-command-value">2</span>
-          <span class="owner-command-label">App types</span>
+          <span class="owner-command-value" id="ownerLeadCount">0</span>
+          <span class="owner-command-label">Client leads</span>
         </article>
         <article class="owner-command-card">
-          <span class="owner-command-value">3</span>
-          <span class="owner-command-label">Agent actions</span>
+          <span class="owner-command-value" id="ownerBookingCount">0</span>
+          <span class="owner-command-label">Bookings</span>
         </article>
         <article class="owner-command-card">
-          <span class="owner-command-value">Live</span>
-          <span class="owner-command-label">Studio setup</span>
+          <span class="owner-command-value" id="ownerCartValue">$0</span>
+          <span class="owner-command-label">Cart pipeline</span>
         </article>
+      </section>
+
+      <section class="owner-conversion-panel owner-only" aria-label="Salon conversion dashboard">
+        <div class="scan-result-topline">
+          <div>
+            <p class="card-label">Salon conversion dashboard</p>
+            <h3 class="scan-history-title">Scan-to-booking-to-retention pipeline.</h3>
+          </div>
+          <span class="scan-result-badge" id="ownerTopConcern">No concern yet</span>
+        </div>
+        <div class="owner-dashboard-grid">
+          <article><span>Reports exported</span><strong id="ownerReportCount">0</strong></article>
+          <article><span>Routine adherence</span><strong id="ownerAdherenceRate">0%</strong></article>
+          <article><span>Latest progress</span><strong id="ownerProgressSignal">Baseline</strong></article>
+          <article><span>Eval readiness</span><strong id="ownerEvalReadiness">0/50</strong></article>
+        </div>
       </section>
 
       <section class="agent-dashboard">
@@ -736,6 +788,22 @@
           <p>Use Stripe Checkout for forecast, reel, and white-label upgrades after the free scan limit.</p>
           <button class="primary-btn primary-btn-full" id="unlockForecastsBtn" type="button">Unlock forecasts + reels - $4.99</button>
           <button class="secondary-btn secondary-btn-full" id="subscribeSalonBtn" type="button">Subscribe salon - $99/mo</button>
+        </article>
+
+        <article class="agent-config owner-only">
+          <p class="card-label">Benchmark evidence path</p>
+          <h3>50-selfie skin eval workflow.</h3>
+          <p>Import labeled eval JSON, score it locally, and export a template reviewers can fill without storing PHI in the repo.</p>
+          <label class="field-group">
+            <span class="field-label">Import labeled eval JSON</span>
+            <input class="field-input" id="skinEvalInput" type="file" accept="application/json,.json" />
+          </label>
+          <div class="eval-actions">
+            <button class="secondary-btn compact-btn" id="seedEvalTemplateBtn" type="button">Load template</button>
+            <button class="secondary-btn compact-btn" id="exportEvalTemplateBtn" type="button">Export template</button>
+            <button class="primary-btn compact-btn" id="runSkinEvalBtn" type="button">Score eval</button>
+          </div>
+          <div class="eval-stats-grid" id="skinEvalStats"></div>
         </article>
       </section>
 

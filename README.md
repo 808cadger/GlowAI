@@ -5,16 +5,32 @@
 [![License](https://img.shields.io/github/license/808cadger/GlowAI)](https://github.com/808cadger/GlowAI/blob/HEAD/LICENSE)
 ![Platforms](https://img.shields.io/badge/platform-Web%2FPWA%2C%20Android%2C%20iOS%2C%20API%20service-2563eb)
 
-AI skincare analysis, appointment flow, routine planning, and agentic beauty-commerce actions.
+AI skin-intelligence platform for scan-led routines, cosmetic concern overlays, progress tracking, branded consultation reports, salon conversion, and agentic beauty-commerce workflows.
 
 ## Project Snapshot
 
 | Area | Details |
 |------|---------|
-| Primary use case | AI skincare analysis, appointment flow, routine planning, and agentic beauty-commerce actions. |
+| Primary use case | Skin analysis, cosmetic concern scoring, report export, adherence tracking, booking, commerce, and salon owner workflows. |
 | Platforms | Web/PWA, Android, iOS, API service |
-| Core stack | JavaScript, Capacitor, Android, iOS, FastAPI, Claude AI |
-| Review first | `www/index.html`, `backend`, `android`, `ios`, `capacitor.config.json`, `package.json` |
+| Core stack | JavaScript, Capacitor, Android, iOS, FastAPI, TF.js, MediaPipe, face-api.js, Claude AI |
+| Review first | `www/index.html`, `www/app.js`, `www/scan.js`, `PRD.md`, `ROADMAP.md`, `BENCHMARKS.md`, `backend`, `android`, `ios` |
+
+## Repository At A Glance
+
+| Item | Details |
+|------|---------|
+| License | Apache-2.0 |
+| Latest release | [GlowAI releases](https://github.com/808cadger/GlowAI/releases) |
+| Production demo | `https://808cadger.github.io/GlowAI/` |
+| Owner demo | `https://808cadger.github.io/GlowAI/owner.html` |
+| Standalone PWA | `https://808cadger.github.io/GlowAI/download.html` |
+| Main languages | JavaScript, CSS, HTML, Python, Swift, Java |
+| Deployment targets | GitHub Pages, Netlify, Vercel, Android APK, iOS Capacitor, FastAPI backend |
+
+Suggested GitHub topics:
+
+`ai-skincare`, `skin-analysis`, `beauty-tech`, `computer-vision`, `pwa`, `capacitor`, `android`, `ios`, `fastapi`, `tensorflowjs`, `mediapipe`, `esthetician`, `salon-software`, `agentic-commerce`, `white-label`
 
 ## Download Links
 
@@ -27,9 +43,36 @@ AI skincare analysis, appointment flow, routine planning, and agentic beauty-com
 
 ## Why This Repo Is Worth Reviewing
 
-- Camera and upload flows turn skin scans into routine and forecast outputs.
-- Includes Android and iOS Capacitor projects plus a standalone downloadable PWA.
-- Agent workflows connect scan results to booking, commerce, reminders, and content.
+- Camera, upload, and live scan flows turn selfies into cosmetic skin metrics, concern rankings, overlays, routines, forecasts, and progress deltas.
+- Scan reports include 15 concern scoring today, lightweight face-region overlays, next-best-action guidance, 7-day adherence, and branded HTML export.
+- Owner mode tracks scan leads, bookings, cart pipeline, report exports, adherence, top concerns, and benchmark readiness.
+- Agent workflows connect scan results to booking, Shopify-style carts, creator reels, reminders, and white-label salon deployment.
+- The repo now includes a next-gen platform roadmap for 40+ scored parameters, pixel-level masks, SDKs, clinician safety rails, and partner ecosystem maturity.
+
+## Top-Tier Product Surfaces
+
+| Surface | What GlowAI Does |
+|---------|------------------|
+| Scan intelligence | Reads hydration, clarity, texture, tone, oil, redness, humidity stress, 15 cosmetic concerns, confidence, safety note, and next best action. |
+| Concern overlays | Shows face-region overlays for redness, oil/shine, texture, dehydration risk, and tone unevenness on the scan preview. |
+| Progress deltas | Compares the latest scan against the previous scan across hydration, clarity, texture, tone, and oil balance. |
+| 7-day adherence | Logs AM routine, SPF reapplication, PM routine, and next scan planning after the scan. |
+| Consultation reports | Copies a text report and exports a branded HTML report with photo, metrics, concerns, overlays, routines, progress, and safety boundary. |
+| Owner dashboard | Shows client leads, bookings, cart pipeline, report exports, adherence, top concern, latest progress, and eval readiness. |
+| Benchmark workflow | Provides `reports/skin-eval.json`, owner-mode eval import/scoring, and benchmark scripts for evidence-backed claims. |
+| Agent cockpit | Runs booking, commerce, reel, subscription, white-label, and report actions locally or through configured endpoints. |
+| Platform roadmap | Defines `/analyze`, `/compare`, `/recommend`, `/compatibility`, SDKs, partner validation, and maturity scoring. |
+
+## Competitive Positioning
+
+GlowAI is designed to compete against four categories at once:
+
+- **Haut.AI-style analysis depth:** roadmap targets 40+ scored parameters, 1-5 severity grades, 150+ biomarkers, pixel-level masks, and public validation methodology.
+- **Perfect Corp-style reports:** scan-to-report workflow with metrics, routines, overlays, safety language, and exportable salon/client artifacts.
+- **MDacne-style continuity:** selfie tracking, progress deltas, adherence loop, modular routine guidance, and side-effect/safety boundaries in the roadmap.
+- **GlamAR-style SDK commerce:** platform roadmap for Web, iOS, Android, Flutter, React Native, AR/try-on, product compatibility, checkout bundles, and partner analytics.
+
+Current app features are cosmetic wellness guidance and demoable salon workflows. Clinical claims, prescription workflows, and 40+ parameter validation are roadmap targets documented in [`PRD.md`](./PRD.md), [`BENCHMARKS.md`](./BENCHMARKS.md), and [`ROADMAP.md`](./ROADMAP.md).
 
 
 ## Instant single-file download
@@ -43,7 +86,7 @@ For someone who just wants GlowAI immediately, use the standalone PWA file:
 - Direct single-file HTML download: `https://raw.githubusercontent.com/808cadger/GlowAI/main/www/download.html`
 - Download [`www/download.html`](./www/download.html) from GitHub.
 - Open it in Chrome, Edge, Brave, or Safari.
-- Upload a selfie or run the demo scan, then export PDF/JSON or share the report.
+- Upload a selfie or run the demo scan, then copy the consultation report, export a branded HTML report, or share the app.
 - On mobile, use the browser menu to install/add it to the home screen.
 
 The file is self-contained, under 1 MB, and does not require `npm install`, Android Studio, or the backend.
@@ -136,8 +179,10 @@ Demo flow:
 1. Start on the client app.
 2. Tap `Scan` on the intro screen, or use `Open app` and then `Scan now`.
 3. Allow camera access when prompted.
-4. If camera/model access is unavailable, GlowAI loads a guided demo scan so the routine, forecast, booking, commerce, and coach flows still work.
-5. Open `Agents` to demo booking, product cart, TikTok reel, and owner workflow actions from the latest scan.
+4. Review concern scoring, face-region overlays, AM/PM routine, next best action, progress delta, 30-day forecast, and 7-day adherence loop.
+5. Export a branded report or copy the consultation report.
+6. Open `Agents` to demo booking, product cart, TikTok reel, owner dashboard, benchmark eval workflow, and white-label actions from the latest scan.
+7. If camera/model access is unavailable, GlowAI loads a guided demo scan so the routine, forecast, booking, commerce, report, and coach flows still work.
 
 ### Android APK demo
 
@@ -179,22 +224,20 @@ Create `backend/.env` from `backend/.env.example` before starting backend servic
 - Apache License 2.0. See [`LICENSE`](./LICENSE).
 <!-- INSTALL-END -->
 
-
-AI-powered skin analysis, appointment booking, and personal skincare chatbot — built as a hybrid PWA + Android APK + iOS Capacitor app from Pearl City, Hawaii.
-
----
-
 ## Problem it solves
 
-Skincare users often jump between product advice, appointment booking, and vague progress tracking. GlowAI connects a camera scan to personalized care recommendations, appointment flow, and a skincare assistant so the user has one place to understand concerns and plan next steps.
+Skincare users, estheticians, and salons often jump between scan tools, product advice, booking, reminders, and vague progress tracking. GlowAI connects a camera scan to concern scoring, overlays, personalized routine guidance, report export, adherence tracking, booking, product-cart handoff, and owner conversion metrics so the whole workflow stays in one place.
 
-## Screenshots
+## Demo Surfaces
 
-Add screenshots here after capture:
+| Surface | How To Review |
+|---------|---------------|
+| Client scan | Open `http://localhost:3000`, run a guided/camera scan, and review metrics, overlays, routine, progress, forecast, and adherence. |
+| Owner dashboard | Open `http://localhost:3000/owner.html` and review leads, bookings, cart pipeline, reports, adherence, top concern, and eval readiness. |
+| Agent cockpit | Open `Agents` and run booking, cart, reel, report, and white-label workflows. |
+| Report export | Use `Export branded report` after a scan to create a shareable HTML consultation artifact. |
 
-| Skin scan | Routine plan | AI chat |
-|-----------|--------------|---------|
-| `docs/screenshots/skin-scan.png` | `docs/screenshots/routine-plan.png` | `docs/screenshots/ai-chat.png` |
+Screenshots can be added later under `docs/screenshots/` after the next capture pass.
 
 ## Developer highlights
 
@@ -209,14 +252,77 @@ Add screenshots here after capture:
 - Shows ability to combine frontend UX, backend APIs, database models, camera input, and AI services into one product.
 - Review this project for evidence of production-style architecture around a sensitive consumer workflow.
 
+## Recruiter-Friendly Review Guide
+
+GlowAI is built to show end-to-end product engineering, not just a prototype screen. A reviewer can evaluate product thinking, AI workflow design, mobile packaging, frontend execution, backend architecture, safety boundaries, and commercial strategy in one repo.
+
+| What To Evaluate | Where To Look |
+|------------------|---------------|
+| Product strategy | [`PRD.md`](./PRD.md), [`ROADMAP.md`](./ROADMAP.md), [`BENCHMARKS.md`](./BENCHMARKS.md) |
+| Client app UX | [`www/index.html`](./www/index.html), [`www/styles.css`](./www/styles.css), [`www/app.js`](./www/app.js) |
+| Camera and scan flow | [`www/scan.js`](./www/scan.js) |
+| PWA/mobile packaging | [`capacitor.config.json`](./capacitor.config.json), [`android`](./android), [`ios`](./ios) |
+| Backend/API work | [`backend`](./backend) |
+| Agent and benchmark checks | [`scripts`](./scripts), [`tests`](./tests), [`reports/skin-eval.json`](./reports/skin-eval.json) |
+
+### Skills Demonstrated
+
+- Full-stack product engineering across PWA, Android, iOS, and FastAPI.
+- Applied AI product design around camera input, scan results, routines, reports, and safety language.
+- Frontend implementation with multi-page app state, local persistence, owner/client modes, dashboards, and export flows.
+- Mobile camera integration with Capacitor, TF.js, MediaPipe, and face-api.js.
+- Agent workflows for booking, commerce, reminders, reports, and creator content.
+- Evidence-minded engineering with benchmark scripts, eval targets, and validation-roadmap documentation.
+- Commercial product thinking: white-label salon mode, subscription hooks, Shopify-style cart handoff, and platform/API roadmap.
+
+### Fast Demo Path For Reviewers
+
+```bash
+npm install
+npm run check
+npm run dev
+```
+
+Then open:
+
+- Client demo: `http://localhost:3000`
+- Owner dashboard: `http://localhost:3000/owner.html`
+
+Recommended review flow:
+
+1. Run a guided scan or camera scan.
+2. Review concern scoring, overlays, routine, progress delta, forecast, and adherence loop.
+3. Export a branded report.
+4. Open Owner mode and review conversion dashboard, agent actions, and benchmark workflow.
+5. Skim `PRD.md` and `ROADMAP.md` to see how the app evolves into a platform/API ecosystem.
+
+### Role Fit
+
+GlowAI is relevant for:
+
+- AI product engineer
+- Full-stack engineer
+- Frontend/mobile engineer
+- Applied computer-vision engineer
+- Health-tech or beauty-tech product engineer
+- Developer platform / SDK engineer
+- Startup founding engineer
+
 ## Features
 
-- **Skin Scan** — Claude Opus 4.6 vision analyzes a camera photo and returns condition tags, severity, confidence, and care recommendations
-- **Live Video Scan** — browser/mobile camera sampling estimates hydration, texture, clarity, oil, tone, redness, and Hawaii humidity fit
+- **Skin Scan** — camera and guided demo flows return cosmetic skin metrics, concern tags, confidence, safety note, AM/PM routine, and next-best-action guidance
+- **15 Concern Readout** — ranks acne, redness, dryness, oiliness, dark spots, uneven tone, texture, pores, sensitivity, dullness, fine lines, sun damage, dehydration, barrier support, and ingrown-hair risk
+- **Face-Region Overlays** — highlights redness, oil/shine, texture, dehydration risk, and tone unevenness regions on the scan preview
+- **Live Video Scan** — browser/mobile camera sampling estimates hydration, texture, clarity, oil, tone, redness, and coastal humidity fit
+- **Progress Delta** — compares the latest scan against the previous scan for hydration, clarity, texture, tone, and oil balance
 - **30-Day Glow Forecast** — predicts 7, 14, and 30 day routine progress from scan metrics
-- **Agentic Actions** — booking, Shopify cart building, and TikTok-ready before/after reel generation from the latest scan
-- **B2B White-Label** — salon workspace controls for branded scan apps, calendar handoff, product commerce, and creator workflows
-- **Appointments** — book, view, update, cancel dermatology appointments; auto-suggested from scan results
+- **7-Day Adherence Loop** — tracks AM care, SPF reapplication, PM care, and planned rescan so the app supports outcomes after the scan
+- **Branded Reports** — copies a consultation summary and exports branded HTML reports for clients, salons, and pilots
+- **Agentic Actions** — booking, Shopify-style cart building, and TikTok-ready before/after reel generation from the latest scan
+- **Owner Conversion Dashboard** — tracks scan leads, bookings, cart pipeline, report exports, adherence rate, latest progress, top concern, and eval readiness
+- **Benchmark Eval Workflow** — imports and scores labeled skin eval JSON for concern match, routine relevance, safety pass, and overlay stability
+- **B2B White-Label** — salon workspace controls for branded scan apps, calendar handoff, product commerce, creator workflows, and replaceable model imagery
+- **Appointments** — book, view, update, and cancel esthetician, salon, or dermatology-style appointment handoffs from scan context
 - **AI Chatbot** — embedded agentic assistant (Claude Sonnet 4.6) for skincare Q&A
 - **PWA + APK + iOS** — installable on Android, works in Brave/Chrome/Safari, and includes a Capacitor iOS project for Xcode builds
 
@@ -231,7 +337,7 @@ Add screenshots here after capture:
 | Backend | Python FastAPI + SQLAlchemy (async) + PostgreSQL |
 | AI | Claude Opus 4.6 (vision/scan), Claude Sonnet 4.6 (chatbot) |
 | Packaging | Capacitor `@capacitor/camera`, `@capacitor/android`, `@capacitor/ios` |
-| CI/CD | Forgejo Actions → APK release + Codeberg Pages |
+| Deploy | GitHub Pages, Netlify, Vercel, Railway-ready FastAPI, Android APK, iOS Capacitor |
 
 ---
 
@@ -239,15 +345,20 @@ Add screenshots here after capture:
 
 ```
 glowai/
+├── PRD.md                # product roadmap and next-gen skin analysis specification
+├── ROADMAP.md            # platform/API ecosystem roadmap
+├── BENCHMARKS.md         # evidence and validation protocol
+├── reports/
+│   └── skin-eval.json    # anonymized eval template path
 ├── www/                  # PWA frontend
 │   ├── index.html
-│   ├── app.js            # navigation + chatbot
-│   ├── scan.js           # camera + scan flow
+│   ├── app.js            # navigation, scan report, agents, owner dashboard
+│   ├── scan.js           # camera, live scan, segmentation/model flow
 │   ├── styles.css
 │   ├── manifest.json
 │   └── sw.js
 ├── backend/              # FastAPI service
-│   ├── main.py           # routes: /scan, /appointments, /chat
+│   ├── main.py           # routes: /api/scan, /api/appointments, /api/chat, MCP tools
 │   ├── models.py         # SQLAlchemy ORM
 │   ├── schemas.py        # Pydantic schemas
 │   ├── config.py         # env-driven settings
@@ -339,6 +450,29 @@ The **Agents** tab runs in local demo mode by default and writes action payloads
 
 Voice commands such as "book my esthetician appointment", "order my routine", "make a TikTok reel", or "run autopilot" route into the agent cockpit.
 
+### Owner and benchmark workflow
+
+Owner mode turns GlowAI into a salon conversion cockpit:
+
+- Open `http://localhost:3000/owner.html` or switch to `Owner` in the app.
+- Review client lead count, bookings, cart pipeline, report exports, adherence rate, latest progress, top concern, and eval readiness.
+- Use the benchmark panel to load or export the 50-case eval template.
+- Import labeled JSON from reviewer workflows and score concern match, routine relevance, safety pass, and overlay stability.
+- Use [`reports/skin-eval.json`](./reports/skin-eval.json) as the repo-safe template shape. Do not commit raw selfies or PHI.
+
+### Platform roadmap
+
+[`ROADMAP.md`](./ROADMAP.md) defines the API and ecosystem direction:
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /analyze` | Image/frame in; parameters, grades, masks, clinical-style summary, and safety flags out |
+| `POST /compare` | Baseline vs follow-up progress deltas and mask-area change |
+| `POST /recommend` | Personalized cosmetic routines and safe next steps, not unsupervised prescriptions |
+| `POST /compatibility` | Product and INCI compatibility checks for skin profile and routine conflicts |
+
+The roadmap also defines the esthetician/clinician dashboard, brand/retail SDK, partner directory, reference React/Flutter apps, safety rails, audit trails, and GlowAI maturity score.
+
 ### Environment Variables
 
 | Var | Purpose |
@@ -359,6 +493,8 @@ Voice commands such as "book my esthetician appointment", "order my routine", "m
 
 ## API Endpoints
 
+Current backend routes:
+
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/api/scan` | Analyze skin photo (base64) → JSON result |
@@ -372,12 +508,18 @@ Voice commands such as "book my esthetician appointment", "order my routine", "m
 | `DELETE` | `/api/reminders/{id}` | Delete reminder |
 | `POST` | `/api/push-token` | Register Capacitor push token for reminders |
 | `POST` | `/api/subscribe` | Create Stripe Checkout session for freemium or salon plan |
+| `POST` | `/subscribe` | Stripe Checkout alias for simple deploy integrations |
 | `POST` | `/api/chat` | Agentic chatbot message |
 | `GET` | `/mcp` | Claude tool manifest for GlowAI agent actions |
 | `POST` | `/mcp/book` | MCP-style booking tool |
 | `POST` | `/mcp/recommend` | MCP-style 15-concern routine + Shopify recommendation tool |
+| `GET` | `/health` | Service health check |
+| `GET` | `/health/db` | Database health check |
+| `GET` | `/capabilities` | Runtime feature/capability descriptor |
 
-All API routes except `/api/subscribe` require `Authorization: Bearer <API_TOKEN>`. Checkout uses fixed server-side Stripe price IDs and never exposes the secret key.
+Protected routes require `Authorization: Bearer <API_TOKEN>`, including scan, appointment, reminder, subscribe, chat, and MCP action routes. Public utility routes include `/health`, `/health/db`, `/capabilities`, and the `/mcp` manifest. Checkout uses fixed server-side Stripe price IDs and never exposes the secret key.
+
+Next-gen platform API targets are documented in [`ROADMAP.md`](./ROADMAP.md). They are the direction for GlowAI as an embeddable skin-intelligence layer across apps, retail, AR try-on, telehealth, POS, and clinic hardware.
 
 ### Agent evals
 
@@ -386,7 +528,7 @@ npm run eval:agents
 npm run benchmark
 ```
 
-The eval script runs 20 booking, commerce, reminder, scan, and reel prompts and fails if completion drops below 90%. The benchmark script writes `reports/benchmark.csv` for skin concern matching, routine relevance, safety language, and overlay stability.
+The eval script runs 20 booking, commerce, reminder, scan, and reel prompts and fails if completion drops below 90%. The benchmark script writes `reports/benchmark.csv` for skin concern matching, routine relevance, safety language, and overlay stability. Owner mode adds a browser workflow for importing and scoring labeled eval cases.
 
 For scan safety review prompts:
 
@@ -411,6 +553,18 @@ For sharing by text, send friends to:
 ## APK Release
 
 Download from [Releases](https://github.com/808cadger/GlowAI/releases) — install with **Allow from unknown sources** enabled.
+
+---
+
+## GitHub Presentation Checklist
+
+Use these repository settings so the GitHub page mirrors the README positioning:
+
+- **Description:** AI skin-intelligence platform for scan-led routines, cosmetic overlays, reports, salon conversion, and beauty-commerce agents.
+- **Website:** `https://808cadger.github.io/GlowAI/`
+- **Topics:** `ai-skincare`, `skin-analysis`, `beauty-tech`, `computer-vision`, `pwa`, `capacitor`, `android`, `ios`, `fastapi`, `tensorflowjs`, `mediapipe`, `esthetician`, `salon-software`, `agentic-commerce`, `white-label`
+- **Release:** keep the latest APK and source ZIP attached under GitHub Releases.
+- **Pinned reviewer path:** README -> `PRD.md` -> `ROADMAP.md` -> `BENCHMARKS.md` -> `www/app.js` -> `www/scan.js`.
 
 ---
 

@@ -42,6 +42,9 @@ window.glowaiApp = {
     whiteLabel: 'glowai_white_label',
     appType: 'glowai_app_type',
     habits: 'glowai_habit_preferences',
+    adherence: 'glowai_adherence_loop',
+    evalCases: 'glowai_skin_eval_cases',
+    reportExports: 'glowai_report_exports',
     greeting: 'glowai_greeting_spoken',
     intro: 'glowai_intro_seen',
   },
@@ -303,6 +306,7 @@ window.glowaiApp = {
     this.renderChat();
     this.renderScanSummary();
     this.renderForecast();
+    this.renderAdherenceLoop();
     this.renderAgentOps();
     this.bindBackNavigation();
     this.showPage(this.getPageFromHash() || this.getInitialPage(), { replace: true, source: 'init' });
@@ -312,7 +316,16 @@ window.glowaiApp = {
   },
 
   shouldUseSelfieEntry() {
-    return !this.isOwnerMode() && window.matchMedia?.('(max-width: 640px)').matches;
+    const isNative = window.Capacitor?.isNativePlatform?.() === true;
+    const userAgent = navigator.userAgent || '';
+    const isMobileRuntime = /Android|iPhone|iPad|iPod/i.test(userAgent);
+    const viewportWidth = Math.min(
+      window.innerWidth || 9999,
+      document.documentElement?.clientWidth || 9999,
+      window.screen?.width || 9999,
+    );
+    const isSmallScreen = window.matchMedia?.('(max-width: 640px)').matches === true || viewportWidth <= 760;
+    return !this.isOwnerMode() && (isNative || isMobileRuntime || isSmallScreen);
   },
 
   getInitialPage() {
@@ -437,6 +450,7 @@ window.glowaiApp = {
       photo: this.createDemoScanImage(),
       demo: true,
       ...base,
+      overlays: this.generateScanOverlays(base.metrics, base.concerns),
     };
   },
 
@@ -857,6 +871,10 @@ ${extraContext}`.trim();
     document.getElementById('whiteLabelPortraitInput')?.addEventListener('change', (event) => this.saveWhiteLabelPortrait(event));
     document.getElementById('unlockForecastsBtn')?.addEventListener('click', () => this.startSubscription('freemium_unlock'));
     document.getElementById('subscribeSalonBtn')?.addEventListener('click', () => this.startSubscription('salon_monthly'));
+    document.getElementById('skinEvalInput')?.addEventListener('change', (event) => this.importSkinEvalFile(event));
+    document.getElementById('seedEvalTemplateBtn')?.addEventListener('click', () => this.seedSkinEvalTemplate());
+    document.getElementById('exportEvalTemplateBtn')?.addEventListener('click', () => this.exportSkinEvalTemplate());
+    document.getElementById('runSkinEvalBtn')?.addEventListener('click', () => this.renderSkinEvalStats(this.scoreSkinEvalCases()));
   },
 
   saveAgentConfig() {
@@ -906,6 +924,9 @@ ${extraContext}`.trim();
         summary: latest?.summary || 'Agent used default skin-prep profile.',
         metrics,
         routine,
+        concerns: latest?.concerns?.slice?.(0, 5) || [],
+        priorityAction: latest?.priorityAction || null,
+        progress: latest?.progress || null,
       },
       climate: this.getStored(this.storageKeys.climate, { location: 'coastal climate', humidityMode: 'humid' }),
     };
@@ -1180,6 +1201,8 @@ ${extraContext}`.trim();
     if (accent && whiteLabel.accent) accent.value = whiteLabel.accent;
     if (plan && whiteLabel.plan) plan.value = whiteLabel.plan;
     if (this.isOwnerMode()) this.applyWhiteLabelWorkspace(whiteLabel);
+    this.renderOwnerDashboard();
+    this.renderSkinEvalStats(this.scoreSkinEvalCases());
 
     const container = document.getElementById('agentLogList');
     if (!container) return;
@@ -1190,10 +1213,10 @@ ${extraContext}`.trim();
     }
     container.innerHTML = log.slice(0, 8).map((item) => `
       <article class="agent-log-item">
-        <p class="card-label">${item.type}</p>
-        <h3>${item.title}</h3>
-        <p>${new Date(item.createdAt).toLocaleString()}</p>
-        <pre>${JSON.stringify(item.detail, null, 2)}</pre>
+        <p class="card-label">${this.escapeHtml(item.type || 'agent')}</p>
+        <h3>${this.escapeHtml(item.title || 'Agent action')}</h3>
+        <p>${this.escapeHtml(new Date(item.createdAt || Date.now()).toLocaleString())}</p>
+        <pre>${this.escapeHtml(JSON.stringify(item.detail || {}, null, 2))}</pre>
       </article>
     `).join('');
   },
@@ -1562,6 +1585,11 @@ Skin support:
         return;
       }
       this.finishLiveSkinScan();
+    });
+    document.getElementById('copyScanReportBtn')?.addEventListener('click', () => this.copyScanReport());
+    document.getElementById('exportScanReportBtn')?.addEventListener('click', () => this.exportScanReportHtml());
+    document.querySelectorAll('[data-adherence-action]').forEach((button) => {
+      button.addEventListener('click', () => this.recordAdherenceAction(button.getAttribute('data-adherence-action')));
     });
   },
 
@@ -2106,6 +2134,8 @@ Skin support:
   showScanPreview(dataUrl) {
     const preview = document.getElementById('scanPreview');
     const previewImage = document.getElementById('scanPreviewImage');
+    const overlayMap = document.getElementById('scanOverlayMap');
+    const overlayLegend = document.getElementById('scanOverlayLegend');
     const badge = document.getElementById('scanResultBadge');
     if (!preview || !previewImage || !dataUrl) return;
 
@@ -2129,10 +2159,13 @@ Skin support:
   handleScanCapture(dataUrl, faceQuality = {}, skinSignals = null) {
     this.showScanPreview(dataUrl);
     const analysis = this.generateFaceAnalysis(faceQuality, skinSignals);
+    const scans = this.getStored(this.storageKeys.scans);
+    const progress = this.compareScanProgress(analysis, scans[0]);
     const scanRecord = {
       id: Date.now().toString(36),
       createdAt: new Date().toISOString(),
       photo: dataUrl,
+      progress,
       ...analysis,
     };
     const historyEntry = {
@@ -2151,8 +2184,11 @@ Skin support:
       safetyNote: scanRecord.safetyNote,
       handoffs: scanRecord.handoffs,
       forecast: scanRecord.forecast,
+      concerns: scanRecord.concerns,
+      priorityAction: scanRecord.priorityAction,
+      progress: scanRecord.progress,
+      overlays: scanRecord.overlays,
     };
-    const scans = this.getStored(this.storageKeys.scans);
     scans.unshift(historyEntry);
     this.latestScan = scanRecord;
     this.trySetStored(this.storageKeys.scans, scans.slice(0, 6));
@@ -2208,6 +2244,10 @@ Skin support:
         routine: { morning: 'Gentle cleanse, hyaluronic serum, moisturizer, SPF 30+', night: 'Cleanse, ceramide cream, no exfoliation tonight' },
         confidence: '84%',
         safetyNote: 'Routine',
+        priorityAction: {
+          title: 'Rebuild hydration before adding actives',
+          copy: 'Use humectant serum, moisturizer, and SPF for the next 48 hours before testing exfoliation or brightening steps.',
+        },
         handoffs: ['Skin coach builds a barrier-support routine', 'Progress tracker saves this as the baseline', 'Forecast watches hydration and texture changes'],
       },
       {
@@ -2221,6 +2261,10 @@ Skin support:
         routine: { morning: 'Cleanse, niacinamide, moisturizer, SPF 50', night: 'Cleanse, barrier cream, pause harsh scrubs' },
         confidence: '76%',
         safetyNote: 'Calm care',
+        priorityAction: {
+          title: 'Calm texture without over-exfoliating',
+          copy: 'Keep brightening low-irritation and limit resurfacing to 1-2 nights weekly while hydration catches up.',
+        },
         handoffs: ['Skin coach avoids aggressive exfoliation', 'Progress tracker watches tone and texture', 'Forecast checks whether brightness improves without irritation'],
       },
       {
@@ -2234,6 +2278,10 @@ Skin support:
         routine: { morning: 'Gel cleanse, lightweight moisturizer, SPF 30+', night: 'Cleanse, niacinamide serum, light moisturizer' },
         confidence: '82%',
         safetyNote: 'Oil balance',
+        priorityAction: {
+          title: 'Control shine without stripping',
+          copy: 'Switch to lighter AM layers and blot or reapply SPF at midday instead of drying the skin out.',
+        },
         handoffs: ['Skin coach adjusts cleanser and moisturizer weight', 'Progress tracker monitors shine and hydration together', 'Forecast checks whether oil balance improves without dryness'],
       },
     ];
@@ -2270,6 +2318,8 @@ Skin support:
         oil: `${oil}%`,
       };
       selected.routine = this.generateRoutineFromSignals(skinSignals);
+      selected.concerns = this.generateConcernReadout(skinSignals);
+      selected.priorityAction = this.generatePriorityAction(selected.concerns, skinSignals);
       selected.steps = [
         humidAdjustment,
         hydration < 66 ? 'Add a humectant serum under moisturizer morning and night.' : 'Keep hydration steady and do not overload layers.',
@@ -2316,8 +2366,485 @@ Skin support:
     }
 
     selected.tags = [...qualityTags, ...selected.tags].slice(0, 5);
+    selected.concerns = selected.concerns || this.generateConcernReadout(null, selected.metrics);
+    selected.priorityAction = selected.priorityAction || this.generatePriorityAction(selected.concerns);
+    selected.overlays = this.generateScanOverlays(selected.metrics, selected.concerns);
     selected.forecast = selected.forecast || this.generateGlowForecast(selected.metrics);
     return selected;
+  },
+
+  metricNumber(value, fallback = 70) {
+    const parsed = Number.parseInt(String(value ?? ''), 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  },
+
+  concernLevel(score) {
+    if (score >= 72) return 'High';
+    if (score >= 48) return 'Watch';
+    return 'Low';
+  },
+
+  generateConcernReadout(signals = null, metrics = {}) {
+    const hydration = this.metricNumber(signals?.hydration ?? metrics.hydration, 70);
+    const clarity = this.metricNumber(signals?.clarity ?? metrics.clarity, 74);
+    const texture = this.metricNumber(signals?.texture ?? metrics.texture, 74);
+    const tone = this.metricNumber(signals?.tone ?? metrics.tone, 76);
+    const oil = this.metricNumber(signals?.oil ?? metrics.oil, 62);
+    const redness = this.metricNumber(signals?.redness ?? metrics.redness, 20);
+    const humidityStress = this.metricNumber(signals?.humidityStress, Math.round((oil + (100 - hydration)) / 2));
+    const lowHydration = 100 - hydration;
+    const lowClarity = 100 - clarity;
+    const unevenTexture = 100 - texture;
+    const unevenTone = 100 - tone;
+    const oilLoad = Math.max(0, oil - 48);
+    const rednessLoad = redness;
+    const clamp = (value) => Math.max(0, Math.min(100, Math.round(value)));
+    const concern = (key, label, score, action) => ({
+      key,
+      label,
+      score: clamp(score),
+      level: this.concernLevel(clamp(score)),
+      action,
+    });
+
+    return [
+      concern('acne', 'Acne', (oilLoad * 0.65) + (lowClarity * 0.45) + (rednessLoad * 0.22), 'Keep the routine non-comedogenic and avoid picking or harsh scrubs.'),
+      concern('redness', 'Redness', rednessLoad * 1.25, 'Use calming care and pause strong actives when the skin looks flushed.'),
+      concern('dryness', 'Dryness', lowHydration * 1.1, 'Layer humectant serum under moisturizer and avoid stripping cleansers.'),
+      concern('oiliness', 'Oiliness', oilLoad * 1.45 + humidityStress * 0.25, 'Use gel moisturizer, lightweight SPF, and midday blotting.'),
+      concern('dark_spots', 'Dark spots', unevenTone * 0.92 + lowClarity * 0.3, 'Keep SPF consistent before adding brightening ingredients.'),
+      concern('uneven_tone', 'Uneven tone', unevenTone * 1.05 + rednessLoad * 0.2, 'Pair daily SPF with low-irritation tone support.'),
+      concern('texture', 'Texture', unevenTexture * 1.08 + lowHydration * 0.22, 'Use gentle resurfacing only when the barrier feels calm.'),
+      concern('pores', 'Pores', oilLoad * 0.95 + unevenTexture * 0.42, 'Balance oil with niacinamide-style support and light hydration.'),
+      concern('sensitivity', 'Sensitivity', rednessLoad * 0.95 + lowHydration * 0.35, 'Simplify to cleanser, moisturizer, and SPF until calm.'),
+      concern('dullness', 'Dullness', lowClarity * 0.82 + lowHydration * 0.35, 'Prioritize hydration and sunscreen before stronger brightening.'),
+      concern('fine_lines', 'Fine lines', lowHydration * 0.72 + unevenTexture * 0.28, 'Improve cushion with hydration, peptides, and steady SPF.'),
+      concern('sun_damage', 'Sun damage', unevenTone * 0.68 + humidityStress * 0.18, 'Reapply SPF and use sun avoidance as the first step.'),
+      concern('dehydration', 'Dehydration', lowHydration * 1.18 + humidityStress * 0.2, 'Add water-binding serum and seal it with a comfortable moisturizer.'),
+      concern('barrier', 'Barrier support', lowHydration * 0.72 + rednessLoad * 0.55 + unevenTexture * 0.18, 'Reduce actives and rebuild with ceramide-style support.'),
+      concern('ingrown_hairs', 'Ingrown hairs', unevenTexture * 0.62 + rednessLoad * 0.24, 'Use low-friction cleansing and gentle exfoliation only if skin is calm.'),
+    ].sort((a, b) => b.score - a.score);
+  },
+
+  generatePriorityAction(concerns = [], signals = {}) {
+    const top = concerns[0];
+    if (!top) {
+      return {
+        title: 'Complete a fresh baseline',
+        copy: 'Take a scan in even light so GlowAI can rank the most useful skincare move for today.',
+      };
+    }
+
+    const humidityStress = this.metricNumber(signals?.humidityStress, 50);
+    const humidCopy = humidityStress > 62 ? ' Keep AM layers light for humidity and reapply SPF instead of adding heavy products.' : '';
+    return {
+      title: `${top.label}: ${top.level.toLowerCase()} priority`,
+      copy: `${top.action}${humidCopy}`,
+    };
+  },
+
+  generateScanOverlays(metrics = {}, concerns = []) {
+    const concernScore = (key) => concerns.find((item) => item.key === key)?.score || 0;
+    const hydration = this.metricNumber(metrics.hydration, 70);
+    const tone = this.metricNumber(metrics.tone, 74);
+    const texture = this.metricNumber(metrics.texture, 74);
+    const oil = this.metricNumber(metrics.oil, 58);
+    const redness = Math.max(concernScore('redness'), concernScore('sensitivity'));
+    const overlays = [
+      {
+        key: 'redness',
+        label: 'Redness',
+        score: redness,
+        zones: [
+          { x: 27, y: 48, w: 18, h: 12 },
+          { x: 55, y: 48, w: 18, h: 12 },
+        ],
+      },
+      {
+        key: 'shine',
+        label: 'Oil/shine',
+        score: Math.max(0, oil - 40) * 1.6,
+        zones: [
+          { x: 42, y: 31, w: 16, h: 13 },
+          { x: 43, y: 48, w: 14, h: 18 },
+        ],
+      },
+      {
+        key: 'texture',
+        label: 'Texture',
+        score: Math.max(concernScore('texture'), 100 - texture),
+        zones: [
+          { x: 30, y: 60, w: 16, h: 11 },
+          { x: 54, y: 60, w: 16, h: 11 },
+        ],
+      },
+      {
+        key: 'dehydration',
+        label: 'Dehydration risk',
+        score: Math.max(concernScore('dehydration'), 100 - hydration),
+        zones: [
+          { x: 24, y: 40, w: 18, h: 12 },
+          { x: 58, y: 40, w: 18, h: 12 },
+        ],
+      },
+      {
+        key: 'tone',
+        label: 'Tone unevenness',
+        score: Math.max(concernScore('uneven_tone'), 100 - tone),
+        zones: [
+          { x: 35, y: 35, w: 30, h: 38 },
+        ],
+      },
+    ];
+
+    return overlays
+      .map((overlay) => ({
+        ...overlay,
+        score: Math.max(0, Math.min(100, Math.round(overlay.score))),
+        intensity: Math.max(0.22, Math.min(0.72, overlay.score / 120)),
+      }))
+      .filter((overlay) => overlay.score >= 18)
+      .sort((a, b) => b.score - a.score);
+  },
+
+  compareScanProgress(current = {}, previous = null) {
+    if (!previous?.metrics || !current?.metrics) {
+      return {
+        status: 'baseline',
+        title: 'Baseline mode',
+        copy: 'Your next scan will compare hydration, clarity, texture, tone, and oil balance against this result.',
+        deltas: [],
+      };
+    }
+
+    const fields = [
+      { key: 'hydration', label: 'Hydration' },
+      { key: 'clarity', label: 'Clarity' },
+      { key: 'texture', label: 'Texture' },
+      { key: 'tone', label: 'Tone' },
+      { key: 'oil', label: 'Oil balance', target: 58 },
+    ];
+
+    const deltas = fields.map((field) => {
+      const now = this.metricNumber(current.metrics[field.key], 0);
+      const before = this.metricNumber(previous.metrics[field.key], now);
+      const rawDelta = field.key === 'oil'
+        ? Math.abs(before - field.target) - Math.abs(now - field.target)
+        : now - before;
+      const delta = Math.round(rawDelta);
+      return {
+        key: field.key,
+        label: field.label,
+        delta,
+        now,
+        before,
+        state: delta > 2 ? 'improved' : delta < -2 ? 'watch' : 'steady',
+      };
+    });
+
+    const improved = deltas.filter((item) => item.state === 'improved').length;
+    const watch = deltas.filter((item) => item.state === 'watch').length;
+    const strongest = [...deltas].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))[0];
+    const title = improved > watch
+      ? `${improved} signals improved`
+      : watch > improved
+        ? `${watch} signals need attention`
+        : 'Skin signals are steady';
+    const copy = strongest
+      ? `${strongest.label} changed ${strongest.delta > 0 ? '+' : ''}${strongest.delta} points since the last scan. Use the routine plan for seven days, then compare again.`
+      : 'Use this result as today’s comparison point.';
+
+    return { status: 'comparison', title, copy, deltas };
+  },
+
+  buildScanReport(scan = this.getLatestScan()) {
+    if (!scan) return 'GlowAI report: no scan has been completed yet.';
+    const topConcerns = (scan.concerns || []).slice(0, 5).map((item) => `${item.label} ${item.score}/${item.level}`).join('; ');
+    const progress = scan.progress?.deltas?.length
+      ? scan.progress.deltas.map((item) => `${item.label} ${item.delta > 0 ? '+' : ''}${item.delta}`).join('; ')
+      : 'Baseline scan, no prior comparison yet.';
+    return [
+      `GlowAI consultation report`,
+      `Scan: ${scan.title}`,
+      `Summary: ${scan.summary}`,
+      `Metrics: balance ${scan.metrics?.balance || '-'}, hydration ${scan.metrics?.hydration || '-'}, clarity ${scan.metrics?.clarity || '-'}, texture ${scan.metrics?.texture || '-'}, tone ${scan.metrics?.tone || '-'}, oil ${scan.metrics?.oil || '-'}`,
+      `Top concerns: ${topConcerns || 'Not ranked yet'}`,
+      `Next action: ${scan.priorityAction?.title || 'Keep the routine consistent'} - ${scan.priorityAction?.copy || ''}`,
+      `AM routine: ${scan.routine?.morning || 'Cleanse, hydrate, SPF'}`,
+      `PM routine: ${scan.routine?.night || 'Barrier support'}`,
+      `Progress: ${scan.progress?.title || 'Baseline mode'} - ${progress}`,
+      `Boundary: Cosmetic wellness guidance only; refer unusual, painful, changing, or persistent concerns to a licensed professional.`,
+    ].join('\n');
+  },
+
+  escapeHtml(value = '') {
+    return String(value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  },
+
+  async copyScanReport() {
+    const status = document.getElementById('copyScanReportStatus');
+    const report = this.buildScanReport();
+    try {
+      await navigator.clipboard?.writeText(report);
+      if (status) status.textContent = 'Consultation report copied.';
+    } catch {
+      if (status) status.textContent = report;
+    }
+    this.logAgentAction('report', 'Consultation report prepared', {
+      status: 'local-copy',
+      report,
+      scanId: this.getLatestScan()?.id || 'none',
+    });
+    this.renderAgentOps();
+  },
+
+  exportScanReportHtml() {
+    const scan = this.getLatestScan();
+    const status = document.getElementById('copyScanReportStatus');
+    if (!scan) {
+      if (status) status.textContent = 'Complete a scan before exporting a report.';
+      return;
+    }
+
+    const whiteLabel = this.getStored(this.storageKeys.whiteLabel, {});
+    const reportHtml = this.buildBrandedReportHtml(scan, whiteLabel);
+    const blob = new Blob([reportHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `glowai-report-${scan.id || Date.now().toString(36)}.html`;
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    window.setTimeout(() => {
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }, 2500);
+
+    const exports = this.getStored(this.storageKeys.reportExports);
+    exports.unshift({ id: `report-${Date.now().toString(36)}`, scanId: scan.id, createdAt: new Date().toISOString() });
+    this.setStored(this.storageKeys.reportExports, exports.slice(0, 50));
+    this.logAgentAction('report', 'Branded HTML report exported', { status: 'downloaded', scanId: scan.id });
+    if (status) status.textContent = 'Branded report exported.';
+    this.renderOwnerDashboard();
+  },
+
+  buildBrandedReportHtml(scan, whiteLabel = {}) {
+    const studio = this.escapeHtml(whiteLabel.studio || 'GlowAI Studio');
+    const topConcerns = (scan.concerns || []).slice(0, 5);
+    const overlays = scan.overlays || this.generateScanOverlays(scan.metrics || {}, scan.concerns || []);
+    const report = this.escapeHtml(this.buildScanReport(scan)).replaceAll('\n', '<br />');
+    return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${studio} GlowAI Report</title>
+  <style>
+    body{margin:0;font-family:Arial,sans-serif;background:#fff8f2;color:#241226}
+    main{max-width:920px;margin:0 auto;padding:28px}
+    .hero{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+    img{width:100%;border-radius:18px;display:block}
+    .card{background:#fff;border:1px solid rgba(36,18,38,.12);border-radius:18px;padding:18px;margin-top:16px}
+    h1,h2,h3{margin:.1rem 0 .5rem}
+    .metrics,.concerns,.overlays{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .pill{border-radius:14px;background:#ecfbf6;padding:10px}
+    small{color:#5f4a55;font-weight:700;text-transform:uppercase}
+    pre{white-space:pre-wrap;font-family:inherit;line-height:1.45}
+    @media(max-width:760px){.hero,.metrics,.concerns,.overlays{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main>
+    <p><strong>${studio}</strong></p>
+    <section class="hero">
+      <div>
+        <h1>${this.escapeHtml(scan.title)}</h1>
+        <p>${this.escapeHtml(scan.summary)}</p>
+        <div class="metrics">
+          ${['balance', 'hydration', 'clarity', 'texture', 'tone', 'oil'].map((key) => `<div class="pill"><small>${key}</small><h3>${this.escapeHtml(scan.metrics?.[key] || '-')}</h3></div>`).join('')}
+        </div>
+      </div>
+      <img src="${scan.photo}" alt="Client scan" />
+    </section>
+    <section class="card">
+      <h2>Top concern priorities</h2>
+      <div class="concerns">${topConcerns.map((item) => `<div class="pill"><small>${this.escapeHtml(item.level)}</small><h3>${this.escapeHtml(item.label)}</h3><p>${item.score}/100</p></div>`).join('')}</div>
+    </section>
+    <section class="card">
+      <h2>Face-region overlay map</h2>
+      <div class="overlays">${overlays.map((item) => `<div class="pill"><small>${this.escapeHtml(item.label)}</small><h3>${item.score}/100</h3><p>${item.zones.length} highlighted region${item.zones.length === 1 ? '' : 's'}</p></div>`).join('')}</div>
+    </section>
+    <section class="card">
+      <h2>Routine and handoff</h2>
+      <pre>${report}</pre>
+    </section>
+  </main>
+</body>
+</html>`;
+  },
+
+  recordAdherenceAction(action) {
+    const today = new Date().toISOString().slice(0, 10);
+    const state = this.getStored(this.storageKeys.adherence, { startedAt: today, days: {} });
+    const day = state.days[today] || { am: false, spf: false, pm: false, rescan: false };
+    if (action && day[action] !== undefined) day[action] = true;
+    state.days[today] = day;
+    state.updatedAt = new Date().toISOString();
+    this.setStored(this.storageKeys.adherence, state);
+    this.renderAdherenceLoop();
+    this.renderOwnerDashboard();
+    const label = action === 'rescan' ? 'next scan reminder' : `${String(action || '').toUpperCase()} routine`;
+    this.pushAssistantMessage(`Logged ${label}. Keep the seven-day loop simple and scan again when the streak is complete.`);
+  },
+
+  renderAdherenceLoop() {
+    const grid = document.getElementById('adherenceGrid');
+    const title = document.getElementById('adherenceTitle');
+    const badge = document.getElementById('adherenceBadge');
+    if (!grid) return;
+    const state = this.getStored(this.storageKeys.adherence, { startedAt: new Date().toISOString().slice(0, 10), days: {} });
+    const start = new Date(state.startedAt || new Date().toISOString());
+    const today = new Date().toISOString().slice(0, 10);
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + index);
+      const key = date.toISOString().slice(0, 10);
+      const day = state.days?.[key] || {};
+      const done = ['am', 'spf', 'pm'].filter((item) => day[item]).length;
+      return { key, index, done, rescan: day.rescan };
+    });
+    const completed = days.reduce((sum, day) => sum + day.done, 0);
+    if (title) title.textContent = completed ? `${completed}/21 routine moments logged.` : 'Stay with the plan after the scan.';
+    if (badge) badge.textContent = `Day ${Math.min(7, Math.max(1, days.findIndex((day) => day.key === today) + 1 || 1))}`;
+    grid.innerHTML = days.map((day) => `
+      <article class="adherence-day ${day.done >= 3 ? 'is-complete' : day.done ? 'is-started' : ''}">
+        <span>Day ${day.index + 1}</span>
+        <strong>${day.done}/3</strong>
+        <small>${day.rescan ? 'scan planned' : day.key.slice(5)}</small>
+      </article>
+    `).join('');
+  },
+
+  createSkinEvalTemplate() {
+    const concerns = ['acne', 'redness', 'dryness', 'oiliness', 'dark_spots', 'uneven_tone', 'texture', 'pores', 'sensitivity', 'dullness', 'fine_lines', 'sun_damage', 'dehydration', 'barrier', 'ingrown_hairs'];
+    return Array.from({ length: 50 }, (_, index) => ({
+      id: `selfie-${String(index + 1).padStart(3, '0')}`,
+      reviewer_concerns: concerns.slice(index % concerns.length, (index % concerns.length) + 2).filter(Boolean),
+      predicted_concerns: [],
+      routine_score: null,
+      safety_pass: null,
+      overlay_stable: null,
+      notes: 'Reviewer fills labels after consented, anonymized selfie review. Do not store PHI in this file.',
+    }));
+  },
+
+  seedSkinEvalTemplate() {
+    const cases = this.createSkinEvalTemplate();
+    this.setStored(this.storageKeys.evalCases, cases);
+    this.renderSkinEvalStats(this.scoreSkinEvalCases());
+    this.logAgentAction('eval', '50-case skin eval template loaded', { cases: cases.length });
+    this.renderOwnerDashboard();
+  },
+
+  exportSkinEvalTemplate() {
+    const cases = this.getStored(this.storageKeys.evalCases, this.createSkinEvalTemplate());
+    const blob = new Blob([JSON.stringify(cases, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'skin-eval.json';
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    window.setTimeout(() => {
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }, 2500);
+    this.logAgentAction('eval', 'Skin eval template exported', { cases: cases.length });
+  },
+
+  importSkinEvalFile(event) {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const cases = JSON.parse(String(reader.result || '[]'));
+        if (!Array.isArray(cases)) throw new Error('Expected a JSON array.');
+        this.setStored(this.storageKeys.evalCases, cases);
+        this.renderSkinEvalStats(this.scoreSkinEvalCases());
+        this.logAgentAction('eval', 'Skin eval cases imported', { file: file.name, cases: cases.length });
+        this.renderOwnerDashboard();
+      } catch (error) {
+        this.pushAssistantMessage(`Eval import failed: ${error.message}`);
+      }
+    };
+    reader.readAsText(file);
+  },
+
+  scoreSkinEvalCases() {
+    const cases = this.getStored(this.storageKeys.evalCases, []);
+    const labeled = cases.filter((item) => Array.isArray(item.reviewer_concerns) && item.safety_pass !== null && item.routine_score !== null);
+    const concernScores = labeled.map((item) => {
+      const reviewer = new Set(item.reviewer_concerns || []);
+      const predicted = new Set(item.predicted_concerns || []);
+      if (!reviewer.size) return 1;
+      return [...reviewer].filter((label) => predicted.has(label)).length / reviewer.size;
+    });
+    const avg = (values) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+    return {
+      total: cases.length,
+      labeled: labeled.length,
+      concernMatch: Math.round(avg(concernScores) * 100),
+      routineRelevance: labeled.length ? Math.round((labeled.filter((item) => Number(item.routine_score) >= 4).length / labeled.length) * 100) : 0,
+      safetyPass: labeled.length ? Math.round((labeled.filter((item) => item.safety_pass === true).length / labeled.length) * 100) : 0,
+      overlayStability: labeled.length ? Math.round((labeled.filter((item) => item.overlay_stable === true).length / labeled.length) * 100) : 0,
+    };
+  },
+
+  renderSkinEvalStats(stats = this.scoreSkinEvalCases()) {
+    const grid = document.getElementById('skinEvalStats');
+    if (!grid) return;
+    grid.innerHTML = [
+      ['Cases', `${stats.labeled}/${stats.total}`],
+      ['Concern match', `${stats.concernMatch}%`],
+      ['Routine relevance', `${stats.routineRelevance}%`],
+      ['Safety pass', `${stats.safetyPass}%`],
+      ['Overlay stability', `${stats.overlayStability}%`],
+    ].map(([label, value]) => `<article><span>${label}</span><strong>${value}</strong></article>`).join('');
+  },
+
+  renderOwnerDashboard() {
+    const scans = this.getStored(this.storageKeys.scans, []);
+    const bookings = this.getStored(this.storageKeys.bookings, []);
+    const favorites = this.getStored(this.storageKeys.favorites, []);
+    const exports = this.getStored(this.storageKeys.reportExports, []);
+    const evalStats = this.scoreSkinEvalCases();
+    const adherence = this.getStored(this.storageKeys.adherence, { days: {} });
+    const adherenceMoments = Object.values(adherence.days || {}).reduce((sum, day) => sum + ['am', 'spf', 'pm'].filter((item) => day[item]).length, 0);
+    const latest = this.getLatestScan();
+    const topConcern = latest?.concerns?.[0]?.label || 'No concern yet';
+    const progress = latest?.progress?.title || 'Baseline';
+    const cartCount = favorites.filter((item) => /cart|routine/i.test(`${item.title} ${item.summary}`)).length;
+
+    const setText = (id, value) => {
+      const node = document.getElementById(id);
+      if (node) node.textContent = value;
+    };
+    setText('ownerLeadCount', String(scans.length));
+    setText('ownerBookingCount', String(bookings.length));
+    setText('ownerCartValue', `$${cartCount * 89}`);
+    setText('ownerReportCount', String(exports.length));
+    setText('ownerAdherenceRate', `${Math.min(100, Math.round((adherenceMoments / 21) * 100))}%`);
+    setText('ownerProgressSignal', progress);
+    setText('ownerEvalReadiness', `${evalStats.labeled}/50`);
+    setText('ownerTopConcern', topConcern);
   },
 
   generateRoutineFromSignals(signals) {
@@ -2364,6 +2891,7 @@ Skin support:
     const list = document.getElementById('scanResultList');
     const preview = document.getElementById('scanPreview');
     const previewImage = document.getElementById('scanPreviewImage');
+    const overlayMap = document.getElementById('scanOverlayMap');
     const badge = document.getElementById('scanResultBadge');
     const studioCTA = document.getElementById('scanStudioCTA');
     const heroTitle = document.getElementById('heroFocusTitle');
@@ -2373,6 +2901,12 @@ Skin support:
     const metricClarity = document.getElementById('scanMetricClarity');
     const routineMorning = document.getElementById('scanRoutineMorning');
     const routineNight = document.getElementById('scanRoutineNight');
+    const priorityTitle = document.getElementById('scanPriorityTitle');
+    const priorityCopy = document.getElementById('scanPriorityCopy');
+    const progressTitle = document.getElementById('scanProgressTitle');
+    const progressCopy = document.getElementById('scanProgressCopy');
+    const progressDeltas = document.getElementById('scanProgressDeltas');
+    const concernGrid = document.getElementById('scanConcernGrid');
     const qualityConfidence = document.getElementById('scanQualityConfidence');
     const qualitySafety = document.getElementById('scanQualitySafety');
     const handoffs = document.getElementById('scanAgentHandoffs');
@@ -2383,11 +2917,19 @@ Skin support:
       if (badge) badge.textContent = 'Waiting';
       if (preview) preview.classList.add('hidden');
       if (previewImage) previewImage.removeAttribute('src');
+      if (overlayMap) overlayMap.innerHTML = '';
+      if (overlayLegend) overlayLegend.innerHTML = '';
       if (metricBalance) metricBalance.textContent = '-';
       if (metricHydration) metricHydration.textContent = '-';
       if (metricClarity) metricClarity.textContent = '-';
       if (routineMorning) routineMorning.textContent = 'Cleanse, hydrate, SPF';
       if (routineNight) routineNight.textContent = 'Barrier support';
+      if (priorityTitle) priorityTitle.textContent = 'Build a baseline first';
+      if (priorityCopy) priorityCopy.textContent = 'Complete one scan and GlowAI will rank the most useful skincare move for today.';
+      if (progressTitle) progressTitle.textContent = 'Baseline mode';
+      if (progressCopy) progressCopy.textContent = 'Your next scan will compare hydration, clarity, texture, tone, and oil balance against this result.';
+      if (progressDeltas) progressDeltas.innerHTML = '';
+      if (concernGrid) concernGrid.innerHTML = '';
       if (qualityConfidence) qualityConfidence.textContent = '-';
       if (qualitySafety) qualitySafety.textContent = 'Guide';
       if (handoffs) handoffs.innerHTML = '';
@@ -2411,16 +2953,61 @@ Skin support:
     if (metricClarity) metricClarity.textContent = latest.metrics?.clarity || '-';
     if (routineMorning) routineMorning.textContent = latest.routine?.morning || 'Cleanse, hydrate, SPF';
     if (routineNight) routineNight.textContent = latest.routine?.night || 'Barrier support';
+    if (priorityTitle) priorityTitle.textContent = latest.priorityAction?.title || 'Keep the routine consistent';
+    if (priorityCopy) priorityCopy.textContent = latest.priorityAction?.copy || 'Stay consistent for 7 days, then scan again to compare hydration, clarity, texture, and tone.';
+    const storedScans = this.getStored(this.storageKeys.scans);
+    const progress = latest.progress || this.compareScanProgress(latest, storedScans.find((scan) => scan.id !== latest.id));
+    if (progressTitle) progressTitle.textContent = progress.title;
+    if (progressCopy) progressCopy.textContent = progress.copy;
+    if (progressDeltas) {
+      progressDeltas.innerHTML = progress.deltas?.length
+        ? progress.deltas.map((item) => `
+          <article class="progress-delta progress-${this.escapeHtml(item.state || 'steady')}">
+            <span>${this.escapeHtml(item.label || 'Signal')}</span>
+            <strong>${this.escapeHtml(`${item.delta > 0 ? '+' : ''}${item.delta}`)}</strong>
+          </article>
+        `).join('')
+        : '<article class="progress-delta progress-steady"><span>Baseline</span><strong>New</strong></article>';
+    }
+    if (concernGrid) {
+      const concerns = latest.concerns || this.generateConcernReadout(null, latest.metrics || {});
+      concernGrid.innerHTML = concerns.map((concern) => `
+        <article class="concern-card concern-${this.escapeHtml(String(concern.level || 'low').toLowerCase())}">
+          <span>${this.escapeHtml(concern.label || 'Concern')}</span>
+          <strong>${this.escapeHtml(concern.score ?? '-')}</strong>
+          <small>${this.escapeHtml(concern.level || 'Low')}</small>
+        </article>
+      `).join('');
+    }
     if (qualityConfidence) qualityConfidence.textContent = latest.confidence || 'Guided';
     if (qualitySafety) qualitySafety.textContent = latest.safetyNote || 'Guide';
     if (handoffs) {
       const items = latest.handoffs || ['Skin coach builds the routine', 'Progress tracker saves the baseline', 'Forecast watches hydration and texture'];
-      handoffs.innerHTML = items.map((item) => `<div class="agent-handoff">${item}</div>`).join('');
+      handoffs.innerHTML = items.map((item) => `<div class="agent-handoff">${this.escapeHtml(item)}</div>`).join('');
     }
 
     if (preview && previewImage) {
       preview.classList.remove('hidden');
       previewImage.src = latest.photo;
+    }
+    if (overlayMap) {
+      const overlays = latest.overlays || this.generateScanOverlays(latest.metrics || {}, latest.concerns || []);
+      overlayMap.innerHTML = overlays.map((overlay) => overlay.zones.map((zone) => `
+        <span
+          class="scan-overlay-zone overlay-${overlay.key}"
+          style="left:${zone.x}%;top:${zone.y}%;width:${zone.w}%;height:${zone.h}%;--overlay-alpha:${overlay.intensity}"
+          title="${overlay.label} ${overlay.score}/100"
+        ></span>
+      `).join('')).join('');
+      if (overlayLegend) {
+        overlayLegend.innerHTML = overlays.length
+          ? overlays.slice(0, 5).map((overlay) => `
+            <span class="overlay-legend-item overlay-${this.escapeHtml(overlay.key)}">
+              <i aria-hidden="true"></i>${this.escapeHtml(overlay.label)} ${this.escapeHtml(overlay.score)}
+            </span>
+          `).join('')
+          : '<span class="overlay-legend-item">No priority overlay zones</span>';
+      }
     }
 
     if (tags) {
@@ -2444,6 +3031,8 @@ Skin support:
 
     this.renderScanHistory();
     this.renderForecast();
+    this.renderAdherenceLoop();
+    this.renderOwnerDashboard();
   },
 
   renderScanHistory() {
@@ -2457,16 +3046,16 @@ Skin support:
 
     container.innerHTML = scans.slice(0, 3).map((scan) => `
       <article class="note-card saved-card scan-history-card">
-        <p class="card-label">${scan.studioLane}</p>
-        <h3>${scan.title}</h3>
-        <p>${scan.summary}</p>
+        <p class="card-label">${this.escapeHtml(scan.studioLane || 'Skin read')}</p>
+        <h3>${this.escapeHtml(scan.title || 'Saved scan')}</h3>
+        <p>${this.escapeHtml(scan.summary || 'No summary saved.')}</p>
         <div class="detail-tags">
-          <span class="detail-tag">Balance ${scan.metrics?.balance || '-'}</span>
-          <span class="detail-tag">Hydration ${scan.metrics?.hydration || '-'}</span>
-          <span class="detail-tag">Clarity ${scan.metrics?.clarity || '-'}</span>
-          <span class="detail-tag">Texture ${scan.metrics?.texture || '-'}</span>
-          <span class="detail-tag">Tone ${scan.metrics?.tone || '-'}</span>
-          <span class="detail-tag">Oil ${scan.metrics?.oil || '-'}</span>
+          <span class="detail-tag">Balance ${this.escapeHtml(scan.metrics?.balance || '-')}</span>
+          <span class="detail-tag">Hydration ${this.escapeHtml(scan.metrics?.hydration || '-')}</span>
+          <span class="detail-tag">Clarity ${this.escapeHtml(scan.metrics?.clarity || '-')}</span>
+          <span class="detail-tag">Texture ${this.escapeHtml(scan.metrics?.texture || '-')}</span>
+          <span class="detail-tag">Tone ${this.escapeHtml(scan.metrics?.tone || '-')}</span>
+          <span class="detail-tag">Oil ${this.escapeHtml(scan.metrics?.oil || '-')}</span>
         </div>
       </article>
     `).join('');
@@ -2491,10 +3080,10 @@ Skin support:
     if (badge) badge.textContent = latest.safetyNote || 'Routine';
     grid.innerHTML = forecast.map((item) => `
       <article class="forecast-card">
-        <p class="card-label">Day ${item.day}</p>
-        <strong>${item.score}%</strong>
-        <h3>${item.label}</h3>
-        <span>${item.action}</span>
+        <p class="card-label">Day ${this.escapeHtml(item.day || '-')}</p>
+        <strong>${this.escapeHtml(item.score ?? '-')}%</strong>
+        <h3>${this.escapeHtml(item.label || 'Forecast')}</h3>
+        <span>${this.escapeHtml(item.action || 'Stay consistent with the routine.')}</span>
       </article>
     `).join('');
   },
@@ -2602,16 +3191,20 @@ Skin support:
     ];
   },
 
-  startAvatarSelfieFlow() {
+  startAvatarSelfieFlow({ fromGesture = false } = {}) {
     if (!this.avatarIntro.active) return;
     this.clearAvatarIntroTimers();
+    try { this.avatarIntro.recognition?.stop?.(); } catch {}
+    this.avatarIntro.recognition = null;
+    this.avatarIntro.listening = false;
+    document.getElementById('glowIntro')?.classList.remove('is-listening');
     this.writeAvatarLine('Opening the camera now. Hold steady and let me frame your face.');
     this.speak('Opening the camera now. Hold steady and let me frame your face.', { force: true });
 
     window.setTimeout(() => {
       this.finishAvatarIntro();
       this.beginScanFlow();
-    }, 1100);
+    }, fromGesture ? 180 : 900);
   },
 
   startAvatarListening({ fromGesture = false, interruptIntro = false } = {}) {
@@ -2804,9 +3397,9 @@ Skin support:
 
     container.innerHTML = favorites.map((item) => `
       <article class="note-card saved-card">
-        <p class="card-label">${this.focusContent[item.service]?.label || 'Saved look'}</p>
-        <h3>${item.title}</h3>
-        <p>${item.summary}</p>
+        <p class="card-label">${this.escapeHtml(this.focusContent[item.service]?.label || 'Saved look')}</p>
+        <h3>${this.escapeHtml(item.title || 'Saved item')}</h3>
+        <p>${this.escapeHtml(item.summary || 'No summary saved.')}</p>
       </article>
     `).join('');
   },
@@ -2822,10 +3415,10 @@ Skin support:
 
     container.innerHTML = bookings.slice(0, 4).map((item) => `
       <article class="note-card saved-card">
-        <p class="card-label">${item.serviceTitle}</p>
-        <h3>${item.name}</h3>
-        <p>${item.date} at ${item.time || 'TBD'}</p>
-        ${item.notes ? `<p>${item.notes}</p>` : ''}
+        <p class="card-label">${this.escapeHtml(item.serviceTitle || 'Booking')}</p>
+        <h3>${this.escapeHtml(item.name || 'Guest')}</h3>
+        <p>${this.escapeHtml(item.date || 'Date TBD')} at ${this.escapeHtml(item.time || 'TBD')}</p>
+        ${item.notes ? `<p>${this.escapeHtml(item.notes)}</p>` : ''}
       </article>
     `).join('');
   },
@@ -2836,7 +3429,7 @@ Skin support:
     const messages = this.getStored(this.storageKeys.chat);
     thread.innerHTML = messages.map((message) => `
       <div class="chat-row ${message.role === 'assistant' ? 'assistant' : 'user'}">
-        <div class="chat-bubble">${message.text}</div>
+        <div class="chat-bubble">${this.escapeHtml(message.text || '')}</div>
       </div>
     `).join('');
     thread.scrollTop = thread.scrollHeight;

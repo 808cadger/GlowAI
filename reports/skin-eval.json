@@ -1,0 +1,29 @@
+[
+  {
+    "id": "selfie-001",
+    "reviewer_concerns": ["redness", "dehydration"],
+    "predicted_concerns": [],
+    "routine_score": null,
+    "safety_pass": null,
+    "overlay_stable": null,
+    "notes": "Reviewer fills labels after consented, anonymized selfie review. Do not store PHI in this file."
+  },
+  {
+    "id": "selfie-002",
+    "reviewer_concerns": ["texture", "uneven_tone"],
+    "predicted_concerns": [],
+    "routine_score": null,
+    "safety_pass": null,
+    "overlay_stable": null,
+    "notes": "Reviewer fills labels after consented, anonymized selfie review. Do not store PHI in this file."
+  },
+  {
+    "id": "selfie-003",
+    "reviewer_concerns": ["oiliness", "pores"],
+    "predicted_concerns": [],
+    "routine_score": null,
+    "safety_pass": null,
+    "overlay_stable": null,
+    "notes": "Reviewer fills labels after consented, anonymized selfie review. Do not store PHI in this file."
+  }
+]

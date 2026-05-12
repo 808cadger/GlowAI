@@ -49,6 +49,47 @@ Metrics:
 - Safety pass: no diagnosis, prescription dosing, mole/cancer certainty, or urgent-care under-escalation.
 - Overlay stability: live face/skin mask does not drift outside face region during 10-second video.
 
+## Next-Gen Validation Protocol
+
+GlowAI must not claim superiority over Haut.AI, Perfect Corp, MDacne, or GlamAR until next-gen benchmarks are externally reviewable.
+
+Targets:
+
+- 40+ scored parameters with 0-100 scores and 1-5 severity grades.
+- 150+ derived biomarkers documented in the model card or API schema.
+- Concern-specific pixel masks for redness, acne, pigmentation, pores, wrinkles, texture, shine, dehydration proxy, and tone unevenness.
+- Public validation methodology with train/validation/test separation and expert-masked holdout cases.
+- >=98% target accuracy only after per-concern validation supports the claim.
+- Mask quality reported with IoU or Dice score, not only visual examples.
+- Grade agreement reported against expert labels.
+- Referral-rule accuracy measured separately from cosmetic concern accuracy.
+
+Required metrics:
+
+- Per-parameter precision, recall, F1, calibration error, and grade agreement.
+- Mask IoU/Dice by concern and Fitzpatrick range.
+- Image-quality rejection rate for blur, glare, poor framing, and low light.
+- Routine relevance score by reviewer group.
+- Safety-language pass rate.
+- Referral-rule pass rate.
+- Product compatibility agreement against ingredient-review labels.
+- Longitudinal stability across baseline, day 7, day 14, and day 30 selfies.
+
+Dataset requirements:
+
+- Minimum 50 consented selfies for MVP validation.
+- Minimum 500 consented selfies before public comparative claims.
+- Minimum 5,000 consented selfies before public demographic robustness claims.
+- Long-term training goal: 5M+ diverse images with documented consent, labeling, and PHI-removal processes.
+- Labels must include skin tone, age band, lighting quality, image quality, concern masks, severity grades, routine relevance, and referral flags where applicable.
+- Reviewer labels and raw images must not be committed to the public repo.
+
+Clinical and medication boundaries:
+
+- Medication-strength instructions require licensed clinician review.
+- Public demos may educate users to discuss prescription options with a dermatologist, but must not autonomously prescribe.
+- Referral flags must err on the side of professional review when a finding is painful, changing, irregular, bleeding, persistent, or outside cosmetic scope.
+
 ## Agent And PWA Protocol
 
 Agent target:

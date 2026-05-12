@@ -106,9 +106,9 @@
 
   function css(accent) {
     return [
-      '.swav{position:fixed;right:16px;bottom:18px;z-index:99999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eef8ff}',
+      '.swav{position:fixed;right:max(14px,calc(env(safe-area-inset-right) + 12px));bottom:max(14px,calc(env(safe-area-inset-bottom) + 12px));z-index:99999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eef8ff;transform:none}',
       '.swav *{box-sizing:border-box}',
-      '.swav-panel{width:min(380px,calc(100vw - 24px));max-height:min(620px,calc(100vh - 96px));display:none;flex-direction:column;overflow:hidden;background:rgba(8,13,24,.96);border:1px solid color-mix(in srgb,' + accent + ' 58%,transparent);border-radius:12px;box-shadow:0 20px 58px rgba(0,0,0,.42);backdrop-filter:blur(18px) saturate(140%)}',
+      '.swav-panel{width:min(380px,calc(100vw - 24px));max-height:min(620px,calc(100svh - 92px));display:none;flex-direction:column;overflow:hidden;background:rgba(8,13,24,.96);border:1px solid color-mix(in srgb,' + accent + ' 58%,transparent);border-radius:12px;box-shadow:0 20px 58px rgba(0,0,0,.42);backdrop-filter:blur(18px) saturate(140%)}',
       '.swav.open .swav-panel{display:flex}',
       '.swav-head{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid rgba(255,255,255,.08)}',
       '.swav-face{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 28%,#fff,' + accent + ' 28%,#101827 69%);box-shadow:0 0 24px color-mix(in srgb,' + accent + ' 38%,transparent);transition:transform .18s ease,box-shadow .18s ease}',
@@ -133,7 +133,7 @@
       '.swav-launch-face{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 28%,#fff,' + accent + ' 28%,#101827 69%)}',
       '.swav-launch-copy{display:grid;text-align:left;line-height:1.05}.swav-launch-copy strong{font-size:12px}.swav-launch-copy span{font-size:10px;color:#a9bdd4;margin-top:3px}',
       '.swav-pulse{animation:swavPulse 2.8s ease-in-out infinite}@keyframes swavPulse{0%,100%{box-shadow:0 0 16px color-mix(in srgb,' + accent + ' 25%,transparent)}50%{box-shadow:0 0 32px color-mix(in srgb,' + accent + ' 52%,transparent)}}',
-      '@media(max-width:520px){.swav{left:50%;right:auto;bottom:max(8.7rem,calc(env(safe-area-inset-bottom) + 8.25rem));align-items:center;transform:translateX(-50%)}.swav.open{bottom:max(9.4rem,calc(env(safe-area-inset-bottom) + 8.9rem))}.swav-panel{width:calc(100vw - 24px);max-height:66vh}.swav-launch{min-width:104px;min-height:48px}.swav-launch-face{width:32px;height:32px}.swav-launch-copy strong{font-size:11px}.swav-launch-copy span{font-size:9px}.swav-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}'
+      '@media(max-width:520px){.swav{left:auto;right:max(10px,calc(env(safe-area-inset-right) + 10px));bottom:max(10px,calc(env(safe-area-inset-bottom) + 10px));align-items:flex-end;transform:none}.swav.open{bottom:max(10px,calc(env(safe-area-inset-bottom) + 10px))}.swav-panel{width:min(360px,calc(100vw - 20px));max-height:min(70svh,calc(100svh - 84px))}.swav-launch{min-width:54px;width:54px;min-height:54px;justify-content:center;padding:8px;border-radius:50%}.swav-launch-face{width:34px;height:34px}.swav-launch-copy{display:none}.swav-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}'
     ].join('');
   }
 
@@ -492,9 +492,10 @@
     function open() {
       wrap.classList.add('open');
       launcher.classList.remove('swav-pulse');
-      input.focus();
+      if (!window.matchMedia || window.matchMedia('(min-width: 641px)').matches) input.focus();
     }
     function closePanel() {
+      stopAvatar(wrap);
       wrap.classList.remove('open');
     }
     async function submit(text, skill) {
@@ -535,7 +536,7 @@
 
     launcher.addEventListener('click', function () {
       if (wrap.classList.contains('open')) {
-        submit('', 'talk');
+        closePanel();
       } else {
         open();
         speak(p.greeting, wrap);

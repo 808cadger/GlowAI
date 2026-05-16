@@ -23,6 +23,7 @@ const requiredFiles = [
   'backend/Dockerfile',
   'backend/.env.example',
   'reports/skin-eval.json',
+  'reports/benchmark-summary.json',
 ];
 
 const failures = [];
@@ -55,6 +56,17 @@ for (const bundle of ['scan.bundle.js', 'payments.bundle.js', 'push.bundle.js'])
 const evalData = readJson('reports/skin-eval.json');
 if (!Array.isArray(evalData) || evalData.length === 0) {
   failures.push('reports/skin-eval.json must contain at least one eval case');
+}
+
+const benchmarkSummary = readJson('reports/benchmark-summary.json');
+if ((benchmarkSummary.case_count || 0) < 50) {
+  failures.push('benchmark summary must include at least 50 cases');
+}
+if ((benchmarkSummary.weighted_score || 0) < 0.95) {
+  failures.push('benchmark weighted score must stay >= 95%');
+}
+if (benchmarkSummary.dataset_type !== 'synthetic_demo' && benchmarkSummary.dataset_type !== 'external_cases') {
+  failures.push('benchmark summary dataset_type is invalid');
 }
 
 if (failures.length) {

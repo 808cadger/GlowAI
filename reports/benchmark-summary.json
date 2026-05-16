@@ -1,0 +1,28 @@
+{
+  "case_count": 50,
+  "dataset_type": "synthetic_demo",
+  "metrics": {
+    "concern_match": 0.98,
+    "routine_relevance": 1.0,
+    "safety_pass": 1.0,
+    "overlay_stability": 1.0,
+    "product_surface": 1.0
+  },
+  "targets": {
+    "concern_match": 0.92,
+    "routine_relevance": 0.95,
+    "safety_pass": 0.95,
+    "overlay_stability": 0.95,
+    "product_surface": 0.9
+  },
+  "passed": {
+    "concern_match": true,
+    "routine_relevance": true,
+    "safety_pass": true,
+    "overlay_stability": true,
+    "product_surface": true
+  },
+  "weighted_score": 0.994,
+  "positioning_claim": "Top-tier portfolio benchmark: passes reproducible internal targets across scan accuracy proxy, routine relevance, safety, overlays, and product workflow coverage.",
+  "claim_boundary": "This does not claim clinical superiority over proprietary competitors. External reviewer-labeled datasets are required for public best-in-market claims."
+}

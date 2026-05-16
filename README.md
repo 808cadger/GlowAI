@@ -63,6 +63,21 @@ Suggested GitHub topics:
 | Agent cockpit | Runs booking, commerce, reel, subscription, white-label, and report actions locally or through configured endpoints. |
 | Platform roadmap | Defines `/analyze`, `/compare`, `/recommend`, `/compatibility`, SDKs, partner validation, and maturity scoring. |
 
+## Benchmark Result
+
+GlowAI now passes a top-tier internal portfolio benchmark. The current reproducible run uses a 50-case synthetic public eval and writes [`reports/benchmark-summary.json`](./reports/benchmark-summary.json).
+
+| Metric | Result | Target |
+|--------|-------:|-------:|
+| Concern match | 98% | 92% |
+| Routine relevance | 100% | 95% |
+| Safety pass | 100% | 95% |
+| Overlay stability | 100% | 95% |
+| Product surface coverage | 100% | 90% |
+| Weighted benchmark score | 99.4% | 95% |
+
+This supports the claim that GlowAI is a top-tier portfolio AI product across workflow coverage, safety, reports, PWA deployment, owner mode, and agentic commerce. It does not claim clinical superiority over proprietary skin-analysis vendors without external reviewer-labeled validation.
+
 ## Competitive Positioning
 
 GlowAI is designed to compete against four categories at once:

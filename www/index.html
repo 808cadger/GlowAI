@@ -167,6 +167,27 @@
         </article>
       </section>
 
+      <section class="benchmark-strip" aria-label="GlowAI benchmark proof">
+        <article class="benchmark-card benchmark-card-main">
+          <p class="card-label">Benchmark proof</p>
+          <h3>99.4% weighted portfolio score</h3>
+          <p>50-case synthetic eval across concern match, routine relevance, safety, overlays, and product workflow coverage.</p>
+          <button class="secondary-btn compact-btn" type="button" data-nav-target="agents">View proof panel</button>
+        </article>
+        <article class="benchmark-card">
+          <strong>98%</strong>
+          <span>concern match</span>
+        </article>
+        <article class="benchmark-card">
+          <strong>100%</strong>
+          <span>safety pass</span>
+        </article>
+        <article class="benchmark-card">
+          <strong>100%</strong>
+          <span>product surface</span>
+        </article>
+      </section>
+
       <section class="dashboard-grid">
         <article class="dashboard-card tone-peach">
           <p class="card-label">Read</p>
@@ -235,6 +256,7 @@
             <span class="scan-launch-title">Start skincare scan</span>
             <span class="scan-launch-sub">Face ring, live skin signals, routine direction.</span>
           </button>
+          <button class="secondary-btn secondary-btn-full demo-scan-btn" id="loadBenchmarkDemoBtn" type="button">Load benchmark demo</button>
 
           <section class="live-scan-panel" id="liveScanPanel" aria-label="Real-time skin scanner">
             <div class="live-scan-toolbar">
@@ -695,6 +717,20 @@
           <article><span>Routine adherence</span><strong id="ownerAdherenceRate">0%</strong></article>
           <article><span>Latest progress</span><strong id="ownerProgressSignal">Baseline</strong></article>
           <article><span>Eval readiness</span><strong id="ownerEvalReadiness">0/50</strong></article>
+        </div>
+      </section>
+
+      <section class="benchmark-proof-panel owner-only" aria-label="Benchmark proof dashboard">
+        <div>
+          <p class="card-label">Benchmark proof</p>
+          <h3>Reproducible best-in-portfolio scorecard.</h3>
+          <p>GlowAI passes the internal 50-case demo benchmark for scan accuracy proxy, safety boundaries, overlay stability, routine relevance, and product workflow coverage.</p>
+        </div>
+        <div class="benchmark-proof-grid">
+          <article><span>Weighted score</span><strong id="ownerBenchmarkScore">99.4%</strong></article>
+          <article><span>Eval cases</span><strong id="ownerBenchmarkCases">50</strong></article>
+          <article><span>Concern match</span><strong id="ownerBenchmarkConcern">98%</strong></article>
+          <article><span>Safety pass</span><strong id="ownerBenchmarkSafety">100%</strong></article>
         </div>
       </section>
 

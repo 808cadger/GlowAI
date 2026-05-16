@@ -153,10 +153,11 @@ npm install
 
 ```bash
 npm run build
+npm run audit
 npm run check
 ```
 
-`npm run check` builds the PWA, runs scan/routine benchmarks, runs agent routing evals, and runs backend routine tests.
+`npm run audit` verifies deploy-critical files, bundle references, PWA manifest shape, hosting config, and eval data. `npm run check` builds the PWA, audits the deploy bundle, runs scan/routine benchmarks, runs agent routing evals, and runs backend routine tests.
 
 ## Demo
 

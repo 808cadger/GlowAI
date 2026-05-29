@@ -95,3 +95,18 @@ If a check cannot run locally, say exactly why in the final handoff.
 - Summarize changed files and verification results.
 - Include blockers and assumptions explicitly.
 - Do not force JSON-only or diff-only responses unless the user asks for that format.
+
+---
+
+## Avatar Interview Standard (All Apps)
+
+- Every app must include a built-in interviewer flow that captures voice answers with mic input and can fill form fields from those answers.
+- Prefer a split layout with an animated avatar interviewer on one side and the target form on the other when the screen allows it.
+- Voice capture requirements: start/stop control, listening state, transcript preview, and automatic field fill for the active question.
+- Keep this flow on-device first; use external endpoints only when explicitly configured.
+
+## Rollout Plan (Slow 3-Phase)
+
+1. Phase 1 - Pilot in active repos and validate usability, latency, and error handling.
+2. Phase 2 - Extract reusable interviewer module/template and document integration steps.
+3. Phase 3 - Sweep remaining repos with staged PRs, verification, and rollback-ready commits.

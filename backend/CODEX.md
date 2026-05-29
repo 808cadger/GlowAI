@@ -13,3 +13,8 @@
 ## Handoff
 
 Point Claude to `../CLAUDE.md` for product decisions and point Codex to `../CODEX.md` for implementation workflow.
+
+## Avatar Interview Standard
+
+- Backend changes must support interviewer voice/form flows without breaking low-latency interactions.
+- Any API added for interviewer workflows must keep request/response contracts simple for step-by-step question and field-fill behavior.

@@ -13,3 +13,8 @@
 ## Handoff
 
 Point Claude to `../CLAUDE.md` for user experience and model intent. Point Codex to `../CODEX.md` for code execution and verification.
+
+## Avatar Interview Standard
+
+- Frontend surfaces must include the built-in interviewer pattern: animated avatar, mic voice answers, transcript handling, and active-field auto-fill.
+- Keep the interviewer first-party and integrated in the app screen rather than a detached floating widget when a form workflow is the goal.

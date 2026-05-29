@@ -12,3 +12,8 @@
 ## Handoff
 
 Claude keeps product and model intent in `../CLAUDE.md`. Codex keeps Android build and verification workflow in `../CODEX.md`.
+
+## Avatar Interview Standard
+
+- Android-delivered app experiences must include the built-in interviewer pattern from `../CODEX.md`: animated avatar + mic answer capture + form auto-fill.
+- Verify voice permissions and runtime behavior on-device when this flow is touched.

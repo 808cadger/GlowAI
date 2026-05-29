@@ -3167,7 +3167,7 @@ Skin support:
     this.writeAvatarLine(lines[0]);
     const listeningState = document.getElementById('glowListeningState');
     if (listeningState && this.shouldUseSelfieEntry()) {
-      listeningState.textContent = 'Tap anywhere to open the selfie camera.';
+      listeningState.textContent = 'Tap anywhere. I will open camera and guide you.';
     }
 
     this.speak(lines[0], { force: true });
@@ -3196,18 +3196,18 @@ Skin support:
     const dayPart = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
     const latestScan = this.latestScan || this.getStored(this.storageKeys.scans)[0] || null;
     const scanContext = latestScan
-      ? `I remember your last read: ${latestScan.title}. We can compare today against that.`
-      : 'No baseline yet, so the first scan will give us your starting point.';
+      ? `Your last read was ${latestScan.title}. We will compare against it.`
+      : 'No baseline yet. This first scan sets your reference.';
     const openings = [
-      `Good ${dayPart}. Let me settle the light before we begin.`,
-      `Hi. I am here with you. I will move slowly, then we can decide what you need.`,
-      `Welcome back to GlowAI. I am checking the room and getting the scan path ready.`,
+      `Good ${dayPart}. You are in good hands.`,
+      'Welcome back. We will keep this simple and precise.',
+      'I am ready. We begin when you are ready.',
     ];
     const opening = openings[Math.floor(Math.random() * openings.length)];
     return [
       opening,
-      `${scanContext} I will take you straight into a selfie scan, then we can talk through what I notice.`,
-      'Keep your face centered in soft, even light. If something looks medical, I will keep you pointed toward a professional.',
+      `${scanContext} I will take you directly into scan, then we review results together.`,
+      'Hold a calm, centered frame in soft light. For medical concerns, I will direct you to a professional.',
     ];
   },
 
@@ -3218,8 +3218,8 @@ Skin support:
     this.avatarIntro.recognition = null;
     this.avatarIntro.listening = false;
     document.getElementById('glowIntro')?.classList.remove('is-listening');
-    this.writeAvatarLine('Opening the camera now. Hold steady and let me frame your face.');
-    this.speak('Opening the camera now. Hold steady and let me frame your face.', { force: true });
+    this.writeAvatarLine('Opening camera now. Hold still while I frame you.');
+    this.speak('Opening camera now. Hold still while I frame you.', { force: true });
 
     window.setTimeout(() => {
       this.finishAvatarIntro();
@@ -3240,7 +3240,7 @@ Skin support:
     }
 
     if (!SpeechRecognition) {
-      if (state) state.textContent = 'Voice input is not supported here. Opening Coach so you can type.';
+      if (state) state.textContent = 'Voice is unavailable here. Opening Coach for text.';
       window.setTimeout(() => {
         this.finishAvatarIntro();
         this.showPage('concierge');
@@ -3256,7 +3256,7 @@ Skin support:
     this.avatarIntro.recognition = recognition;
     this.avatarIntro.listening = true;
     intro?.classList.add('is-listening');
-    if (state) state.textContent = fromGesture ? 'I am listening now.' : 'Listening for your voice...';
+    if (state) state.textContent = fromGesture ? 'Listening now.' : 'Listening for your voice.';
 
     recognition.onresult = async (event) => {
       const transcript = Array.from(event.results)
@@ -3278,8 +3278,8 @@ Skin support:
       if (state) {
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
           state.textContent = fromGesture
-            ? 'Microphone permission was blocked. Opening Coach so you can type.'
-            : 'Tap anywhere on the avatar screen once, then speak.';
+            ? 'Microphone is blocked. Opening Coach for text.'
+            : 'Tap once on the avatar screen, then speak.';
           if (fromGesture) {
             window.setTimeout(() => {
               this.finishAvatarIntro();
@@ -3289,8 +3289,8 @@ Skin support:
           }
         } else {
           state.textContent = fromGesture
-            ? 'I could not hear you clearly. Tap the avatar and speak again.'
-            : 'Tap anywhere on the avatar screen once, then speak.';
+            ? 'I did not catch that. Tap the avatar and try again.'
+            : 'Tap once on the avatar screen, then speak.';
         }
       }
     };
@@ -3299,7 +3299,7 @@ Skin support:
       this.avatarIntro.listening = false;
       intro?.classList.remove('is-listening');
       if (this.avatarIntro.active && state && !state.textContent.includes('Tap')) {
-        state.textContent = 'Say "scan my face" or tell me what you need.';
+        state.textContent = 'Say "scan my face" or tell me your goal.';
       }
     };
 
@@ -3308,7 +3308,7 @@ Skin support:
     } catch {
       this.avatarIntro.listening = false;
       intro?.classList.remove('is-listening');
-      if (state) state.textContent = 'Tap anywhere on the avatar screen once, then speak.';
+      if (state) state.textContent = 'Tap once on the avatar screen, then speak.';
     }
   },
 
@@ -3332,25 +3332,25 @@ Skin support:
 
     if (wantsExit) {
       this.clearAvatarIntroTimers();
-      this.writeAvatarLine('Opening GlowAI. You can call me from Coach when you want help.');
-      this.speak('Opening GlowAI. You can call me from Coach when you want help.', { force: true });
+      this.writeAvatarLine('Opening GlowAI now. Call me from Coach any time.');
+      this.speak('Opening GlowAI now. Call me from Coach any time.', { force: true });
       window.setTimeout(() => this.finishAvatarIntro(), 900);
       return;
     }
 
     if (wantsScan) {
-      this.writeAvatarLine('Yes. I will open the face scan now. Keep your face centered in even light.');
-      this.speak('Yes. I will open the face scan now. Keep your face centered in even light.', { force: true });
+      this.writeAvatarLine('Opening face scan now. Keep centered in even light.');
+      this.speak('Opening face scan now. Keep centered in even light.', { force: true });
       this.clearAvatarIntroTimers();
       window.setTimeout(() => this.startAvatarSelfieFlow(), 1000);
       return;
     }
 
     this.clearAvatarIntroTimers();
-    this.writeAvatarLine('I can help with that. I am opening Coach so we can keep talking.');
-    this.speak('I can help with that. I am opening Coach so we can keep talking.', { force: true });
+    this.writeAvatarLine('Understood. I am opening Coach so we can continue.');
+    this.speak('Understood. I am opening Coach so we can continue.', { force: true });
     this.pushUserMessage(text);
-    this.pushAssistantMessage('I heard you. Tell me a little more, or ask me to scan your face when you are ready.');
+    this.pushAssistantMessage('I heard you. Share one detail, or ask me to start your face scan.');
     if (state) state.textContent = 'Opening Coach...';
     window.setTimeout(() => {
       this.finishAvatarIntro();

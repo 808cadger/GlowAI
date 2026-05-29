@@ -3913,10 +3913,10 @@ body::before {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(240px, 420px) minmax(280px, 520px);
+  grid-template-columns: minmax(380px, 1fr) minmax(320px, 1fr);
   align-items: center;
   gap: clamp(1.5rem, 6vw, 5rem);
-  width: min(1060px, 100%);
+  width: min(1240px, 100%);
   transform: translateY(-4vh);
 }
 
@@ -3924,7 +3924,8 @@ body::before {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 470px;
+  min-height: clamp(520px, 72vh, 780px);
+  width: min(50vw, 620px);
   opacity: 0;
   filter: blur(18px);
   transform: translateY(28px) scale(0.94);
@@ -3933,7 +3934,7 @@ body::before {
 
 .glow-avatar-aura {
   position: absolute;
-  width: min(72vw, 370px);
+  width: min(92%, 560px);
   aspect-ratio: 1;
   border: 1px solid rgba(143, 213, 199, 0.22);
   border-radius: 50%;
@@ -3950,7 +3951,7 @@ body::before {
 .glow-avatar-portrait {
   position: relative;
   z-index: 5;
-  width: min(70vw, 340px);
+  width: min(92%, 560px);
   aspect-ratio: 1 / 1.28;
   display: block;
   object-fit: cover;
@@ -3988,8 +3989,10 @@ body::before {
 .glow-avatar {
   position: relative;
   z-index: 4;
-  width: min(56vw, 280px);
-  height: 390px;
+  width: min(90%, 520px);
+  height: 660px;
+  transform: scale(1.36);
+  transform-origin: center center;
   transition: opacity 240ms ease;
 }
 
@@ -4010,9 +4013,9 @@ body::before {
   height: 300px;
   border-radius: 48% 48% 42% 42%;
   background:
-    radial-gradient(ellipse at 34% 14%, rgba(95, 66, 48, 0.34), transparent 28%),
-    linear-gradient(160deg, #14100d 0%, #241814 48%, #39251d 100%);
-  box-shadow: inset 20px -28px 34px rgba(0, 0, 0, 0.36), 0 18px 42px rgba(0, 0, 0, 0.28);
+    radial-gradient(ellipse at 34% 14%, rgba(255, 203, 125, 0.2), transparent 34%),
+    linear-gradient(160deg, #0a0612 0%, #2b124b 48%, #5d2a7f 100%);
+  box-shadow: inset 20px -28px 34px rgba(0, 0, 0, 0.36), 0 18px 42px rgba(0, 0, 0, 0.28), 0 0 24px rgba(255, 116, 196, 0.22);
 }
 
 .glow-avatar-hair.hair-left,
@@ -4042,7 +4045,7 @@ body::before {
   z-index: 7;
   width: 56px;
   height: 56px;
-  transform: translateX(-50%) rotate(-12deg);
+  transform: translateX(-50%) rotate(-12deg) scale(1.2);
 }
 
 .glow-avatar-flower span {
@@ -4052,7 +4055,7 @@ body::before {
   width: 18px;
   height: 28px;
   border-radius: 50% 50% 46% 46%;
-  background: linear-gradient(180deg, #fff7f0, #f08a82);
+  background: linear-gradient(180deg, #fff4e8, #ff79b8);
   transform-origin: 7px 21px;
   box-shadow: 0 2px 8px rgba(90, 37, 32, 0.18);
 }
@@ -4080,8 +4083,8 @@ body::before {
   width: 168px;
   height: 216px;
   border-radius: 45% 45% 49% 49%;
-  background: linear-gradient(160deg, #c98d68 0%, #a86449 64%, #8e503c 100%);
-  box-shadow: inset -14px -16px 22px rgba(70, 32, 24, 0.16), 0 18px 42px rgba(0, 0, 0, 0.24);
+  background: linear-gradient(160deg, #d39a7d 0%, #b06d57 60%, #934e42 100%);
+  box-shadow: inset -14px -16px 22px rgba(70, 32, 24, 0.16), 0 18px 42px rgba(0, 0, 0, 0.24), 0 0 22px rgba(255, 208, 132, 0.2);
 }
 
 .glow-avatar-face::before {
@@ -4182,11 +4185,11 @@ body::before {
 
 .glow-avatar-mouth {
   left: 64px;
-  bottom: 52px;
+  bottom: 50px;
   width: 44px;
-  height: 17px;
-  border-bottom: 4px solid rgba(93, 38, 40, 0.9);
-  border-radius: 0 0 50% 50%;
+  height: 21px;
+  border-bottom: 5px solid rgba(108, 34, 56, 0.92);
+  border-radius: 0 0 60% 60%;
   transition: transform 180ms ease;
   z-index: 2;
 }
@@ -4210,7 +4213,7 @@ body::before {
 }
 
 .glow-avatar-wrap.is-speaking .glow-avatar-mouth {
-  transform: scaleY(1.45) translateY(2px);
+  transform: scaleY(1.35) translateY(2px);
 }
 
 .glow-avatar-neck {
@@ -4248,7 +4251,7 @@ body::before {
 }
 
 .glow-intro-dialogue .section-kicker {
-  color: #8fd5c7;
+  color: #9cefff;
 }
 
 .glow-intro-dialogue h2 {
@@ -4391,6 +4394,7 @@ body::before {
 
   .glow-avatar-wrap {
     min-height: 185px;
+    width: 100%;
   }
 
   .glow-avatar {
@@ -4619,56 +4623,59 @@ body::before {
 }
 
 .glow-intro {
-  color: #332927;
-  background: #fbf7f1;
+  color: #fff6fb;
+  background: #0e1232;
 }
 
 .glow-intro-bg {
   background:
-    radial-gradient(circle at 50% 24%, rgba(234,208,202,0.46), transparent 25%),
-    radial-gradient(circle at 82% 18%, rgba(220,196,146,0.24), transparent 22%),
-    linear-gradient(145deg, #fbf7f1 0%, #f5eee7 52%, #f0f3ee 100%);
+    radial-gradient(circle at 14% 18%, rgba(255,108,184,0.72), transparent 35%),
+    radial-gradient(circle at 84% 16%, rgba(99,228,255,0.66), transparent 32%),
+    radial-gradient(circle at 76% 84%, rgba(255,205,92,0.54), transparent 35%),
+    radial-gradient(circle at 24% 86%, rgba(93,255,202,0.46), transparent 31%),
+    linear-gradient(145deg, #0f1336 0%, #2a2558 52%, #1a3261 100%);
 }
 
 .glow-intro-bg::before {
   background:
-    linear-gradient(115deg, rgba(255,253,249,0.56), transparent 32%),
-    repeating-linear-gradient(90deg, rgba(92,70,65,0.035) 0 1px, transparent 1px 38px);
+    linear-gradient(115deg, rgba(255,255,255,0.2), transparent 32%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 38px);
 }
 
 .light-one {
-  background: rgba(234,208,202,0.38);
+  background: rgba(255,96,176,0.58);
 }
 
 .light-two {
-  background: rgba(220,196,146,0.24);
+  background: rgba(90,230,255,0.54);
 }
 
 .light-three {
-  background: rgba(201,215,201,0.24);
+  background: rgba(255,203,96,0.5);
 }
 
 .glow-intro-grid {
   background:
-    linear-gradient(rgba(185,133,125,0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(185,133,125,0.08) 1px, transparent 1px);
-  opacity: 0.22;
+    linear-gradient(rgba(172,226,255,0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(172,226,255,0.1) 1px, transparent 1px);
+  opacity: 0.34;
 }
 
 .glow-avatar-aura {
-  border-color: rgba(185,133,125,0.22);
+  border-color: rgba(143,240,255,0.54);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 0 38px rgba(90,220,255,0.35);
 }
 
 .glow-intro-dialogue {
-  color: #332927;
-  background: rgba(255,253,249,0.72);
-  border-color: rgba(92,70,65,0.12);
-  box-shadow: 0 22px 54px rgba(82,60,54,0.12);
+  color: #fff6fb;
+  background: linear-gradient(145deg, rgba(15,24,63,0.66), rgba(52,24,81,0.58));
+  border-color: rgba(168,238,255,0.34);
+  box-shadow: 0 22px 54px rgba(0,0,0,0.28), 0 0 24px rgba(105,222,255,0.2);
 }
 
 .glow-intro-dialogue h2,
 .glow-guide-line,
 .glow-listening-state,
 .glow-heard-line {
-  color: #332927;
+  color: #fff6fb;
 }

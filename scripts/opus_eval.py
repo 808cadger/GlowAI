@@ -35,7 +35,7 @@ def main() -> int:
     for case in cases:
         print(json.dumps({
             "case_id": case["id"],
-            "model": "claude-opus-4-6",
+            "model": "claude-opus-4-8",
             "prompt": PROMPT,
             "report": case["report"],
         }, indent=2))

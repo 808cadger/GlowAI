@@ -12,6 +12,9 @@ window.glowaiApp = {
     samples: [],
     lastFrame: '',
   },
+  scanUX: {
+    lastAutoLaunchAt: 0,
+  },
   voiceCoach: {
     recognition: null,
     active: false,
@@ -319,10 +322,22 @@ window.glowaiApp = {
     this.renderAdherenceLoop();
     this.renderAgentOps();
     this.bindBackNavigation();
+    this.forceIntroVisibleState();
     this.showPage(this.getPageFromHash() || this.getInitialPage(), { replace: true, source: 'init' });
     if (!this.isOwnerMode() && !this.startAvatarIntro()) {
       window.setTimeout(() => this.greetUserOnce({ forceSpeech: true }), 450);
     }
+  },
+
+  forceIntroVisibleState() {
+    if (this.isOwnerMode()) return;
+    const intro = document.getElementById('glowIntro');
+    if (!intro) return;
+    // Hard reset in case a prior session left stale hidden/closing classes.
+    intro.classList.remove('hidden', 'is-closing', 'is-listening');
+    intro.style.display = 'grid';
+    intro.style.visibility = 'visible';
+    intro.style.opacity = '1';
   },
 
   shouldUseSelfieEntry() {
@@ -1587,6 +1602,15 @@ Skin support:
     document.getElementById('scanLaunch')?.addEventListener('click', () => {
       this.beginScanFlow();
     });
+    document.getElementById('scanFaceNowBtn')?.addEventListener('click', () => {
+      this.showPage('scan');
+      const directScan = window.scanModule?.startFallbackPhotoScan;
+      if (typeof directScan === 'function') {
+        directScan();
+        return;
+      }
+      this.beginScanFlow();
+    });
 
     document.getElementById('loadBenchmarkDemoBtn')?.addEventListener('click', () => {
       this.showPage('scan');
@@ -1838,6 +1862,16 @@ Skin support:
     if (pageId === 'scan') {
       this.renderScanSummary();
       this.renderForecast();
+      const now = Date.now();
+      const recentlyAutoLaunched = now - (this.scanUX.lastAutoLaunchAt || 0) < 2200;
+      const blockedSource = options.source === 'camera-cancel' || options.source === 'back-button';
+      if (changedPage && !blockedSource && !recentlyAutoLaunched && !document.body.classList.contains('is-guided-scanning')) {
+        const directScan = window.scanModule?.startFallbackPhotoScan;
+        if (typeof directScan === 'function') {
+          this.scanUX.lastAutoLaunchAt = now;
+          window.setTimeout(() => directScan(), 120);
+        }
+      }
     }
 
     this.updateBackButton();
@@ -3152,6 +3186,7 @@ Skin support:
   startAvatarIntro() {
     const intro = document.getElementById('glowIntro');
     const line = document.getElementById('glowGuideLine');
+    const heard = document.getElementById('glowHeardLine');
     if (!intro || !line) return false;
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3160,14 +3195,21 @@ Skin support:
     intro.classList.remove('hidden');
     intro.classList.remove('is-closing');
     intro.classList.add('is-revealing');
+    intro.classList.remove('is-listening');
+    if (heard) {
+      heard.textContent = '';
+      heard.classList.add('hidden');
+    }
 
     const lines = this.getAvatarIntroLines();
     this.avatarIntro.lines = lines;
     this.avatarIntro.lineIndex = 0;
     this.writeAvatarLine(lines[0]);
     const listeningState = document.getElementById('glowListeningState');
-    if (listeningState && this.shouldUseSelfieEntry()) {
-      listeningState.textContent = 'Tap anywhere. I will open camera and guide you.';
+    if (listeningState) {
+      listeningState.textContent = this.shouldUseSelfieEntry()
+        ? 'Tap anywhere. I will open camera and guide you.'
+        : 'Tap anywhere and speak, or press Scan to begin.';
     }
 
     this.speak(lines[0], { force: true });
@@ -3212,7 +3254,8 @@ Skin support:
   },
 
   startAvatarSelfieFlow({ fromGesture = false } = {}) {
-    if (!this.avatarIntro.active) return;
+    // Always allow the intro Scan Face button to open camera, even if intro state desynced.
+    if (!this.avatarIntro.active) this.avatarIntro.active = true;
     this.clearAvatarIntroTimers();
     try { this.avatarIntro.recognition?.stop?.(); } catch {}
     this.avatarIntro.recognition = null;
@@ -3315,7 +3358,7 @@ Skin support:
   showAvatarTranscript(text) {
     const heard = document.getElementById('glowHeardLine');
     if (!heard || !text) return;
-    heard.textContent = `I heard: ${text}`;
+    heard.textContent = `Heard: ${text}`;
     heard.classList.remove('hidden');
   },
 
@@ -3366,7 +3409,8 @@ Skin support:
     line.textContent = text;
     avatar?.classList.add('is-speaking');
     window.clearTimeout(this.avatarIntro.speakingTimer);
-    this.avatarIntro.speakingTimer = window.setTimeout(() => avatar?.classList.remove('is-speaking'), 1500);
+    const speakingMs = Math.min(2400, Math.max(1100, text.length * 28));
+    this.avatarIntro.speakingTimer = window.setTimeout(() => avatar?.classList.remove('is-speaking'), speakingMs);
   },
 
   finishAvatarIntro() {
@@ -3377,6 +3421,8 @@ Skin support:
     try { this.avatarIntro.recognition?.stop?.(); } catch {}
     this.avatarIntro.recognition = null;
     this.avatarIntro.listening = false;
+    intro?.classList.remove('is-listening');
+    intro?.classList.remove('is-revealing');
     intro?.classList.add('is-closing');
     window.setTimeout(() => intro?.classList.add('hidden'), 260);
   },

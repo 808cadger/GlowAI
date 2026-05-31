@@ -1,6 +1,6 @@
 # GlowAI — main.py  // Aloha from Pearl City! 🌺
 # #ASSUMPTION: Static Bearer token auth; upgrade to JWT when user accounts are added.
-# #ASSUMPTION: Claude claude-opus-4-6 is used for vision per CLAUDE.md.
+# #ASSUMPTION: Claude claude-opus-4-8 is used for vision per CLAUDE.md.
 
 import asyncio
 import base64
@@ -93,7 +93,7 @@ If you cannot clearly see skin, return skin_type "unknown" and empty arrays."""
 async def call_claude_vision(b64_image: str) -> tuple[dict, str]:
     client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
     msg = await client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-opus-4-8",
         max_tokens=1024,
         messages=[{
             "role": "user",

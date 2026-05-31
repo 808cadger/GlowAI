@@ -661,7 +661,8 @@ async function captureStudioPhoto({ facing = 'rear' } = {}) {
         width: 1280,
         height: 1280,
         allowEditing: false,
-        resultType: CameraResultType.DataUrl,
+        // URI is more reliable across Android devices; normalizeCameraPhoto handles conversion.
+        resultType: CameraResultType.Uri,
         source: CameraSource.Camera,
         saveToGallery: false,
         correctOrientation: true,
@@ -1032,7 +1033,7 @@ async function runFallbackPhotoScan() {
       app()?.setScanStatus?.('Idle', 'Scan canceled. Start again when you are ready.');
       return;
     }
-    app()?.handleScanError?.('Could not access camera. Check camera permissions and try again.');
+    app()?.handleScanError?.(`Could not access camera. ${msg}`);
   }
 }
 
@@ -1041,21 +1042,26 @@ async function startScan() {
   const permitted = await ensureCameraPermission();
   if (!permitted) return;
 
-  if (isNativePlatform()) {
-    app()?.showPage?.('scan');
-    app()?.setScanStatus?.('Opening selfie camera', 'Use the phone camera shutter, then confirm the selfie to see your GlowAI skin result.');
-    await runFallbackPhotoScan();
-    return;
-  }
-
+  // Always try guided in-app scan first (including native WebView), then fall back.
   const guidedComplete = await runGuidedCameraScan();
   if (guidedComplete) return;
 
+  app()?.showPage?.('scan');
+  app()?.setScanStatus?.('Opening selfie camera', 'Use the phone camera shutter, then confirm the selfie to see your GlowAI skin result.');
+  await runFallbackPhotoScan();
+}
+
+async function startFallbackPhotoScan() {
+  const permitted = await ensureCameraPermission();
+  if (!permitted) return;
+  app()?.showPage?.('scan');
+  app()?.setScanStatus?.('Opening selfie camera', 'Use the phone camera shutter, then confirm the selfie to see your GlowAI skin result.');
   await runFallbackPhotoScan();
 }
 
 window.scanModule = {
   startScan,
+  startFallbackPhotoScan,
   captureStudioPhoto,
   loadFaceModels,
   analyzeFacePresence,

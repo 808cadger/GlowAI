@@ -64,7 +64,7 @@
         <p class="glow-listening-state" id="glowListeningState" aria-live="polite">Tap Scan and I will guide you gently.</p>
         <p class="glow-heard-line hidden" id="glowHeardLine"></p>
         <div class="glow-intro-actions" aria-label="GlowAI start actions">
-          <button class="glow-intro-action primary" id="glowIntroScan" type="button">Scan</button>
+          <button class="glow-intro-action primary" id="glowIntroScan" type="button">Scan Face</button>
           <button class="glow-intro-action" id="glowIntroOpen" type="button">Open app</button>
         </div>
       </article>
@@ -120,7 +120,7 @@
           <p class="hero-text">GlowAI reads your skin through the camera, adapts your AM/PM routine to light, heat, and humidity, then turns the next step into something you can actually do: book, shop, track, or ask.</p>
 
           <div class="hero-actions">
-            <button class="primary-btn scan-now-cta" id="homeStartScan" type="button">Scan now</button>
+            <button class="primary-btn scan-now-cta" id="homeStartScan" type="button">Scan Face</button>
             <button class="secondary-btn" type="button" data-nav-target="concierge">Open coach</button>
             <button class="secondary-btn share-app-btn" id="shareAppBtn" type="button">Text app</button>
             <a class="secondary-btn" href="./download.html">Download PWA</a>
@@ -129,7 +129,7 @@
 
           <div class="page-pills">
             <button class="page-pill is-active" type="button" data-nav-target="home">Home</button>
-            <button class="page-pill scan-now-pill" type="button" data-nav-target="scan">Scan now</button>
+            <button class="page-pill scan-now-pill" type="button" data-nav-target="scan">Scan Face</button>
             <button class="page-pill" type="button" data-nav-target="services">Studio</button>
             <button class="page-pill" type="button" data-nav-target="agents">Agents</button>
           </div>
@@ -249,14 +249,15 @@
 
       <section class="detail-hero booking-layout">
         <article class="detail-main scan-main">
-          <button class="scan-launch" id="scanLaunch" type="button">
+          <button class="scan-launch hidden" id="scanLaunch" type="button">
             <span class="scan-launch-ring"></span>
             <span class="scan-launch-ring scan-launch-ring-two"></span>
             <span class="scan-launch-icon">◉</span>
-            <span class="scan-launch-title">Start skincare scan</span>
+            <span class="scan-launch-title">Start Face Scan</span>
             <span class="scan-launch-sub">Face ring, live skin signals, routine direction.</span>
           </button>
-          <button class="secondary-btn secondary-btn-full demo-scan-btn" id="loadBenchmarkDemoBtn" type="button">Load benchmark demo</button>
+          <button class="primary-btn secondary-btn-full" id="scanFaceNowBtn" type="button">Scan Face Now</button>
+          <button class="secondary-btn secondary-btn-full demo-scan-btn hidden" id="loadBenchmarkDemoBtn" type="button">Load benchmark demo</button>
 
           <section class="live-scan-panel" id="liveScanPanel" aria-label="Real-time skin scanner">
             <div class="live-scan-toolbar">
@@ -904,7 +905,7 @@
       </button>
       <button class="bottom-nav-item" type="button" data-page="scan">
         <span class="bottom-nav-icon">◎</span>
-        <span class="bottom-nav-label">Scan</span>
+        <span class="bottom-nav-label">Scan Face</span>
       </button>
       <button class="bottom-nav-item" type="button" data-page="services">
         <span class="bottom-nav-icon">◌</span>

@@ -3930,6 +3930,7 @@ body::before {
   filter: blur(18px);
   transform: translateY(28px) scale(0.94);
   animation: avatarArrive 2400ms cubic-bezier(.2,.8,.2,1) 260ms forwards, avatarBreathe 5.8s ease-in-out 2800ms infinite;
+  will-change: transform, opacity;
 }
 
 .glow-avatar-aura {
@@ -3962,6 +3963,7 @@ body::before {
   opacity: 0;
   transform: translateY(8px) scale(0.985);
   transition: opacity 420ms ease, transform 420ms ease, box-shadow 220ms ease;
+  will-change: transform, opacity;
 }
 
 .glow-avatar-wrap.has-portrait .glow-avatar-portrait {
@@ -3994,6 +3996,7 @@ body::before {
   transform: scale(1.36);
   transform-origin: center center;
   transition: opacity 240ms ease;
+  will-change: transform, opacity;
 }
 
 .glow-avatar-face,
@@ -4383,13 +4386,18 @@ body::before {
 @media (max-width: 760px) {
   .glow-intro {
     align-items: start;
+    place-items: start center;
     padding-top: max(0.35rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    overflow-y: auto;
   }
 
   .glow-intro-stage {
     grid-template-columns: 1fr;
     gap: 0.25rem;
-    transform: translateY(-3.4rem);
+    transform: none;
+    width: min(100%, 460px);
+    margin: 0 auto;
   }
 
   .glow-avatar-wrap {
@@ -4411,6 +4419,7 @@ body::before {
   .glow-intro-dialogue {
     width: 100%;
     padding: 0.85rem;
+    margin-bottom: 0.75rem;
   }
 
   .glow-intro-dialogue h2 {
@@ -4424,6 +4433,18 @@ body::before {
 
   .glow-listening-state {
     margin-top: 0.75rem;
+  }
+
+  .glow-intro-actions {
+    position: sticky;
+    bottom: 0;
+    padding-bottom: max(0.2rem, env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, transparent 0%, rgba(15, 19, 54, 0.88) 34%);
+  }
+
+  .glow-intro-action {
+    flex: 1 1 44%;
+    min-height: 3rem;
   }
 }
 

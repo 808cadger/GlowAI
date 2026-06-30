@@ -47,6 +47,16 @@ CREATE TABLE IF NOT EXISTS reminders (
     updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS freemium_unlocks (
+    id                UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id           VARCHAR(100) NOT NULL UNIQUE,
+    plan              VARCHAR(50)  NOT NULL DEFAULT 'freemium_unlock',
+    stripe_session_id VARCHAR(200),
+    unlocked_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_freemium_unlocks_user_id ON freemium_unlocks(user_id);
+
 -- Auto-update updated_at
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$

@@ -7,6 +7,16 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .database import Base
 
 
+class FreemiumUnlock(Base):
+    __tablename__ = "freemium_unlocks"
+
+    id:                Mapped[uuid.UUID]   = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id:           Mapped[str]         = mapped_column(String(100), nullable=False, unique=True, index=True)
+    plan:              Mapped[str]         = mapped_column(String(50),  nullable=False, default="freemium_unlock")
+    stripe_session_id: Mapped[str | None]  = mapped_column(String(200))
+    unlocked_at:       Mapped[datetime]    = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+
 class Appointment(Base):
     __tablename__ = "appointments"
 

@@ -1,12 +1,15 @@
 # GlowAI — main.py  // Aloha from Pearl City! 🌺
 # #ASSUMPTION: Static Bearer token auth; upgrade to JWT when user accounts are added.
-# #ASSUMPTION: Claude claude-opus-4-8 is used for vision per CLAUDE.md.
+# #ASSUMPTION: Claude claude-opus-4-8 is used for vision.
 
 import asyncio
 import base64
+import hashlib
+import hmac
 import json
 import logging
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -15,23 +18,23 @@ from contextlib import asynccontextmanager
 from typing import Literal
 
 import anthropic
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Security, status
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
-from sqlalchemy import select, delete, text
+from sqlalchemy import extract, func as sqlfunc, select, delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .config import settings
 from .database import Base, engine, get_db
-from .models import Appointment, Reminder, ScanResult
+from .models import Appointment, FreemiumUnlock, Reminder, ScanResult
 from .routines import routine_from_concerns
 from .schemas import (
     AppointmentCreate, AppointmentResponse, AppointmentUpdate,
     PushTokenCreate,
     ReminderCreate, ReminderResponse, ReminderUpdate,
-    ScanRequest, ScanResponse, SuggestedAppointment,
+    ScanRequest, ScanResponse, ScanStatusResponse, SuggestedAppointment,
 )
 
 logging.basicConfig(
@@ -109,6 +112,27 @@ async def call_claude_vision(b64_image: str) -> tuple[dict, str]:
     return json.loads(raw), raw
 
 
+# ── Freemium helpers ──────────────────────────────────────────────────────────
+
+async def get_monthly_scan_count(user_id: str, db: AsyncSession) -> int:
+    now = datetime.now(timezone.utc)
+    result = await db.execute(
+        select(sqlfunc.count()).select_from(ScanResult).where(
+            ScanResult.user_id == user_id,
+            extract("year", ScanResult.created_at) == now.year,
+            extract("month", ScanResult.created_at) == now.month,
+        )
+    )
+    return result.scalar_one()
+
+
+async def is_freemium_unlocked(user_id: str, db: AsyncSession) -> bool:
+    result = await db.execute(
+        select(FreemiumUnlock).where(FreemiumUnlock.user_id == user_id)
+    )
+    return result.scalar_one_or_none() is not None
+
+
 # ── POST /api/scan ────────────────────────────────────────────────────────────
 @app.post("/api/scan", response_model=ScanResponse, status_code=201)
 async def scan_skin(
@@ -121,7 +145,21 @@ async def scan_skin(
     except Exception:
         raise HTTPException(400, "Invalid base64 image data")
 
-    log.info("scan requested user_id=%s", body.user_id)
+    month_count = await get_monthly_scan_count(body.user_id, db)
+    unlocked = await is_freemium_unlocked(body.user_id, db)
+    if not unlocked and month_count >= settings.FREE_SCAN_LIMIT:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "scan_limit_reached",
+                "message": f"You've used all {settings.FREE_SCAN_LIMIT} free scans this month. Unlock unlimited scans for $4.99.",
+                "scans_used": month_count,
+                "scans_limit": settings.FREE_SCAN_LIMIT,
+                "upgrade_plan": "freemium_unlock",
+            },
+        )
+
+    log.info("scan requested user_id=%s month_count=%d unlocked=%s", body.user_id, month_count, unlocked)
 
     try:
         parsed, raw = await call_claude_vision(body.image_base64)
@@ -499,6 +537,108 @@ async def chat(
     reply = resp.content[0].text.strip()
     log.info("chat reply user_id=%s len=%d", body.user_id, len(reply))
     return {"reply": reply}
+
+
+# ── Freemium endpoints ────────────────────────────────────────────────────────
+
+@app.get("/api/scan/status", response_model=ScanStatusResponse)
+async def scan_status(
+    user_id: str = "default",
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_token),
+):
+    now = datetime.now(timezone.utc)
+    scans_used = await get_monthly_scan_count(user_id, db)
+    unlocked = await is_freemium_unlocked(user_id, db)
+    remaining = 0 if unlocked else max(0, settings.FREE_SCAN_LIMIT - scans_used)
+    return ScanStatusResponse(
+        user_id=user_id,
+        scans_used=scans_used,
+        scans_limit=settings.FREE_SCAN_LIMIT,
+        scans_remaining=remaining,
+        is_unlocked=unlocked,
+        period=f"{now.year}-{now.month:02d}",
+    )
+
+
+@app.post("/api/freemium/unlock", status_code=201)
+async def freemium_unlock(
+    user_id: str,
+    stripe_session_id: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_token),
+):
+    existing = await db.execute(
+        select(FreemiumUnlock).where(FreemiumUnlock.user_id == user_id)
+    )
+    if existing.scalar_one_or_none():
+        return {"status": "already_unlocked", "user_id": user_id}
+    unlock = FreemiumUnlock(user_id=user_id, stripe_session_id=stripe_session_id)
+    db.add(unlock)
+    await db.commit()
+    log.info("freemium unlocked user_id=%s session=%s", user_id, stripe_session_id)
+    return {"status": "unlocked", "user_id": user_id}
+
+
+# ── Stripe webhook ────────────────────────────────────────────────────────────
+
+def _verify_stripe_signature(payload: bytes, sig_header: str, secret: str) -> None:
+    parts = {k: v for k, v in (p.split("=", 1) for p in sig_header.split(",") if "=" in p)}
+    timestamp = parts.get("t")
+    signature = parts.get("v1")
+    if not timestamp or not signature:
+        raise ValueError("Missing t or v1 in Stripe-Signature header")
+    if abs(time.time() - int(timestamp)) > 300:
+        raise ValueError("Webhook timestamp too old (> 5 min)")
+    signed = f"{timestamp}.{payload.decode('utf-8')}"
+    expected = hmac.new(secret.encode(), signed.encode(), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected, signature):
+        raise ValueError("Signature mismatch")
+
+
+@app.post("/api/webhook/stripe", status_code=200)
+async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        log.error("stripe webhook called but STRIPE_WEBHOOK_SECRET is not set")
+        raise HTTPException(503, "Webhook secret not configured")
+
+    raw_body = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+
+    try:
+        _verify_stripe_signature(raw_body, sig_header, settings.STRIPE_WEBHOOK_SECRET)
+    except ValueError as exc:
+        log.warning("stripe webhook signature rejected: %s", exc)
+        raise HTTPException(400, "Invalid webhook signature")
+
+    event = json.loads(raw_body)
+    event_type = event.get("type")
+    log.info("stripe webhook received type=%s id=%s", event_type, event.get("id"))
+
+    if event_type == "checkout.session.completed":
+        session = event["data"]["object"]
+        user_id = session.get("client_reference_id") or (session.get("metadata") or {}).get("user_id")
+        plan = (session.get("metadata") or {}).get("plan", "freemium_unlock")
+        session_id = session.get("id")
+
+        if not user_id:
+            log.warning("stripe webhook: checkout.session.completed missing user_id session=%s", session_id)
+            return {"received": True}
+
+        if plan == "freemium_unlock":
+            existing = await db.execute(
+                select(FreemiumUnlock).where(FreemiumUnlock.user_id == user_id)
+            )
+            if not existing.scalar_one_or_none():
+                db.add(FreemiumUnlock(user_id=user_id, stripe_session_id=session_id))
+                await db.commit()
+                log.info("stripe webhook: freemium unlocked user_id=%s session=%s", user_id, session_id)
+            else:
+                log.info("stripe webhook: user already unlocked user_id=%s", user_id)
+        else:
+            log.info("stripe webhook: unhandled plan=%s user_id=%s", plan, user_id)
+
+    return {"received": True}
 
 
 # ── Health checks ─────────────────────────────────────────────────────────────

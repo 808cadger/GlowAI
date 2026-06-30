@@ -33,7 +33,7 @@ Claude and Codex should work as a paired agent team for GlowAI.
 
 | Use | Model |
 |-----|-------|
-| Skin scan (vision) | `claude-opus-4-6` |
+| Skin scan (vision) | `claude-opus-4-8` |
 | Chatbot / tools | `claude-sonnet-4-6` |
 
 Never swap these without explicit approval.

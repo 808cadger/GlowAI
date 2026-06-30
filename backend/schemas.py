@@ -90,3 +90,14 @@ class PushTokenCreate(BaseModel):
     user_id: str = Field(default="default", max_length=100)
     token: str = Field(..., min_length=10, max_length=500)
     platform: str = Field(default="android", max_length=40)
+
+
+# ── Freemium ──────────────────────────────────────────────────────────────
+
+class ScanStatusResponse(BaseModel):
+    user_id: str
+    scans_used: int
+    scans_limit: int
+    scans_remaining: int
+    is_unlocked: bool
+    period: str

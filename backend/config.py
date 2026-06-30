@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     STRIPE_PRICE_SALON_MONTHLY: str | None = None
     STRIPE_SUCCESS_URL: str = "https://808cadger.github.io/GlowAI/download.html?checkout=success"
     STRIPE_CANCEL_URL: str = "https://808cadger.github.io/GlowAI/download.html?checkout=cancelled"
+    STRIPE_WEBHOOK_SECRET: str | None = None
+    FREE_SCAN_LIMIT: int = 3
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

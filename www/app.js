@@ -1549,9 +1549,12 @@ ${extraContext}`.trim();
 
     // Build Claude messages array from stored history (last 20 turns to keep context tight)
     const stored = this.getStored(this.storageKeys.chat, []);
-    const apiMessages = stored.slice(-20)
+    const allMessages = stored.slice(-20)
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.text }));
+    // Claude API requires messages to start with 'user' role
+    const firstUserIdx = allMessages.findIndex(m => m.role === 'user');
+    const apiMessages = firstUserIdx >= 0 ? allMessages.slice(firstUserIdx) : allMessages;
 
     const climate = this.getStored(this.storageKeys.climate, { location: 'coastal climate', humidityMode: 'humid' });
     const latestScan = this.latestScan || this.getStored(this.storageKeys.scans)[0] || null;
@@ -1603,6 +1606,7 @@ Skin support:
       this.beginScanFlow();
     });
     document.getElementById('scanFaceNowBtn')?.addEventListener('click', () => {
+      this.scanUX.lastAutoLaunchAt = Date.now(); // prevent double-launch from showPage auto-launch
       this.showPage('scan');
       const directScan = window.scanModule?.startFallbackPhotoScan;
       if (typeof directScan === 'function') {
@@ -1633,6 +1637,7 @@ Skin support:
   },
 
   beginScanFlow() {
+    this.scanUX.lastAutoLaunchAt = Date.now(); // prevent double-launch from showPage auto-launch
     this.showPage('scan');
     this.setScanStatus('Opening camera', 'Launching the front camera now. Hold the phone steady and keep your face centered.');
     const startScan = window.scanModule?.startScan;
@@ -1864,7 +1869,7 @@ Skin support:
       this.renderForecast();
       const now = Date.now();
       const recentlyAutoLaunched = now - (this.scanUX.lastAutoLaunchAt || 0) < 2200;
-      const blockedSource = options.source === 'camera-cancel' || options.source === 'back-button';
+      const blockedSource = options.source === 'camera-cancel' || options.source === 'back-button' || options.source === 'init';
       if (changedPage && !blockedSource && !recentlyAutoLaunched && !document.body.classList.contains('is-guided-scanning')) {
         const directScan = window.scanModule?.startFallbackPhotoScan;
         if (typeof directScan === 'function') {
@@ -2187,6 +2192,10 @@ Skin support:
     const overlayLegend = document.getElementById('scanOverlayLegend');
     const badge = document.getElementById('scanResultBadge');
     if (!preview || !previewImage || !dataUrl) return;
+
+    // Clear stale overlays from the previous scan while the new one is processing
+    if (overlayMap) overlayMap.innerHTML = '';
+    if (overlayLegend) overlayLegend.innerHTML = '';
 
     preview.classList.remove('hidden', 'is-error');
     preview.classList.add('is-loading');
@@ -3189,8 +3198,6 @@ Skin support:
     const heard = document.getElementById('glowHeardLine');
     if (!intro || !line) return false;
 
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
     this.avatarIntro.active = true;
     intro.classList.remove('hidden');
     intro.classList.remove('is-closing');
@@ -3201,34 +3208,15 @@ Skin support:
       heard.classList.add('hidden');
     }
 
-    const lines = this.getAvatarIntroLines();
-    this.avatarIntro.lines = lines;
-    this.avatarIntro.lineIndex = 0;
-    this.writeAvatarLine(lines[0]);
+    line.textContent = 'GlowAI reads your skin signals and builds your AM/PM routine.';
     const listeningState = document.getElementById('glowListeningState');
-    if (listeningState) {
-      listeningState.textContent = this.shouldUseSelfieEntry()
-        ? 'Tap anywhere. I will open camera and guide you.'
-        : 'Tap anywhere and speak, or press Scan to begin.';
-    }
+    if (listeningState) listeningState.textContent = 'Tap anywhere to start your face scan.';
 
-    this.speak(lines[0], { force: true });
-
-    if (!reducedMotion) {
-      lines.slice(1).forEach((text, index) => {
-        const timer = window.setTimeout(() => {
-          this.writeAvatarLine(text);
-          this.speak(text, { force: true });
-        }, 2600 + (index * 3300));
-        this.avatarIntro.timers.push(timer);
-      });
-    }
-
-    const selfieDelay = this.shouldUseSelfieEntry()
-      ? (reducedMotion ? 900 : 4200)
-      : (reducedMotion ? 900 : 9300);
-    const selfieTimer = window.setTimeout(() => this.startAvatarSelfieFlow(), selfieDelay);
-    this.avatarIntro.timers.push(selfieTimer);
+    const autoTimer = window.setTimeout(() => {
+      this.finishAvatarIntro();
+      this.beginScanFlow();
+    }, 3000);
+    this.avatarIntro.timers.push(autoTimer);
     intro.focus({ preventScroll: true });
     return true;
   },
@@ -3254,20 +3242,14 @@ Skin support:
   },
 
   startAvatarSelfieFlow({ fromGesture = false } = {}) {
-    // Always allow the intro Scan Face button to open camera, even if intro state desynced.
     if (!this.avatarIntro.active) this.avatarIntro.active = true;
     this.clearAvatarIntroTimers();
     try { this.avatarIntro.recognition?.stop?.(); } catch {}
     this.avatarIntro.recognition = null;
     this.avatarIntro.listening = false;
     document.getElementById('glowIntro')?.classList.remove('is-listening');
-    this.writeAvatarLine('Opening camera now. Hold still while I frame you.');
-    this.speak('Opening camera now. Hold still while I frame you.', { force: true });
-
-    window.setTimeout(() => {
-      this.finishAvatarIntro();
-      this.beginScanFlow();
-    }, fromGesture ? 180 : 900);
+    this.finishAvatarIntro();
+    this.beginScanFlow();
   },
 
   startAvatarListening({ fromGesture = false, interruptIntro = false } = {}) {
@@ -3424,7 +3406,14 @@ Skin support:
     intro?.classList.remove('is-listening');
     intro?.classList.remove('is-revealing');
     intro?.classList.add('is-closing');
-    window.setTimeout(() => intro?.classList.add('hidden'), 260);
+    if (intro) {
+      intro.style.opacity = '';
+      intro.style.visibility = '';
+    }
+    window.setTimeout(() => {
+      intro?.classList.add('hidden');
+      if (intro) intro.style.display = '';
+    }, 260);
   },
 
   bindAvatarSkills() {

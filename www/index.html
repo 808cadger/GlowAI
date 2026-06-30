@@ -7,6 +7,7 @@
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./shine.css">
+  <link rel="stylesheet" href="./premium.css">
 </head>
 <body>
   <section class="glow-intro" id="glowIntro" aria-labelledby="glowIntroTitle" aria-modal="true" role="dialog" tabindex="0">
@@ -249,6 +250,12 @@
 
       <section class="detail-hero booking-layout">
         <article class="detail-main scan-main">
+          <div class="freemium-scan-status" id="freemiumScanStatus" aria-label="Scan allowance">
+            <div class="freemium-scan-dots" id="freemiumDots"></div>
+            <span class="freemium-badge" id="freemiumBadge">3 free scans left</span>
+            <span style="flex:1"></span>
+            <button class="secondary-btn compact-btn" id="freemiumUpgradeBtn" type="button" aria-label="Upgrade to unlimited">Unlock</button>
+          </div>
           <button class="scan-launch hidden" id="scanLaunch" type="button">
             <span class="scan-launch-ring"></span>
             <span class="scan-launch-ring scan-launch-ring-two"></span>
@@ -324,6 +331,15 @@
               <p class="card-label">Clarity</p>
               <strong id="scanMetricClarity">-</strong>
             </article>
+          </div>
+          <div id="skinRadarWrap" class="skin-radar-wrap hidden" aria-label="Skin signal radar">
+            <div class="skin-radar-header">
+              <div>
+                <p class="card-label">6-signal skin map</p>
+                <h4 style="margin:0;font-size:var(--title-sm)">Your skin fingerprint</h4>
+              </div>
+            </div>
+            <div id="skinRadarContainer"></div>
           </div>
           <div class="routine-plan" id="scanRoutinePlan">
             <article>
@@ -705,6 +721,34 @@
         </article>
       </section>
 
+      <section class="salon-analytics-panel owner-only" aria-label="Salon analytics">
+        <div class="scan-result-topline">
+          <div>
+            <p class="card-label">Salon analytics</p>
+            <h3 class="scan-history-title">This month at a glance.</h3>
+          </div>
+        </div>
+        <div class="salon-analytics-grid">
+          <div class="salon-metric-card">
+            <span class="salon-metric-value" id="salonScansThisMonth">0</span>
+            <span class="salon-metric-label">Scans this month</span>
+          </div>
+          <div class="salon-metric-card">
+            <span class="salon-metric-value" id="salonBookingsTotal">0</span>
+            <span class="salon-metric-label">Total bookings</span>
+          </div>
+          <div class="salon-metric-card">
+            <span class="salon-metric-value" id="salonAvgClarity">—</span>
+            <span class="salon-metric-label">Avg skin clarity</span>
+          </div>
+        </div>
+        <div class="salon-trend-chart">
+          <p class="card-label" style="margin-bottom:var(--space-sm)">7-day scan activity</p>
+          <div class="salon-trend-bars" id="salonTrendBars"></div>
+          <div class="salon-trend-day-labels" id="salonTrendDayLabels"></div>
+        </div>
+      </section>
+
       <section class="owner-conversion-panel owner-only" aria-label="Salon conversion dashboard">
         <div class="scan-result-topline">
           <div>
@@ -921,10 +965,42 @@
       </button>
     </nav>
   </main>
+
+  <!-- Upgrade modal — shown when free scan limit is reached -->
+  <div class="upgrade-modal-backdrop hidden" id="upgradeModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="upgradeModalTitle">
+    <div class="upgrade-modal">
+      <div class="upgrade-modal-top">
+        <span class="upgrade-modal-icon" aria-hidden="true">✦</span>
+        <h2 class="upgrade-modal-title" id="upgradeModalTitle">Free scans used up</h2>
+        <p class="upgrade-modal-subtitle">Unlock unlimited AI skin scans and 30-day forecasts.</p>
+        <div class="upgrade-modal-count" id="upgradeModalCount">3 of 3 free scans used this month</div>
+      </div>
+      <div class="upgrade-modal-body">
+        <ul class="upgrade-benefits">
+          <li>Unlimited AI skin scans every month</li>
+          <li>30-day skin forecast &amp; trend tracking</li>
+          <li>Before &amp; after progress reels</li>
+          <li>Priority ingredient conflict alerts</li>
+        </ul>
+        <div class="upgrade-modal-price">
+          <span class="upgrade-price-amount">$4.99</span>
+          <span class="upgrade-price-note">one-time unlock — no subscription</span>
+        </div>
+        <div class="upgrade-modal-actions">
+          <button class="primary-btn primary-btn-full" id="upgradeModalBtn" type="button">Unlock unlimited scans — $4.99</button>
+          <button class="secondary-btn secondary-btn-full" id="upgradeModalSkip" type="button">Maybe later</button>
+        </div>
+        <p class="upgrade-modal-error" id="upgradeModalError" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+
   <script src="./scan.bundle.js"></script>
   <script src="./payments.bundle.js"></script>
   <script src="./push.bundle.js"></script>
   <script src="./api-client.js"></script>
   <script src="./app.js"></script>
+  <script src="./skin-radar.js"></script>
+  <script src="./freemium.js"></script>
 </body>
 </html>

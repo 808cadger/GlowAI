@@ -36,10 +36,12 @@ Suggested GitHub topics:
 
 | Platform | Link |
 |----------|------|
-| iOS / iPhone | [Open the PWA in Safari](https://808cadger.github.io/GlowAI/) and choose **Share -> Add to Home Screen** |
-| Android | [Download the latest APK from GitHub Releases](https://github.com/808cadger/GlowAI/releases/latest) |
-| Source | [Download the GitHub source ZIP](https://github.com/808cadger/GlowAI/archive/refs/heads/main.zip) |
-| Repository | [View on GitHub](https://github.com/808cadger/GlowAI) |
+| **Web / PWA** | [808cadger.github.io/GlowAI](https://808cadger.github.io/GlowAI/) — works in any browser |
+| **iOS / iPhone** | Open the PWA in Safari → **Share → Add to Home Screen** |
+| **Android APK** | [Download from GitHub Releases](https://github.com/808cadger/GlowAI/releases/latest) |
+| **Demo page** | [808cadger.github.io/GlowAI/demo.html](https://808cadger.github.io/GlowAI/demo.html) — no install needed |
+| **Source ZIP** | [Download source](https://github.com/808cadger/GlowAI/archive/refs/heads/main.zip) |
+| **Repository** | [github.com/808cadger/GlowAI](https://github.com/808cadger/GlowAI) |
 
 ## Why This Repo Is Worth Reviewing
 
@@ -178,9 +180,10 @@ npm run check
 
 ### Hosted demo
 
-- Client app: `https://808cadger.github.io/GlowAI/`
-- Owner/customizer app: `https://808cadger.github.io/GlowAI/owner.html`
-- Shareable standalone PWA: `https://808cadger.github.io/GlowAI/download.html`
+- Client app: [808cadger.github.io/GlowAI](https://808cadger.github.io/GlowAI/)
+- Demo page: [808cadger.github.io/GlowAI/demo.html](https://808cadger.github.io/GlowAI/demo.html)
+- Owner/customizer app: [808cadger.github.io/GlowAI/owner.html](https://808cadger.github.io/GlowAI/owner.html)
+- Standalone shareable PWA: [808cadger.github.io/GlowAI/download.html](https://808cadger.github.io/GlowAI/download.html)
 
 ### Local web demo
 
@@ -232,9 +235,15 @@ Create `backend/.env` from `backend/.env.example` before starting backend servic
 
 ### AI/API setup
 
-- Add provider keys and backend tokens in `backend/.env` for API-backed scans/chat.
-- The browser demo can still run without backend credentials by using local guided scan and demo agent flows.
-- Browser-only API keys are stored on the local device unless a backend endpoint is configured.
+The backend picks providers in priority order: **Anthropic → Groq → Ollama**.
+
+| Provider | What you need | Cost |
+|----------|--------------|------|
+| Anthropic | `ANTHROPIC_API_KEY` in `.env` | Pay-per-token |
+| Groq | `GROQ_API_KEY` in `.env` — [console.groq.com](https://console.groq.com) | Free tier |
+| Ollama | `ollama pull moondream && ollama pull llama3.2` | Free, local |
+
+The browser demo runs without any backend using local guided scan and demo agent flows.
 
 ### License
 - Apache License 2.0. See [`LICENSE`](./LICENSE).
@@ -339,7 +348,7 @@ GlowAI is relevant for:
 - **Benchmark Eval Workflow** — imports and scores labeled skin eval JSON for concern match, routine relevance, safety pass, and overlay stability
 - **B2B White-Label** — salon workspace controls for branded scan apps, calendar handoff, product commerce, creator workflows, and replaceable model imagery
 - **Appointments** — book, view, update, and cancel esthetician, salon, or dermatology-style appointment handoffs from scan context
-- **AI Chatbot** — embedded agentic assistant (Claude Sonnet 4.6) for skincare Q&A
+- **AI Chatbot** — embedded agentic assistant (Claude Sonnet 4.6 · Groq · Ollama) for skincare Q&A
 - **PWA + APK + iOS** — installable on Android, works in Brave/Chrome/Safari, and includes a Capacitor iOS project for Xcode builds
 
 ---
@@ -350,8 +359,9 @@ GlowAI is relevant for:
 |-------|------|
 | Frontend | HTML + Capacitor 8 (PWA + Android + iOS) |
 | Build | esbuild, Gradle 8, AGP 8.13+ |
-| Backend | Python FastAPI + SQLAlchemy (async) + PostgreSQL |
-| AI | Claude Opus 4.6 (vision/scan), Claude Sonnet 4.6 (chatbot) |
+| Backend | Python FastAPI + SQLAlchemy (async) + PostgreSQL or SQLite |
+| AI — Vision | Claude Opus 4.8 (paid) · Ollama moondream/llava (free, local) |
+| AI — Chat | Claude Sonnet 4.6 (paid) · Groq llama-3.3-70b (free tier) · Ollama llama3.2 (free, local) |
 | Packaging | Capacitor `@capacitor/camera`, `@capacitor/android`, `@capacitor/ios` |
 | Deploy | GitHub Pages, Netlify, Vercel, Railway-ready FastAPI, Android APK, iOS Capacitor |
 
@@ -414,13 +424,33 @@ chsh -s zsh
 
 ### Backend
 
+**Free local setup (no credits needed):**
+
 ```bash
-cd backend
+# 1. Install Ollama — https://ollama.com
+ollama pull moondream          # vision (~1.8 GB)
+ollama pull llama3.2           # chat fallback
+
+# 2. Install Python deps
+pip install -r backend/requirements.txt
+
+# 3. Create .env at repo root (copy values below, add your Groq key)
+cp .env.example .env
+
+# 4. Start backend
+python -m uvicorn backend.main:app --port 8000
+```
+
+Get a free Groq API key at [console.groq.com](https://console.groq.com) for faster chat (no card required).
+
+**Paid/production setup:**
+
+```bash
 cp .env.example .env          # fill ANTHROPIC_API_KEY, DATABASE_URL, API_TOKEN
 docker compose up -d          # postgres + api
 # or:
-pip install -r requirements.txt
-uvicorn backend.main:app --reload --port 8000
+pip install -r backend/requirements.txt
+python -m uvicorn backend.main:app --reload --port 8000
 ```
 
 ### Frontend + Android APK + iOS
@@ -491,19 +521,25 @@ The roadmap also defines the esthetician/clinician dashboard, brand/retail SDK, 
 
 ### Environment Variables
 
-| Var | Purpose |
-|-----|---------|
-| `ANTHROPIC_API_KEY` | Claude API access |
-| `DATABASE_URL` | async postgres URL (`postgresql+asyncpg://...`) |
-| `API_TOKEN` | bearer token for frontend → backend |
-| `CORS_ORIGINS` | comma-separated allowed origins |
-| `PORT` | server port (default 8000) |
-| `STRIPE_SECRET_KEY` | server-side Stripe Checkout session creation |
-| `STRIPE_PUBLISHABLE_KEY` | browser Stripe.js initialization |
-| `STRIPE_PRICE_FREEMIUM_UNLOCK` | $4.99 forecasts/reels unlock price |
-| `STRIPE_PRICE_SALON_MONTHLY` | $99/mo salon subscription price |
-| `STRIPE_SUCCESS_URL` | Stripe success redirect |
-| `STRIPE_CANCEL_URL` | Stripe cancel redirect |
+| Var | Required | Purpose |
+|-----|----------|---------|
+| `API_TOKEN` | ✅ | Bearer token for frontend → backend auth |
+| `DATABASE_URL` | ✅ | `sqlite+aiosqlite:///./glowai.db` (local) or `postgresql+asyncpg://...` (prod) |
+| `ANTHROPIC_API_KEY` | ☐ | Claude Opus vision + Sonnet chat (paid) |
+| `GROQ_API_KEY` | ☐ | Groq free-tier chat — [console.groq.com](https://console.groq.com) |
+| `OLLAMA_BASE_URL` | ☐ | Ollama server (default `http://localhost:11434`) |
+| `OLLAMA_VISION_MODEL` | ☐ | Vision model name (default `moondream`) |
+| `GROQ_CHAT_MODEL` | ☐ | Groq chat model (default `llama-3.3-70b-versatile`) |
+| `CORS_ORIGINS` | ☐ | Comma-separated allowed origins |
+| `PORT` | ☐ | Server port (default 8000) |
+| `STRIPE_SECRET_KEY` | ☐ | Server-side Stripe Checkout session creation |
+| `STRIPE_PUBLISHABLE_KEY` | ☐ | Browser Stripe.js initialization |
+| `STRIPE_PRICE_FREEMIUM_UNLOCK` | ☐ | $4.99 forecasts/reels unlock price |
+| `STRIPE_PRICE_SALON_MONTHLY` | ☐ | $99/mo salon subscription price |
+| `STRIPE_SUCCESS_URL` | ☐ | Stripe success redirect |
+| `STRIPE_CANCEL_URL` | ☐ | Stripe cancel redirect |
+
+AI provider priority: `ANTHROPIC_API_KEY` → `GROQ_API_KEY` → Ollama local fallback.
 
 ---
 
@@ -525,15 +561,15 @@ Current backend routes:
 | `POST` | `/api/push-token` | Register Capacitor push token for reminders |
 | `POST` | `/api/subscribe` | Create Stripe Checkout session for freemium or salon plan |
 | `POST` | `/subscribe` | Stripe Checkout alias for simple deploy integrations |
-| `POST` | `/api/chat` | Agentic chatbot message |
-| `GET` | `/mcp` | Claude tool manifest for GlowAI agent actions |
+| `POST` | `/api/chat` | Agentic chatbot message (Anthropic → Groq → Ollama) |
+| `GET` | `/mcp` | Agent tool manifest |
 | `POST` | `/mcp/book` | MCP-style booking tool |
 | `POST` | `/mcp/recommend` | MCP-style 15-concern routine + Shopify recommendation tool |
-| `GET` | `/health` | Service health check |
-| `GET` | `/health/db` | Database health check |
-| `GET` | `/capabilities` | Runtime feature/capability descriptor |
+| `GET` | `/health` | Service health check (public) |
+| `GET` | `/health/db` | Database health check (auth required) |
+| `GET` | `/capabilities` | Runtime feature/capability descriptor (auth required) |
 
-Protected routes require `Authorization: Bearer <API_TOKEN>`, including scan, appointment, reminder, subscribe, chat, and MCP action routes. Public utility routes include `/health`, `/health/db`, `/capabilities`, and the `/mcp` manifest. Checkout uses fixed server-side Stripe price IDs and never exposes the secret key.
+All routes except `GET /health` require `Authorization: Bearer <API_TOKEN>`. Freemium unlocks are granted exclusively via the verified Stripe webhook (`/api/webhook/stripe`) — there is no unguarded unlock endpoint. Checkout uses fixed server-side Stripe price IDs and never exposes the secret key.
 
 Next-gen platform API targets are documented in [`ROADMAP.md`](./ROADMAP.md). They are the direction for GlowAI as an embeddable skin-intelligence layer across apps, retail, AR try-on, telehealth, POS, and clinic hardware.
 

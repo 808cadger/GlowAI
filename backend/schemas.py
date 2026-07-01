@@ -1,6 +1,6 @@
 # GlowAI — schemas.py
 import uuid
-from datetime import date, time, datetime
+import datetime as _dt
 from typing import Literal
 from pydantic import BaseModel, Field
 
@@ -22,7 +22,7 @@ class ScanResponse(BaseModel):
     issues: list[str]
     recommendations: list[str]
     suggested_appointment: SuggestedAppointment
-    created_at: datetime
+    created_at: _dt.datetime
 
     model_config = {"from_attributes": True}
 
@@ -33,8 +33,8 @@ class AppointmentCreate(BaseModel):
     user_id: str = Field(default="default", max_length=100)
     mode: Literal["personal", "company"]
     title: str = Field(..., max_length=200)
-    date: date
-    time: time
+    date: _dt.date
+    time: _dt.time
     type: str | None = None
     status: Literal["confirmed", "pending", "completed", "cancelled"] = "pending"
     client: str | None = None
@@ -42,8 +42,8 @@ class AppointmentCreate(BaseModel):
 
 class AppointmentUpdate(BaseModel):
     title: str | None = None
-    date: date | None = None
-    time: time | None = None
+    date: _dt.date | None = None
+    time: _dt.time | None = None
     type: str | None = None
     status: Literal["confirmed", "pending", "completed", "cancelled"] | None = None
     client: str | None = None
@@ -51,8 +51,8 @@ class AppointmentUpdate(BaseModel):
 
 class AppointmentResponse(AppointmentCreate):
     id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
+    created_at: _dt.datetime
+    updated_at: _dt.datetime
 
     model_config = {"from_attributes": True}
 
@@ -63,14 +63,14 @@ class ReminderCreate(BaseModel):
     user_id: str = Field(default="default", max_length=100)
     title: str = Field(..., min_length=1, max_length=200)
     message: str = Field(..., min_length=1, max_length=500)
-    remind_at: datetime
+    remind_at: _dt.datetime
     channel: Literal["push", "websocket", "local"] = "push"
     cadence: Literal["once", "daily", "weekly"] = "once"
 
 class ReminderUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
     message: str | None = Field(default=None, min_length=1, max_length=500)
-    remind_at: datetime | None = None
+    remind_at: _dt.datetime | None = None
     channel: Literal["push", "websocket", "local"] | None = None
     cadence: Literal["once", "daily", "weekly"] | None = None
     is_active: bool | None = None
@@ -78,8 +78,8 @@ class ReminderUpdate(BaseModel):
 class ReminderResponse(ReminderCreate):
     id: uuid.UUID
     is_active: bool
-    created_at: datetime
-    updated_at: datetime
+    created_at: _dt.datetime
+    updated_at: _dt.datetime
 
     model_config = {"from_attributes": True}
 

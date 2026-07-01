@@ -20,7 +20,6 @@ async function registerPush({ userId = 'local-demo-user' } = {}) {
   }
 
   PushNotifications.addListener('registration', async (token) => {
-    localStorage.setItem('glowai_push_token', token.value);
     await sendTokenToBackend(token.value, userId);
   });
 

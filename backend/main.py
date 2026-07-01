@@ -4,6 +4,7 @@
 
 import asyncio
 import base64
+import collections
 import hashlib
 import hmac
 import json
@@ -15,9 +16,12 @@ import urllib.parse
 import urllib.request
 import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Literal
 
 import anthropic
+import groq as _groq
+import openai as _openai
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -44,9 +48,25 @@ logging.basicConfig(
 log = logging.getLogger("glowai.api")
 
 
+# ── Rate limiting ─────────────────────────────────────────────────────────────
+_rate_buckets: dict[str, collections.deque] = collections.defaultdict(lambda: collections.deque())
+
+def _check_rate(key: str, limit: int, window: int = 60) -> None:
+    now = time.time()
+    bucket = _rate_buckets[key]
+    while bucket and bucket[0] < now - window:
+        bucket.popleft()
+    if len(bucket) >= limit:
+        raise HTTPException(429, "Rate limit exceeded. Please wait before trying again.")
+    bucket.append(now)
+
+
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    origins = settings.cors_origins_list()
+    if any(o.strip() == "*" for o in origins):
+        raise RuntimeError("CORS_ORIGINS must not contain '*' when allow_credentials=True")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     log.info("GlowAI API started — tables ready")
@@ -94,19 +114,38 @@ If you cannot clearly see skin, return skin_type "unknown" and empty arrays."""
 
 @retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=1, min=2, max=8))
 async def call_claude_vision(b64_image: str) -> tuple[dict, str]:
-    client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
-    msg = await client.messages.create(
-        model="claude-opus-4-8",
-        max_tokens=1024,
-        messages=[{
-            "role": "user",
-            "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": b64_image}},
-                {"type": "text", "text": SKIN_PROMPT},
-            ],
-        }],
-    )
-    raw = msg.content[0].text.strip()
+    if settings.ANTHROPIC_API_KEY:
+        client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+        msg = await client.messages.create(
+            model="claude-opus-4-8",
+            max_tokens=1024,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": b64_image}},
+                    {"type": "text", "text": SKIN_PROMPT},
+                ],
+            }],
+        )
+        raw = msg.content[0].text.strip()
+    else:
+        # Ollama vision fallback (moondream or llava)
+        ollama_client = _openai.AsyncOpenAI(
+            base_url=f"{settings.OLLAMA_BASE_URL}/v1",
+            api_key="ollama",
+        )
+        msg = await ollama_client.chat.completions.create(
+            model=settings.OLLAMA_VISION_MODEL,
+            max_tokens=1024,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_image}"}},
+                    {"type": "text", "text": SKIN_PROMPT},
+                ],
+            }],
+        )
+        raw = msg.choices[0].message.content.strip()
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
     return json.loads(raw), raw
@@ -161,14 +200,16 @@ async def scan_skin(
 
     log.info("scan requested user_id=%s month_count=%d unlocked=%s", body.user_id, month_count, unlocked)
 
+    _check_rate(f"scan:{body.user_id}", 10)
+
     try:
         parsed, raw = await call_claude_vision(body.image_base64)
     except json.JSONDecodeError:
         log.error("Claude returned non-JSON for scan user_id=%s", body.user_id)
-        raise HTTPException(502, "AI response was not valid JSON")
+        raise HTTPException(502, "AI analysis failed. Please try again.")
     except Exception as e:
         log.error("Vision API error user_id=%s err=%s", body.user_id, e)
-        raise HTTPException(502, f"Vision API error: {str(e)}")
+        raise HTTPException(502, "AI analysis failed. Please try again.")
 
     suggested = parsed.get("suggested_appointment", {})
     if suggested.get("urgency") == "urgent":
@@ -447,7 +488,7 @@ async def subscribe(
 
 
 @app.get("/mcp")
-async def mcp_manifest():
+async def mcp_manifest(_: str = Depends(require_token)):
     return {
         "name": "glowai-agent",
         "tools": [
@@ -520,21 +561,44 @@ async def chat(
     body: ChatRequest,
     _: str = Depends(require_token),
 ):
+    _check_rate(f"chat:{body.user_id}", 30)
     log.info("chat message user_id=%s len=%d", body.user_id, len(body.message))
-    client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+
     messages = [
         {"role": m.role if m.role in ("user", "assistant") else "user", "content": m.content}
         for m in body.history[-8:]
     ]
     messages.append({"role": "user", "content": body.message})
 
-    resp = await client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=256,
-        system=CHAT_SYSTEM,
-        messages=messages,
-    )
-    reply = resp.content[0].text.strip()
+    if settings.ANTHROPIC_API_KEY:
+        client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+        resp = await client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=256,
+            system=CHAT_SYSTEM,
+            messages=messages,
+        )
+        reply = resp.content[0].text.strip()
+    elif settings.GROQ_API_KEY:
+        groq_client = _groq.AsyncGroq(api_key=settings.GROQ_API_KEY)
+        resp = await groq_client.chat.completions.create(
+            model=settings.GROQ_CHAT_MODEL,
+            max_tokens=256,
+            messages=[{"role": "system", "content": CHAT_SYSTEM}] + messages,
+        )
+        reply = resp.choices[0].message.content.strip()
+    else:
+        ollama_client = _openai.AsyncOpenAI(
+            base_url=f"{settings.OLLAMA_BASE_URL}/v1",
+            api_key="ollama",
+        )
+        resp = await ollama_client.chat.completions.create(
+            model="llama3.2:3b",
+            max_tokens=256,
+            messages=[{"role": "system", "content": CHAT_SYSTEM}] + messages,
+        )
+        reply = resp.choices[0].message.content.strip()
+
     log.info("chat reply user_id=%s len=%d", body.user_id, len(reply))
     return {"reply": reply}
 
@@ -559,25 +623,6 @@ async def scan_status(
         is_unlocked=unlocked,
         period=f"{now.year}-{now.month:02d}",
     )
-
-
-@app.post("/api/freemium/unlock", status_code=201)
-async def freemium_unlock(
-    user_id: str,
-    stripe_session_id: str | None = None,
-    db: AsyncSession = Depends(get_db),
-    _: str = Depends(require_token),
-):
-    existing = await db.execute(
-        select(FreemiumUnlock).where(FreemiumUnlock.user_id == user_id)
-    )
-    if existing.scalar_one_or_none():
-        return {"status": "already_unlocked", "user_id": user_id}
-    unlock = FreemiumUnlock(user_id=user_id, stripe_session_id=stripe_session_id)
-    db.add(unlock)
-    await db.commit()
-    log.info("freemium unlocked user_id=%s session=%s", user_id, stripe_session_id)
-    return {"status": "unlocked", "user_id": user_id}
 
 
 # ── Stripe webhook ────────────────────────────────────────────────────────────
@@ -647,7 +692,7 @@ async def health():
     return {"status": "ok", "service": "glowai-api"}
 
 @app.get("/capabilities")
-async def capabilities():
+async def capabilities(_: str = Depends(require_token)):
     return {
         "app": "GlowAI",
         "positioning": "Scan-led beauty consultation for skin prep, salon planning, bookings, and concierge coaching.",
@@ -666,10 +711,10 @@ async def capabilities():
     }
 
 @app.get("/health/db")
-async def health_db(db: AsyncSession = Depends(get_db)):
+async def health_db(db: AsyncSession = Depends(get_db), _: str = Depends(require_token)):
     try:
         await db.execute(text("SELECT 1"))
         return {"status": "ok", "db": "reachable"}
     except Exception as e:
         log.error("DB health check failed: %s", e)
-        raise HTTPException(503, f"Database unreachable: {e}")
+        raise HTTPException(503, {"status": "error", "db": "unreachable"})

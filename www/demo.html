@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none';" />
+<meta http-equiv="X-Frame-Options" content="DENY" />
+<title>GlowAI — Pocket Esthetician</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --blue:#2563eb;
+  --blue-d:#1d4ed8;
+  --blue-l:#eff6ff;
+  --blue-s:#dbeafe;
+  --bg:#faf8f5;
+  --surface:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:#e8e4df;
+  --green:#10b981;
+  --green-l:#d1fae5;
+  --amber:#f59e0b;
+  --amber-l:#fef3c7;
+  --r:18px;
+  --sh:0 2px 20px rgba(0,0,0,.07);
+}
+
+html,body{height:100%}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;
+  background:linear-gradient(135deg,#0a0d1a 0%,#141927 100%);
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+}
+
+.app{
+  width:100%;max-width:400px;
+  height:min(820px,100svh);
+  position:relative;overflow:hidden;
+  border-radius:44px;
+  box-shadow:0 40px 100px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08),inset 0 0 0 1px rgba(255,255,255,.05);
+}
+
+@media(max-width:440px){
+  body{background:#0a0d1a;padding:0}
+  .app{border-radius:0;max-height:100svh;box-shadow:none}
+}
+
+.screen{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;
+  transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.4,0,.2,1);
+  transform:translateY(22px);
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+.screen.active{opacity:1;pointer-events:all;transform:translateY(0)}
+.screen.out{opacity:0;transform:translateY(-22px)}
+
+.demo-tag{
+  position:absolute;top:18px;right:18px;z-index:99;
+  background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);
+  font-size:9px;font-weight:700;letter-spacing:.1em;
+  padding:4px 10px;border-radius:20px;
+  border:1px solid rgba(255,255,255,.15);
+  pointer-events:none;backdrop-filter:blur(8px);
+}
+
+/* ══════════════════════════════════════════
+   INTRO
+══════════════════════════════════════════ */
+#s-intro{
+  background:linear-gradient(160deg,#08091a 0%,#0c1028 45%,#110920 100%);
+  align-items:center;justify-content:space-between;
+  padding:52px 28px 44px;
+  gap:0;
+}
+
+/* hero orb */
+.hero-area{display:flex;flex-direction:column;align-items:center;gap:24px}
+
+.orb-wrap{
+  position:relative;width:168px;height:168px;
+  display:flex;align-items:center;justify-content:center;
+}
+.orb-ring{
+  position:absolute;inset:-2px;border-radius:50%;
+  background:conic-gradient(from 0deg,#4f46e5,#7c3aed,#db2777,#f59e0b,#3b82f6,#4f46e5);
+  animation:spin 8s linear infinite;
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#fff calc(100% - 2.5px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#fff calc(100% - 2.5px));
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.orb-ring-soft{
+  position:absolute;inset:-12px;border-radius:50%;
+  background:conic-gradient(from 180deg,#4f46e5,#7c3aed,#db2777,#f59e0b,#3b82f6,#4f46e5);
+  opacity:.25;filter:blur(10px);
+  animation:spin 8s linear infinite reverse;
+}
+
+.orb-body{
+  width:148px;height:148px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#1e2f6e 0%,#0e1328 60%,#080a18 100%);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;z-index:1;
+  box-shadow:0 0 0 1px rgba(79,70,229,.3),0 0 40px rgba(79,70,229,.35),0 0 80px rgba(79,70,229,.12);
+  animation:orb-breathe 3.5s ease-in-out infinite;
+}
+@keyframes orb-breathe{
+  0%,100%{box-shadow:0 0 0 1px rgba(79,70,229,.3),0 0 40px rgba(79,70,229,.35),0 0 80px rgba(79,70,229,.12)}
+  50%{box-shadow:0 0 0 1px rgba(79,70,229,.5),0 0 60px rgba(79,70,229,.5),0 0 120px rgba(79,70,229,.2)}
+}
+
+.orb-emoji{font-size:56px;filter:drop-shadow(0 0 12px rgba(200,180,255,.4))}
+
+/* floating particles */
+.orb-wrap .p{
+  position:absolute;border-radius:50%;
+  background:rgba(255,255,255,.7);pointer-events:none;
+}
+.p1{width:4px;height:4px;top:20px;right:24px;animation:float1 4s ease-in-out infinite}
+.p2{width:3px;height:3px;bottom:30px;left:16px;animation:float1 5.5s ease-in-out infinite .8s}
+.p3{width:2.5px;height:2.5px;top:50px;left:12px;animation:float1 4.8s ease-in-out infinite 1.4s}
+.p4{width:3.5px;height:3.5px;bottom:22px;right:20px;animation:float1 6s ease-in-out infinite .3s}
+@keyframes float1{0%,100%{transform:translateY(0) scale(1);opacity:.7}50%{transform:translateY(-8px) scale(1.2);opacity:1}}
+
+.hero-text{text-align:center}
+.hero-title{
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-size:46px;font-weight:700;letter-spacing:-.02em;
+  color:#f0f4ff;line-height:1;margin-bottom:8px;
+}
+.hero-sub{
+  font-size:14px;color:rgba(220,230,255,.6);
+  font-style:italic;letter-spacing:.01em;
+  font-family:'Cormorant Garamond',Georgia,serif;
+}
+
+/* features */
+.feat-row{
+  display:flex;flex-direction:column;width:100%;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;overflow:hidden;
+  background:rgba(255,255,255,.04);
+  backdrop-filter:blur(10px);
+}
+.feat-item{
+  display:flex;align-items:center;gap:14px;
+  padding:15px 18px;
+}
+.feat-item+.feat-item{border-top:1px solid rgba(255,255,255,.07)}
+.feat-ic{
+  font-size:20px;flex-shrink:0;
+  width:40px;height:40px;border-radius:12px;
+  background:rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;
+}
+.feat-copy strong{display:block;font-size:13px;font-weight:700;color:rgba(240,244,255,.9);margin-bottom:2px}
+.feat-copy span{font-size:11px;color:rgba(180,195,230,.6);line-height:1.4}
+
+/* cta */
+.intro-cta{display:flex;flex-direction:column;gap:10px;width:100%}
+.btn-glow{
+  width:100%;padding:18px;border:none;border-radius:var(--r);
+  font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;cursor:pointer;
+  background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#2563eb 100%);
+  color:#fff;letter-spacing:.01em;
+  box-shadow:0 4px 24px rgba(79,70,229,.5),0 8px 40px rgba(79,70,229,.25);
+  transition:transform .15s,box-shadow .2s;
+  position:relative;overflow:hidden;
+}
+.btn-glow::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(255,255,255,.15),transparent);
+  border-radius:var(--r);
+}
+.btn-glow:hover{box-shadow:0 6px 32px rgba(79,70,229,.65),0 12px 50px rgba(79,70,229,.3)}
+.btn-glow:active{transform:scale(.97)}
+.btn-skip{
+  background:none;border:none;cursor:pointer;
+  font-family:'DM Sans',system-ui,sans-serif;
+  font-size:13px;color:rgba(180,195,230,.5);font-weight:500;
+  padding:6px;transition:color .2s;
+}
+.btn-skip:hover{color:rgba(180,195,230,.8)}
+
+/* ══════════════════════════════════════════
+   SCAN
+══════════════════════════════════════════ */
+#s-scan{
+  background:radial-gradient(ellipse 70% 50% at 50% 30%,#111a3d 0%,#060810 100%);
+  align-items:center;justify-content:center;
+}
+
+.scan-nav{
+  position:absolute;top:0;left:0;right:0;
+  padding:48px 20px 16px;
+  display:flex;align-items:center;gap:12px;
+}
+.scan-back{
+  width:38px;height:38px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.09);color:rgba(255,255,255,.8);font-size:22px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+.scan-back:hover{background:rgba(255,255,255,.15)}
+.scan-nav-lbl{font-size:15px;font-weight:600;color:rgba(255,255,255,.85)}
+
+.vp{position:relative;width:240px;height:310px;display:flex;align-items:center;justify-content:center}
+
+.vp-oval{
+  position:absolute;inset:0;border-radius:50%;
+  border:2.5px solid transparent;
+  background:linear-gradient(#060810,#060810) padding-box,
+             conic-gradient(from 0deg,#4f46e5,#7c3aed,#3b82f6,#4f46e5) border-box;
+  animation:oval-spin 4s linear infinite;
+}
+@keyframes oval-spin{to{background:linear-gradient(#060810,#060810) padding-box,conic-gradient(from 360deg,#4f46e5,#7c3aed,#3b82f6,#4f46e5) border-box}}
+
+.vp-oval-glow{
+  position:absolute;inset:-8px;border-radius:50%;
+  box-shadow:0 0 0 2px rgba(79,70,229,.15),0 0 24px rgba(79,70,229,.2);
+  animation:glow-pulse 2.5s ease-in-out infinite;
+}
+@keyframes glow-pulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+.scan-line{
+  position:absolute;left:6px;right:6px;height:1.5px;top:6px;z-index:2;
+  background:linear-gradient(90deg,transparent,rgba(99,102,241,.6),rgba(196,181,253,1),rgba(99,102,241,.6),transparent);
+  filter:blur(.3px);
+  animation:sweep 2.8s ease-in-out infinite;
+}
+@keyframes sweep{0%{transform:translateY(0);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateY(298px);opacity:0}}
+
+.vp-corners{position:absolute;inset:0}
+.vc{position:absolute;width:16px;height:16px;border-color:rgba(139,92,246,.9);border-style:solid}
+.vc.tl{top:10px;left:10px;border-width:2px 0 0 2px;border-radius:3px 0 0 0}
+.vc.tr{top:10px;right:10px;border-width:2px 2px 0 0;border-radius:0 3px 0 0}
+.vc.bl{bottom:10px;left:10px;border-width:0 0 2px 2px;border-radius:0 0 0 3px}
+.vc.br{bottom:10px;right:10px;border-width:0 2px 2px 0;border-radius:0 0 3px 0}
+
+.face-ph{font-size:80px;opacity:.2;user-select:none;filter:grayscale(1)}
+
+.scan-floor{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:24px 24px 48px;text-align:center;
+}
+.scan-lbl{
+  font-size:13px;font-weight:600;color:rgba(255,255,255,.8);
+  margin-bottom:14px;min-height:20px;letter-spacing:.02em;
+}
+.prog{height:2px;background:rgba(255,255,255,.1);border-radius:1px;overflow:hidden}
+.prog-bar{height:100%;width:0%;background:linear-gradient(90deg,#4f46e5,#7c3aed);border-radius:1px;transition:width .35s ease}
+.scan-hint{margin-top:12px;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.04em;text-transform:uppercase}
+
+/* ══════════════════════════════════════════
+   ANALYZING
+══════════════════════════════════════════ */
+#s-analyze{
+  background:radial-gradient(ellipse 70% 50% at 50% 30%,#111a3d 0%,#060810 100%);
+  align-items:center;justify-content:center;gap:32px;padding:40px 30px;
+}
+
+.a-orb{
+  width:120px;height:120px;border-radius:50%;flex-shrink:0;
+  background:radial-gradient(circle at 38% 35%,#3b4fd6 0%,#1e1b6e 50%,#050810 100%);
+  box-shadow:0 0 60px rgba(79,70,229,.55),0 0 120px rgba(79,70,229,.2);
+  display:flex;align-items:center;justify-content:center;font-size:50px;
+  animation:a-breathe 2.5s ease-in-out infinite;
+}
+@keyframes a-breathe{0%,100%{transform:scale(1);box-shadow:0 0 60px rgba(79,70,229,.55),0 0 120px rgba(79,70,229,.2)}50%{transform:scale(1.06);box-shadow:0 0 80px rgba(79,70,229,.75),0 0 160px rgba(79,70,229,.3)}}
+
+.a-label{text-align:center;color:rgba(220,230,255,.55);font-size:13px;line-height:1.6}
+.a-label strong{display:block;color:rgba(240,245,255,.95);font-size:19px;font-weight:700;margin-bottom:5px}
+
+.a-rows{display:flex;flex-direction:column;gap:11px;width:100%}
+.a-row{
+  display:flex;align-items:center;gap:10px;
+  opacity:0;transform:translateX(-14px);
+  transition:opacity .4s ease,transform .4s ease;
+}
+.a-row.in{opacity:1;transform:translateX(0)}
+.a-nm{font-size:12px;color:rgba(200,210,240,.6);min-width:88px;font-weight:500}
+.a-track{flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.a-fill{height:100%;background:linear-gradient(90deg,#4f46e5,#818cf8);border-radius:2px;width:0%;transition:width 1s ease}
+.a-pct{font-size:11px;font-weight:700;color:#818cf8;min-width:30px;text-align:right}
+
+/* ══════════════════════════════════════════
+   RESULTS
+══════════════════════════════════════════ */
+#s-results{background:var(--bg)}
+
+.r-top{
+  background:linear-gradient(160deg,#0f1a5c 0%,#1e40af 60%,#2563eb 100%);
+  padding:50px 22px 88px;color:#fff;text-align:center;position:relative;flex-shrink:0;
+}
+.r-back{
+  position:absolute;top:48px;left:18px;
+  width:36px;height:36px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.18);color:#fff;font-size:22px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.r-top h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:700;margin-bottom:4px;letter-spacing:-.01em}
+.r-top p{font-size:12px;opacity:.7;letter-spacing:.02em}
+
+.score-card{
+  margin:-64px 16px 0;
+  background:#fff;border-radius:24px;padding:20px;
+  box-shadow:0 12px 40px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
+  display:flex;align-items:center;gap:16px;flex-shrink:0;
+}
+.ring-w{position:relative;width:92px;height:92px;flex-shrink:0}
+.ring-w svg{transform:rotate(-90deg)}
+.ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-num em{font-size:26px;font-weight:900;font-style:normal;color:var(--text);line-height:1;letter-spacing:-.02em}
+.ring-num span{font-size:10px;color:var(--muted);font-weight:600}
+.score-right h3{font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.01em}
+.score-right p{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:9px}
+.score-tag{display:inline-flex;align-items:center;gap:4px;background:var(--green-l);color:#065f46;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
+
+.r-body{padding:16px 16px 40px;display:flex;flex-direction:column;gap:16px}
+
+.card{background:#fff;border-radius:var(--r);padding:18px;box-shadow:var(--sh);border:1px solid rgba(0,0,0,.04)}
+.kicker{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.card-h{font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px}
+
+.concern{
+  background:linear-gradient(135deg,#fffbeb,#fef3c7);
+  border:1px solid #fde68a;border-radius:14px;padding:14px 16px;
+  display:flex;align-items:flex-start;gap:10px;
+}
+.concern-ic{font-size:18px;flex-shrink:0;margin-top:1px}
+.concern strong{display:block;font-size:13px;font-weight:700;color:#92400e;margin-bottom:2px}
+.concern span{font-size:11px;color:#78350f;line-height:1.5}
+
+.m-list{display:flex;flex-direction:column;gap:12px}
+.m-row{display:flex;flex-direction:column;gap:6px}
+.m-top{display:flex;justify-content:space-between;align-items:center}
+.m-nm{font-size:13px;font-weight:600;color:var(--text)}
+.m-vl{font-size:12px;font-weight:700}
+.m-vl.g{color:var(--green)}.m-vl.a{color:var(--amber)}
+.m-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.m-fill{height:100%;border-radius:3px;width:0%;transition:width 1.1s cubic-bezier(.2,.8,.3,1)}
+.m-fill.g{background:linear-gradient(90deg,#34d399,#10b981)}
+.m-fill.a{background:linear-gradient(90deg,#fbbf24,#f59e0b)}
+
+.rtabs{display:flex;gap:6px;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:14px}
+.rtab{flex:1;padding:8px;border:none;border-radius:9px;font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s}
+.rtab.on{background:#fff;color:var(--blue);box-shadow:0 2px 10px rgba(0,0,0,.1)}
+.rsteps{display:flex;flex-direction:column;gap:12px}
+.rstep{display:flex;align-items:flex-start;gap:12px}
+.sn{width:26px;height:26px;flex-shrink:0;border-radius:50%;background:var(--blue-l);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+.si strong{display:block;font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.si span{font-size:11px;color:var(--muted);line-height:1.4}
+
+.p-list{display:flex;flex-direction:column;gap:10px}
+.p-card{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:14px;border:1px solid var(--border)}
+.p-ic{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.p-inf{flex:1;min-width:0}
+.p-brand{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+.p-nm{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-why{font-size:10px;color:var(--muted)}
+.p-price{font-size:14px;font-weight:900;color:var(--text);flex-shrink:0}
+.p-add{
+  width:30px;height:30px;border-radius:50%;border:none;
+  background:var(--blue);color:#fff;font-size:18px;font-weight:300;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:background .2s,transform .12s;
+}
+.p-add:active{transform:scale(.85)}
+.p-add.on{background:var(--green)}
+
+.cta-col{display:flex;flex-direction:column;gap:10px}
+.btn-blue{
+  width:100%;padding:16px;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;
+  border:none;border-radius:var(--r);font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,.35);transition:all .15s;
+}
+.btn-blue:hover{box-shadow:0 6px 28px rgba(37,99,235,.5)}
+.btn-blue:active{transform:scale(.98)}
+.btn-line{
+  width:100%;padding:14px;background:transparent;color:var(--blue);
+  border:1.5px solid var(--blue-s);border-radius:var(--r);
+  font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:600;
+  cursor:pointer;transition:background .15s;
+}
+.btn-line:hover{background:var(--blue-l)}
+
+/* ══════════════════════════════════════════
+   BOOKING SHEET
+══════════════════════════════════════════ */
+.bk-ov{
+  position:absolute;inset:0;z-index:50;
+  background:rgba(5,8,20,.65);backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;transition:opacity .3s;
+  display:flex;flex-direction:column;justify-content:flex-end;
+}
+.bk-ov.open{opacity:1;pointer-events:all}
+.bk-sheet{
+  background:#fff;border-radius:28px 28px 0 0;
+  max-height:88%;overflow-y:auto;
+  transform:translateY(100%);
+  transition:transform .38s cubic-bezier(.32,.72,0,1);
+}
+.bk-ov.open .bk-sheet{transform:translateY(0)}
+.bk-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 20px}
+.bk-hd{padding:0 20px 16px;border-bottom:1px solid var(--border)}
+.bk-hd h3{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:3px}
+.bk-hd p{font-size:12px;color:var(--muted)}
+.bk-sec{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:14px 20px 8px}
+
+.e-list{display:flex;flex-direction:column;gap:6px;padding:0 12px}
+.e-card{
+  display:flex;align-items:center;gap:13px;
+  padding:14px 14px;background:var(--bg);border-radius:16px;
+  border:2px solid transparent;cursor:pointer;transition:all .18s;
+}
+.e-card:hover{background:var(--blue-l)}
+.e-card.on{border-color:var(--blue);background:var(--blue-l)}
+.e-av{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.e-nm{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.e-sp{font-size:11px;color:var(--muted);margin-bottom:5px}
+.e-mt{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.e-st{font-size:11px;color:#f59e0b;font-weight:800}
+.e-sep{font-size:10px;color:var(--border)}
+.e-rv{font-size:10px;color:var(--muted)}
+.e-av-txt{font-size:10px;font-weight:700;color:var(--green)}
+
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:0 20px 14px}
+.slot{
+  padding:10px 6px;background:var(--bg);border:1.5px solid var(--border);
+  border-radius:12px;font-size:12px;font-weight:700;color:var(--text);
+  cursor:pointer;text-align:center;transition:all .15s;
+}
+.slot:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l)}
+.slot.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.slot.na{opacity:.3;cursor:default;pointer-events:none}
+
+.bk-bot{padding:0 20px 32px}
+.bk-sum{background:var(--blue-l);border-radius:12px;padding:13px 15px;margin-bottom:12px;display:none}
+.bk-sum.show{display:block}
+.bk-sum p{font-size:12px;color:var(--text);line-height:1.65}
+.bk-sum strong{font-weight:800;color:var(--blue)}
+
+/* ══════════════════════════════════════════
+   CONFIRM
+══════════════════════════════════════════ */
+.cfm-ov{
+  position:absolute;inset:0;z-index:60;background:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:36px 26px;opacity:0;pointer-events:none;transition:opacity .4s;
+}
+.cfm-ov.show{opacity:1;pointer-events:all}
+.cfm-ic{
+  width:96px;height:96px;border-radius:50%;
+  background:linear-gradient(135deg,#d1fae5,#a7f3d0);
+  display:flex;align-items:center;justify-content:center;font-size:46px;
+  margin-bottom:22px;
+  animation:pop .55s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.cfm-ov h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:700;text-align:center;margin-bottom:8px;color:var(--text)}
+.cfm-ov>p{font-size:13px;color:var(--muted);text-align:center;line-height:1.55;margin-bottom:24px}
+.cfm-card{background:var(--bg);border-radius:16px;padding:18px;width:100%;margin-bottom:22px}
+.cfm-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.cfm-row:last-child{border-bottom:none}
+.cfm-row span:first-child{color:var(--muted)}
+.cfm-row span:last-child{font-weight:800;color:var(--text)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="demo-tag">DEMO</div>
+
+  <!-- ───── INTRO ───── -->
+  <div class="screen active" id="s-intro">
+    <div class="hero-area">
+      <div class="orb-wrap">
+        <div class="orb-ring-soft"></div>
+        <div class="orb-ring"></div>
+        <div class="orb-body"><div class="orb-emoji">✨</div></div>
+        <div class="p p1"></div><div class="p p2"></div>
+        <div class="p p3"></div><div class="p p4"></div>
+      </div>
+      <div class="hero-text">
+        <div class="hero-title">GlowAI</div>
+        <div class="hero-sub">Your pocket esthetician</div>
+      </div>
+    </div>
+
+    <div class="feat-row">
+      <div class="feat-item">
+        <div class="feat-ic">🔬</div>
+        <div class="feat-copy">
+          <strong>Instant Skin Analysis</strong>
+          <span>Hydration, texture, clarity &amp; barrier — read in seconds</span>
+        </div>
+      </div>
+      <div class="feat-item">
+        <div class="feat-ic">💊</div>
+        <div class="feat-copy">
+          <strong>Your Personalized Routine</strong>
+          <span>AM/PM steps and product picks matched to your signals</span>
+        </div>
+      </div>
+      <div class="feat-item">
+        <div class="feat-ic">📅</div>
+        <div class="feat-copy">
+          <strong>Book a Pro Instantly</strong>
+          <span>Licensed estheticians, real availability, one tap</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-cta">
+      <button class="btn-glow" onclick="startScan()">✦ &nbsp;Scan My Skin</button>
+      <button class="btn-skip" onclick="skipToResults()">Skip to results demo →</button>
+    </div>
+  </div>
+
+  <!-- ───── SCAN ───── -->
+  <div class="screen" id="s-scan">
+    <div class="scan-nav">
+      <button class="scan-back" onclick="show('s-intro')">‹</button>
+      <span class="scan-nav-lbl">Face Scan</span>
+    </div>
+    <div class="vp">
+      <div class="vp-oval"></div>
+      <div class="vp-oval-glow"></div>
+      <div class="scan-line"></div>
+      <div class="vp-corners">
+        <div class="vc tl"></div><div class="vc tr"></div>
+        <div class="vc bl"></div><div class="vc br"></div>
+      </div>
+      <div class="face-ph">👤</div>
+    </div>
+    <div class="scan-floor">
+      <div class="scan-lbl" id="scan-lbl">Position your face in the ring</div>
+      <div class="prog"><div class="prog-bar" id="prog"></div></div>
+      <div class="scan-hint">Even light · Look straight ahead · Arm's length</div>
+    </div>
+  </div>
+
+  <!-- ───── ANALYZING ───── -->
+  <div class="screen" id="s-analyze">
+    <div class="a-orb">✦</div>
+    <div class="a-label">
+      <strong>Reading your skin</strong>
+      Analyzing 47 signal points across hydration, texture, clarity, oil, and barrier
+    </div>
+    <div class="a-rows" id="a-rows">
+      <div class="a-row" data-v="67"><div class="a-nm">Hydration</div><div class="a-track"><div class="a-fill"></div></div><div class="a-pct">67%</div></div>
+      <div class="a-row" data-v="89"><div class="a-nm">Clarity</div><div class="a-track"><div class="a-fill"></div></div><div class="a-pct">89%</div></div>
+      <div class="a-row" data-v="74"><div class="a-nm">Texture</div><div class="a-track"><div class="a-fill"></div></div><div class="a-pct">74%</div></div>
+      <div class="a-row" data-v="58"><div class="a-nm">Oil balance</div><div class="a-track"><div class="a-fill"></div></div><div class="a-pct">58%</div></div>
+      <div class="a-row" data-v="82"><div class="a-nm">Barrier health</div><div class="a-track"><div class="a-fill"></div></div><div class="a-pct">82%</div></div>
+    </div>
+  </div>
+
+  <!-- ───── RESULTS ───── -->
+  <div class="screen" id="s-results">
+    <div class="r-top">
+      <button class="r-back" onclick="show('s-intro')">‹</button>
+      <h2>Your Skin Report</h2>
+      <p>Captured today &nbsp;·&nbsp; Combination skin</p>
+    </div>
+
+    <div class="score-card">
+      <div class="ring-w">
+        <svg width="92" height="92" viewBox="0 0 92 92">
+          <circle cx="46" cy="46" r="40" fill="none" stroke="#e8e4df" stroke-width="8"/>
+          <defs>
+            <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#4f46e5"/>
+              <stop offset="100%" stop-color="#7c3aed"/>
+            </linearGradient>
+          </defs>
+          <circle cx="46" cy="46" r="40" fill="none" stroke="url(#rg)" stroke-width="8"
+            stroke-linecap="round" stroke-dasharray="251.33" stroke-dashoffset="251.33"
+            id="ring-arc"/>
+        </svg>
+        <div class="ring-num"><em id="score-n">0</em><span>/100</span></div>
+      </div>
+      <div class="score-right">
+        <h3>Good Glow ✨</h3>
+        <p>Mild dehydration · T-zone active<br>Barrier strong · Low UV damage</p>
+        <div class="score-tag">↑ 6 pts since last scan</div>
+      </div>
+    </div>
+
+    <div class="r-body">
+
+      <div class="concern">
+        <div class="concern-ic">⚠️</div>
+        <div>
+          <strong>Top concern: Mild dehydration</strong>
+          <span>Your skin is losing moisture faster than it holds it. Layer a humectant serum before moisturizer — this is your highest-impact change right now.</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kicker">Skin signals</div>
+        <div class="m-list">
+          <div class="m-row"><div class="m-top"><span class="m-nm">Hydration</span><span class="m-vl a">67% · Moderate</span></div><div class="m-track"><div class="m-fill a" data-v="67"></div></div></div>
+          <div class="m-row"><div class="m-top"><span class="m-nm">Clarity</span><span class="m-vl g">89% · Good</span></div><div class="m-track"><div class="m-fill g" data-v="89"></div></div></div>
+          <div class="m-row"><div class="m-top"><span class="m-nm">Texture</span><span class="m-vl g">74% · Good</span></div><div class="m-track"><div class="m-fill g" data-v="74"></div></div></div>
+          <div class="m-row"><div class="m-top"><span class="m-nm">Oil balance</span><span class="m-vl a">58% · T-zone active</span></div><div class="m-track"><div class="m-fill a" data-v="58"></div></div></div>
+          <div class="m-row"><div class="m-top"><span class="m-nm">Barrier health</span><span class="m-vl g">82% · Strong</span></div><div class="m-track"><div class="m-fill g" data-v="82"></div></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kicker">Your routine</div>
+        <div class="rtabs">
+          <button class="rtab on" onclick="tab(this,'am')">🌅 Morning</button>
+          <button class="rtab" onclick="tab(this,'pm')">🌙 Night</button>
+        </div>
+        <div class="rsteps" id="r-am">
+          <div class="rstep"><div class="sn">1</div><div class="si"><strong>CeraVe Hydrating Cleanser</strong><span>Barrier-safe, non-stripping · 60 sec gentle massage, lukewarm water</span></div></div>
+          <div class="rstep"><div class="sn">2</div><div class="si"><strong>The Ordinary Niacinamide 10%</strong><span>Oil control, pore-minimizing · 2–3 drops, press into skin, wait 30 sec</span></div></div>
+          <div class="rstep"><div class="sn">3</div><div class="si"><strong>La Roche-Posay SPF 50+ Fluid</strong><span>Daily UV protection · Always the last step, every morning without exception</span></div></div>
+        </div>
+        <div class="rsteps" id="r-pm" style="display:none">
+          <div class="rstep"><div class="sn">1</div><div class="si"><strong>Cetaphil Gentle Skin Cleanser</strong><span>Removes SPF and pollutants · Double cleanse if you wore sunscreen</span></div></div>
+          <div class="rstep"><div class="sn">2</div><div class="si"><strong>Paula's Choice 2% BHA Liquid</strong><span>Unclogs pores, smooths texture · Use 2–3× per week max, skip if irritated</span></div></div>
+          <div class="rstep"><div class="sn">3</div><div class="si"><strong>First Aid Beauty Ultra Repair Cream</strong><span>Deep overnight hydration · Patch-locks your barrier while you sleep</span></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kicker">Matched to your skin</div>
+        <div class="card-h">Recommended products</div>
+        <div class="p-list">
+          <div class="p-card"><div class="p-ic" style="background:#eff6ff">🧴</div><div class="p-inf"><div class="p-brand">CeraVe</div><div class="p-nm">Hydrating Cleanser 16 oz</div><div class="p-why">Barrier-safe · Fragrance-free</div></div><div class="p-price">$17</div><button class="p-add" onclick="addP(this)">+</button></div>
+          <div class="p-card"><div class="p-ic" style="background:#f0fdf4">💧</div><div class="p-inf"><div class="p-brand">The Ordinary</div><div class="p-nm">Niacinamide 10% + Zinc</div><div class="p-why">Oil control · Pore-minimizing</div></div><div class="p-price">$8</div><button class="p-add" onclick="addP(this)">+</button></div>
+          <div class="p-card"><div class="p-ic" style="background:#fff7ed">☀️</div><div class="p-inf"><div class="p-brand">La Roche-Posay</div><div class="p-nm">Anthelios SPF 50+ Fluid</div><div class="p-why">Lightweight · No white cast</div></div><div class="p-price">$34</div><button class="p-add" onclick="addP(this)">+</button></div>
+          <div class="p-card"><div class="p-ic" style="background:#fdf4ff">🔬</div><div class="p-inf"><div class="p-brand">Paula's Choice</div><div class="p-nm">Skin Perfecting 2% BHA</div><div class="p-why">Exfoliates · Unclogs pores</div></div><div class="p-price">$36</div><button class="p-add" onclick="addP(this)">+</button></div>
+        </div>
+      </div>
+
+      <div class="cta-col">
+        <button class="btn-blue" onclick="openBk()">📅 &nbsp;Book an Esthetician</button>
+        <button class="btn-line" onclick="startScan()">Scan again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── BOOKING ───── -->
+  <div class="bk-ov" id="bk-ov" onclick="bkOut(event)">
+    <div class="bk-sheet">
+      <div class="bk-handle"></div>
+      <div class="bk-hd">
+        <h3>Book a session</h3>
+        <p>Matched to your Hydration &amp; Clarity profile · 60 min · $85</p>
+      </div>
+      <div class="bk-sec">Choose your esthetician</div>
+      <div class="e-list">
+        <div class="e-card" onclick="pickE(this,'Mele T.','Today')">
+          <div class="e-av" style="background:#fef3c7">🌺</div>
+          <div><div class="e-nm">Mele Tupou</div><div class="e-sp">Hydration &amp; Glow Specialist</div><div class="e-mt"><span class="e-st">★ 4.9</span><span class="e-sep">·</span><span class="e-rv">127 reviews</span><span class="e-sep">·</span><span class="e-av-txt">Available today</span></div></div>
+        </div>
+        <div class="e-card" onclick="pickE(this,'Grace K.','Tomorrow')">
+          <div class="e-av" style="background:#ecfdf5">🌿</div>
+          <div><div class="e-nm">Grace Kim</div><div class="e-sp">Acne &amp; Clarity Expert</div><div class="e-mt"><span class="e-st">★ 4.8</span><span class="e-sep">·</span><span class="e-rv">89 reviews</span><span class="e-sep">·</span><span class="e-av-txt">Available tomorrow</span></div></div>
+        </div>
+        <div class="e-card" onclick="pickE(this,'Jordan R.','Today')">
+          <div class="e-av" style="background:#eff6ff">💙</div>
+          <div><div class="e-nm">Jordan Reyes</div><div class="e-sp">Anti-Aging &amp; Barrier Care</div><div class="e-mt"><span class="e-st">★ 4.9</span><span class="e-sep">·</span><span class="e-rv">203 reviews</span><span class="e-sep">·</span><span class="e-av-txt">Available today</span></div></div>
+        </div>
+      </div>
+      <div class="bk-sec">Pick a time</div>
+      <div class="slots">
+        <div class="slot" onclick="pickT(this)">10:00 AM</div>
+        <div class="slot na">11:30 AM</div>
+        <div class="slot" onclick="pickT(this)">2:00 PM</div>
+        <div class="slot" onclick="pickT(this)">3:30 PM</div>
+        <div class="slot na">4:00 PM</div>
+        <div class="slot" onclick="pickT(this)">5:00 PM</div>
+      </div>
+      <div class="bk-bot">
+        <div class="bk-sum" id="bk-sum"><p id="bk-sum-txt"></p></div>
+        <button class="btn-blue" id="cfm-btn" style="opacity:.35;pointer-events:none" onclick="confirmBk()">Confirm Appointment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── CONFIRMED ───── -->
+  <div class="cfm-ov" id="cfm-ov">
+    <div class="cfm-ic">✓</div>
+    <h2>You're booked! 🎉</h2>
+    <p id="cfm-msg"></p>
+    <div class="cfm-card" id="cfm-card"></div>
+    <button class="btn-blue" style="width:100%" onclick="closeCfm()">Back to my results</button>
+  </div>
+</div>
+
+<script>
+let eP=null,tP=null;
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+function show(id){
+  const prev=document.querySelector('.screen.active');
+  const next=document.getElementById(id);
+  if(!next||next===prev)return;
+  if(prev){prev.classList.add('out');setTimeout(()=>prev.classList.remove('active','out'),400)}
+  setTimeout(()=>next.classList.add('active'),70);
+}
+
+function startScan(){
+  document.querySelectorAll('.a-row').forEach(r=>{r.classList.remove('in');r.querySelector('.a-fill').style.width='0%'});
+  show('s-scan');setTimeout(runScan,440);
+}
+
+function runScan(){
+  const steps=[
+    [0,'Position your face in the ring'],
+    [18,'Detecting face…'],
+    [35,'Reading skin tone…'],
+    [50,'Analyzing hydration signals…'],
+    [65,'Mapping texture zones…'],
+    [80,'Checking oil balance…'],
+    [94,'Finalizing barrier read…'],
+    [100,'Scan complete ✓']
+  ];
+  const lbl=document.getElementById('scan-lbl');
+  const bar=document.getElementById('prog');
+  let i=0;
+  function tick(){
+    if(i>=steps.length){setTimeout(goAnalyze,360);return}
+    const[p,m]=steps[i++];
+    lbl.textContent=m;bar.style.width=p+'%';
+    setTimeout(tick,i===1?850:360);
+  }
+  tick();
+}
+
+function goAnalyze(){show('s-analyze');setTimeout(runAnalyze,480)}
+
+function runAnalyze(){
+  const rows=document.querySelectorAll('#a-rows .a-row');
+  rows.forEach((r,i)=>{
+    setTimeout(()=>{
+      r.classList.add('in');
+      setTimeout(()=>{r.querySelector('.a-fill').style.width=r.dataset.v+'%'},70);
+    },i*280);
+  });
+  setTimeout(()=>{show('s-results');setTimeout(animResults,440)},rows.length*280+680);
+}
+
+function skipToResults(){show('s-results');setTimeout(animResults,440)}
+
+function animResults(){
+  const arc=document.getElementById('ring-arc');
+  const disp=document.getElementById('score-n');
+  const C=251.33,target=78;
+  let cur=0;
+  const t=setInterval(()=>{
+    cur=Math.min(cur+2,target);
+    disp.textContent=cur;
+    arc.style.strokeDashoffset=C-(C*cur/100);
+    if(cur>=target)clearInterval(t);
+  },20);
+  setTimeout(()=>{document.querySelectorAll('.m-fill').forEach(b=>b.style.width=b.dataset.v+'%')},160);
+}
+
+function tab(btn,w){
+  document.querySelectorAll('.rtab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('r-am').style.display=w==='am'?'flex':'none';
+  document.getElementById('r-pm').style.display=w==='pm'?'flex':'none';
+}
+
+function addP(btn){const on=btn.classList.toggle('on');btn.textContent=on?'✓':'+'}
+
+function openBk(){document.getElementById('bk-ov').classList.add('open')}
+function bkOut(e){if(e.target.id==='bk-ov')document.getElementById('bk-ov').classList.remove('open')}
+
+function pickE(card,name,when){
+  document.querySelectorAll('.e-card').forEach(c=>c.classList.remove('on'));
+  card.classList.add('on');eP={name,when};updateSum();
+}
+function pickT(slot){
+  document.querySelectorAll('.slot').forEach(s=>s.classList.remove('on'));
+  slot.classList.add('on');tP=slot.textContent.trim();updateSum();
+}
+function updateSum(){
+  const sum=document.getElementById('bk-sum');
+  const txt=document.getElementById('bk-sum-txt');
+  const btn=document.getElementById('cfm-btn');
+  if(eP&&tP){
+    const d=eP.when==='Today'?fmt(0):fmt(1);
+    txt.innerHTML=`<strong>${esc(eP.name)}</strong> &nbsp;·&nbsp; ${esc(d)} at <strong>${esc(tP)}</strong><br>Hydration &amp; Clarity Focus &nbsp;·&nbsp; 60 min &nbsp;·&nbsp; $85`;
+    sum.classList.add('show');btn.style.opacity='1';btn.style.pointerEvents='auto';
+  }else{sum.classList.remove('show');btn.style.opacity='.35';btn.style.pointerEvents='none'}
+}
+function confirmBk(){
+  const d=eP.when==='Today'?fmt(0):fmt(1);
+  document.getElementById('cfm-msg').textContent=`Your appointment with ${eP.name} is confirmed. A reminder will be sent to your phone 1 hour before.`;
+  document.getElementById('cfm-card').innerHTML=`
+    <div class="cfm-row"><span>Esthetician</span><span>${esc(eP.name)}</span></div>
+    <div class="cfm-row"><span>Date</span><span>${esc(d)}</span></div>
+    <div class="cfm-row"><span>Time</span><span>${esc(tP)}</span></div>
+    <div class="cfm-row"><span>Service</span><span>Hydration Focus · 60 min</span></div>
+    <div class="cfm-row"><span>Total</span><span>$85</span></div>`;
+  document.getElementById('bk-ov').classList.remove('open');
+  document.getElementById('cfm-ov').classList.add('show');
+}
+function closeCfm(){
+  document.getElementById('cfm-ov').classList.remove('show');
+  eP=null;tP=null;
+  document.querySelectorAll('.e-card,.slot').forEach(el=>el.classList.remove('on'));
+  document.getElementById('bk-sum').classList.remove('show');
+  const b=document.getElementById('cfm-btn');b.style.opacity='.35';b.style.pointerEvents='none';
+}
+function fmt(offset){const d=new Date();d.setDate(d.getDate()+offset);return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
+</script>
+</body>
+</html>

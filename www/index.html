@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' capacitor://localhost; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com https://api.stripe.com capacitor://localhost blob:; img-src 'self' blob: data:; worker-src 'self' blob:; frame-src https://js.stripe.com; frame-ancestors 'none';" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
   <title>GlowAI</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="./styles.css" />

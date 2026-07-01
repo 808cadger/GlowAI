@@ -6,12 +6,15 @@ from .config import settings
 
 log = logging.getLogger("glowai.db")
 
+_is_sqlite = settings.DATABASE_URL.startswith("sqlite")
 engine = create_async_engine(
     settings.DATABASE_URL,
-    pool_size=5,
-    max_overflow=10,
-    pool_pre_ping=True,
-    pool_recycle=1800,
+    **({} if _is_sqlite else {
+        "pool_size": 5,
+        "max_overflow": 10,
+        "pool_pre_ping": True,
+        "pool_recycle": 1800,
+    }),
     echo=False,
 )
 

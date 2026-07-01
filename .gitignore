@@ -18,6 +18,8 @@ backend/*.pyc
 reports/*.csv
 backend/.venv/
 backend/.env
+.env
+*.db
 *.apk
 *.aab
 .DS_Store

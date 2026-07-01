@@ -2,9 +2,13 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    ANTHROPIC_API_KEY: str
+    ANTHROPIC_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_VISION_MODEL: str = "moondream"
+    GROQ_CHAT_MODEL: str = "llama-3.3-70b-versatile"
     DATABASE_URL: str
-    API_TOKEN: str = "dev-token"
+    API_TOKEN: str
     CORS_ORIGINS: str = "capacitor://localhost,http://localhost,http://localhost:3000"
     PORT: int = 8000
     STRIPE_SECRET_KEY: str | None = None

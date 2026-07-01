@@ -3057,9 +3057,9 @@ Skin support:
       const overlays = latest.overlays || this.generateScanOverlays(latest.metrics || {}, latest.concerns || []);
       overlayMap.innerHTML = overlays.map((overlay) => overlay.zones.map((zone) => `
         <span
-          class="scan-overlay-zone overlay-${overlay.key}"
+          class="scan-overlay-zone overlay-${this.escapeHtml(overlay.key)}"
           style="left:${zone.x}%;top:${zone.y}%;width:${zone.w}%;height:${zone.h}%;--overlay-alpha:${overlay.intensity}"
-          title="${overlay.label} ${overlay.score}/100"
+          title="${this.escapeHtml(overlay.label)} ${this.escapeHtml(String(overlay.score))}/100"
         ></span>
       `).join('')).join('');
       if (overlayLegend) {

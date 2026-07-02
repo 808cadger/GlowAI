@@ -5,6 +5,7 @@
 import asyncio
 import base64
 import collections
+import contextlib
 import hashlib
 import hmac
 import json
@@ -16,13 +17,13 @@ import urllib.parse
 import urllib.request
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 import anthropic
 import groq as _groq
 import openai as _openai
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Security, status
+from fastapi import Depends, FastAPI, HTTPException, Request, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
@@ -31,13 +32,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .config import settings
-from .database import Base, engine, get_db
-from .models import Appointment, FreemiumUnlock, Reminder, ScanResult
+from .database import Base, SessionLocal, engine, get_db
+from .models import Appointment, FreemiumUnlock, Reminder, SalonWorkspace, ScanResult
 from .routines import routine_from_concerns
 from .schemas import (
     AppointmentCreate, AppointmentResponse, AppointmentUpdate,
     PushTokenCreate,
     ReminderCreate, ReminderResponse, ReminderUpdate,
+    SalonWorkspaceResponse, SalonWorkspaceUpsert,
     ScanRequest, ScanResponse, ScanStatusResponse, SuggestedAppointment,
 )
 
@@ -70,7 +72,11 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     log.info("GlowAI API started — tables ready")
+    scheduler_task = asyncio.create_task(reminder_scheduler_loop())
     yield
+    scheduler_task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await scheduler_task
     await engine.dispose()
     log.info("GlowAI API shutdown — engine disposed")
 
@@ -306,21 +312,70 @@ async def delete_appointment(
     await db.commit()
 
 
+# ── Salon workspace (B2B white-label) ─────────────────────────────────────────
+SALON_PLAN_DETAILS = {
+    "starter": {
+        "monthly_price": "299",
+        "features": ["Branded scan app", "Agent booking leads", "Basic Shopify cart"],
+    },
+    "growth": {
+        "monthly_price": "799",
+        "features": ["White-label app", "Calendar + Shopify agents", "Reel generator", "Lead analytics"],
+    },
+    "enterprise": {
+        "monthly_price": None,
+        "features": ["Custom domain", "Multi-location routing", "POS/CRM integration", "Dedicated model tuning"],
+    },
+}
+
+
+@app.get("/api/salon-workspace", response_model=SalonWorkspaceResponse)
+async def get_salon_workspace(
+    user_id: str = "default",
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_token),
+):
+    result = await db.execute(select(SalonWorkspace).where(SalonWorkspace.user_id == user_id))
+    workspace = result.scalar_one_or_none()
+    if not workspace:
+        raise HTTPException(404, "Salon workspace not found")
+    return workspace
+
+
+@app.put("/api/salon-workspace", response_model=SalonWorkspaceResponse)
+async def upsert_salon_workspace(
+    body: SalonWorkspaceUpsert,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(require_token),
+):
+    plan_details = SALON_PLAN_DETAILS[body.plan]
+    result = await db.execute(select(SalonWorkspace).where(SalonWorkspace.user_id == body.user_id))
+    workspace = result.scalar_one_or_none()
+    if workspace:
+        for field, val in body.model_dump(exclude={"user_id"}).items():
+            setattr(workspace, field, val)
+        workspace.monthly_price = plan_details["monthly_price"]
+        workspace.features = plan_details["features"]
+    else:
+        workspace = SalonWorkspace(
+            **body.model_dump(),
+            monthly_price=plan_details["monthly_price"],
+            features=plan_details["features"],
+        )
+        db.add(workspace)
+    await db.commit()
+    await db.refresh(workspace)
+    log.info("salon workspace saved user_id=%s plan=%s", workspace.user_id, workspace.plan)
+    return workspace
+
+
 # ── Reminders ────────────────────────────────────────────────────────────────
-async def send_push(reminder: ReminderResponse):
+CADENCE_INTERVALS = {"daily": timedelta(days=1), "weekly": timedelta(weeks=1)}
+
+
+def deliver_reminder(reminder: Reminder) -> None:
     # #ASSUMPTION: Push provider is not connected yet; wire this to WebSocket or
     # @capacitor/push-notifications registration tokens when device auth lands.
-    delay = max(0, (reminder.remind_at - reminder.created_at).total_seconds())
-    if delay > 60:
-        log.info(
-            "reminder scheduled id=%s user_id=%s remind_at=%s; delivery requires scheduler worker",
-            reminder.id,
-            reminder.user_id,
-            reminder.remind_at,
-        )
-        return
-    if delay:
-        await asyncio.sleep(delay)
     log.info(
         "reminder due id=%s user_id=%s channel=%s title=%s",
         reminder.id,
@@ -328,6 +383,45 @@ async def send_push(reminder: ReminderResponse):
         reminder.channel,
         reminder.title,
     )
+
+
+async def deliver_due_reminders() -> int:
+    """Poll for due reminders, deliver them, and advance/deactivate by cadence."""
+    now = datetime.now(timezone.utc)
+    delivered = 0
+    async with SessionLocal() as db:
+        result = await db.execute(
+            select(Reminder).where(Reminder.is_active.is_(True), Reminder.remind_at <= now)
+        )
+        for reminder in result.scalars().all():
+            deliver_reminder(reminder)
+            delivered += 1
+            interval = CADENCE_INTERVALS.get(reminder.cadence)
+            if interval:
+                remind_at = reminder.remind_at
+                if remind_at.tzinfo is None:
+                    remind_at = remind_at.replace(tzinfo=timezone.utc)
+                while remind_at <= now:
+                    remind_at += interval
+                reminder.remind_at = remind_at
+            else:
+                reminder.is_active = False
+        if delivered:
+            await db.commit()
+    return delivered
+
+
+async def reminder_scheduler_loop() -> None:
+    while True:
+        try:
+            delivered = await deliver_due_reminders()
+            if delivered:
+                log.info("reminder scheduler delivered %d due reminder(s)", delivered)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception("reminder scheduler tick failed")
+        await asyncio.sleep(settings.REMINDER_POLL_INTERVAL_SECONDS)
 
 
 @app.get("/api/reminders", response_model=list[ReminderResponse])
@@ -348,7 +442,6 @@ async def list_reminders(
 @app.post("/api/reminders", response_model=ReminderResponse, status_code=201)
 async def set_reminder(
     body: ReminderCreate,
-    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     _: str = Depends(require_token),
 ):
@@ -356,10 +449,8 @@ async def set_reminder(
     db.add(reminder)
     await db.commit()
     await db.refresh(reminder)
-    response = ReminderResponse.model_validate(reminder)
-    background_tasks.add_task(send_push, response)
     log.info("reminder created id=%s user_id=%s remind_at=%s", reminder.id, reminder.user_id, reminder.remind_at)
-    return response
+    return reminder
 
 
 @app.put("/api/reminders/{reminder_id}", response_model=ReminderResponse)

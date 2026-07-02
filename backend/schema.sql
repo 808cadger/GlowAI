@@ -47,6 +47,22 @@ CREATE TABLE IF NOT EXISTS reminders (
     updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS salon_workspaces (
+    id            UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id       VARCHAR(100) NOT NULL UNIQUE,
+    studio        VARCHAR(200) NOT NULL DEFAULT 'GlowAI Studio',
+    headline      VARCHAR(300),
+    accent        VARCHAR(40)  NOT NULL DEFAULT 'blush',
+    plan          VARCHAR(40)  NOT NULL DEFAULT 'starter'
+                      CHECK (plan IN ('starter', 'growth', 'enterprise')),
+    monthly_price VARCHAR(20),
+    features      JSONB        NOT NULL DEFAULT '[]',
+    created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_salon_workspaces_user_id ON salon_workspaces(user_id);
+
 CREATE TABLE IF NOT EXISTS freemium_unlocks (
     id                UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id           VARCHAR(100) NOT NULL UNIQUE,
@@ -74,6 +90,11 @@ CREATE TRIGGER trg_appointments_updated_at
 DROP TRIGGER IF EXISTS trg_reminders_updated_at ON reminders;
 CREATE TRIGGER trg_reminders_updated_at
   BEFORE UPDATE ON reminders
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+DROP TRIGGER IF EXISTS trg_salon_workspaces_updated_at ON salon_workspaces;
+CREATE TRIGGER trg_salon_workspaces_updated_at
+  BEFORE UPDATE ON salon_workspaces
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE INDEX IF NOT EXISTS idx_appointments_user_id ON appointments(user_id);

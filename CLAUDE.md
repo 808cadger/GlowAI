@@ -58,11 +58,11 @@ Eval target: run 10 conversation evals for agent actions such as "Book esthetici
 ## Backend
 
 - `backend/main.py` — all routes; never split into routers unless file exceeds 600 lines
-- `backend/models.py` — `ScanResult`, `Appointment` ORM models
+- `backend/models.py` — `ScanResult`, `Appointment`, `Reminder`, `FreemiumUnlock`, `SalonWorkspace` ORM models
 - `backend/config.py` — Pydantic `Settings`; all secrets via `.env`
 - Auth: single shared bearer token (`API_TOKEN`) — MVP only; JWT when user accounts land
 - DB: async PostgreSQL via `asyncpg`; migrations via raw SQL in `schema.sql`
-- Future sellable polish: scheduled reminders, freemium counters, Stripe subscription state, and salon workspace records should be backend-owned.
+- Backend-owned sellable polish: freemium counters, Stripe subscription state, and salon workspace records (`/api/salon-workspace`) all persist server-side. Reminders fire via an in-process polling scheduler (`reminder_scheduler_loop` in `backend/main.py`, interval set by `REMINDER_POLL_INTERVAL_SECONDS`) — actual push delivery still needs a real FCM/APNs provider wired to persisted device tokens.
 
 ### Env vars required
 

@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     STRIPE_CANCEL_URL: str = "https://808cadger.github.io/GlowAI/download.html?checkout=cancelled"
     STRIPE_WEBHOOK_SECRET: str | None = None
     FREE_SCAN_LIMIT: int = 3
+    REMINDER_POLL_INTERVAL_SECONDS: int = 30
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

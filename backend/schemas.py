@@ -84,6 +84,25 @@ class ReminderResponse(ReminderCreate):
     model_config = {"from_attributes": True}
 
 
+# ── Salon workspace ───────────────────────────────────────────────────────
+
+class SalonWorkspaceUpsert(BaseModel):
+    user_id: str = Field(default="default", max_length=100)
+    studio: str = Field(default="GlowAI Studio", max_length=200)
+    headline: str | None = Field(default=None, max_length=300)
+    accent: str = Field(default="blush", max_length=40)
+    plan: Literal["starter", "growth", "enterprise"] = "starter"
+
+class SalonWorkspaceResponse(SalonWorkspaceUpsert):
+    id: uuid.UUID
+    monthly_price: str | None
+    features: list[str]
+    created_at: _dt.datetime
+    updated_at: _dt.datetime
+
+    model_config = {"from_attributes": True}
+
+
 # ── Push ──────────────────────────────────────────────────────────────────
 
 class PushTokenCreate(BaseModel):

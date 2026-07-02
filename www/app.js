@@ -321,6 +321,7 @@ window.glowaiApp = {
     this.renderForecast();
     this.renderAdherenceLoop();
     this.renderAgentOps();
+    this.loadSalonWorkspaceFromBackend();
     this.bindBackNavigation();
     this.forceIntroVisibleState();
     this.showPage(this.getPageFromHash() || this.getInitialPage(), { replace: true, source: 'init' });
@@ -1127,7 +1128,53 @@ ${extraContext}`.trim();
     document.documentElement.style.setProperty('--gradient-pill-active', theme.pill);
   },
 
-  launchWhiteLabelWorkspace() {
+  salonPlanFallback(plan) {
+    return plan === 'starter'
+      ? { monthlyPrice: 299, features: ['Branded scan app', 'Agent booking leads', 'Basic Shopify cart'] }
+      : plan === 'growth'
+        ? { monthlyPrice: 799, features: ['White-label app', 'Calendar + Shopify agents', 'Reel generator', 'Lead analytics'] }
+        : { monthlyPrice: 'custom', features: ['Custom domain', 'Multi-location routing', 'POS/CRM integration', 'Dedicated model tuning'] };
+  },
+
+  async fetchApi(path, options = {}) {
+    const apiBase = window.GLOWAI_API_BASE;
+    const apiToken = localStorage.getItem('glowai_api_token') || '';
+    if (!apiBase || !apiToken) return null;
+    const res = await fetch(`${apiBase}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiToken}`,
+        ...(options.headers || {}),
+      },
+    });
+    if (!res.ok) throw new Error(await res.text() || `${path} failed`);
+    return res.json();
+  },
+
+  async loadSalonWorkspaceFromBackend() {
+    if (!this.isOwnerMode()) return;
+    try {
+      const remote = await this.fetchApi('/api/salon-workspace?user_id=local-demo-user');
+      if (!remote) return;
+      const workspace = {
+        ...this.getStored(this.storageKeys.whiteLabel, {}),
+        studio: remote.studio,
+        headline: remote.headline,
+        accent: remote.accent,
+        plan: remote.plan,
+        monthlyPrice: remote.monthly_price || 'custom',
+        features: remote.features,
+      };
+      this.setStored(this.storageKeys.whiteLabel, workspace);
+      this.applyWhiteLabelWorkspace(workspace);
+      this.renderAgentOps();
+    } catch {
+      // No saved workspace on the backend yet, or backend unreachable; keep local state.
+    }
+  },
+
+  async launchWhiteLabelWorkspace() {
     if (!this.isOwnerMode()) {
       this.pushAssistantMessage('Owner customization is available in the Version 2 owner link. The customer demo stays polished and locked.');
       return;
@@ -1137,20 +1184,36 @@ ${extraContext}`.trim();
     const accent = document.getElementById('whiteLabelAccent')?.value || 'blush';
     const plan = document.getElementById('whiteLabelPlan')?.value || 'starter';
     const existing = this.getStored(this.storageKeys.whiteLabel, {});
-    const workspace = {
+    let workspace = {
       ...existing,
       studio,
       headline,
       accent,
       plan,
-      monthlyPrice: plan === 'starter' ? 299 : plan === 'growth' ? 799 : 'custom',
-      features: plan === 'starter'
-        ? ['Branded scan app', 'Agent booking leads', 'Basic Shopify cart']
-        : plan === 'growth'
-          ? ['White-label app', 'Calendar + Shopify agents', 'Reel generator', 'Lead analytics']
-          : ['Custom domain', 'Multi-location routing', 'POS/CRM integration', 'Dedicated model tuning'],
+      ...this.salonPlanFallback(plan),
       launchedAt: new Date().toISOString(),
     };
+
+    try {
+      const remote = await this.fetchApi('/api/salon-workspace', {
+        method: 'PUT',
+        body: JSON.stringify({ user_id: 'local-demo-user', studio, headline, accent, plan }),
+      });
+      if (remote) {
+        workspace = {
+          ...workspace,
+          studio: remote.studio,
+          headline: remote.headline,
+          accent: remote.accent,
+          plan: remote.plan,
+          monthlyPrice: remote.monthly_price || 'custom',
+          features: remote.features,
+        };
+      }
+    } catch (error) {
+      this.logAgentAction('white-label', 'Studio workspace saved locally (backend unavailable)', { error: error.message });
+    }
+
     this.setStored(this.storageKeys.whiteLabel, workspace);
     this.applyWhiteLabelWorkspace(workspace);
     this.logAgentAction('white-label', `Studio workspace launched for ${studio}`, workspace);

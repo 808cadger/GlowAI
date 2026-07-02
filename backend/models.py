@@ -49,6 +49,21 @@ class ScanResult(Base):
     created_at:                     Mapped[datetime]    = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
 
+class SalonWorkspace(Base):
+    __tablename__ = "salon_workspaces"
+
+    id:            Mapped[uuid.UUID]   = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id:       Mapped[str]         = mapped_column(String(100), nullable=False, unique=True, index=True)
+    studio:        Mapped[str]         = mapped_column(String(200), nullable=False, default="GlowAI Studio")
+    headline:      Mapped[str | None]  = mapped_column(String(300))
+    accent:        Mapped[str]         = mapped_column(String(40),  nullable=False, default="blush")
+    plan:          Mapped[str]         = mapped_column(String(40),  nullable=False, default="starter")
+    monthly_price: Mapped[str | None]  = mapped_column(String(20))
+    features:      Mapped[list]        = mapped_column(JSON, nullable=False, default=list)
+    created_at:    Mapped[datetime]    = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+    updated_at:    Mapped[datetime]    = mapped_column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class Reminder(Base):
     __tablename__ = "reminders"
 
